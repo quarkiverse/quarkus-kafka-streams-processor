@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package io.quarkiverse.kafkastreamsprocessor.sample.message;
+
+option java_package = "io.quarkiverse.kafkastreamsprocessor.sample.message";
+
+//
+// The class name should follow the convention: "<TopLevelMessageName>Message"
+//
+option java_outer_classname = "PingMessage";
+
+
+message Ping {
+	string message = 1;
+}

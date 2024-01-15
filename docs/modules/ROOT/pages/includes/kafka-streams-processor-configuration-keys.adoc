@@ -1,0 +1,170 @@
+:summaryTableId: kafka-streams-processor-configuration-keys
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[[kafka-streams-processor-configuration-keys]]link:#kafka-streams-processor-configuration-keys[Configuration property]
+
+h|Type
+h|Default
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[kafkastreamsprocessor.input.topic]`
+
+
+[.description]
+--
+The Kafka topics for incoming messages (comma separated if multiple topics).
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+-- a| string
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic[kafkastreamsprocessor.output.topic]`
+
+[.description]
+--
+The Kafka topics for outgoing messages.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+-- a| string
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic]]`link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
+
+[.description]
+--
+The Kafka topic for outgoing messages for the given sink name.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS_sink in uppercase_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS_sink in uppercase_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--| string
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.dlq.topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.dlq.topic[kafkastreamsprocessor.dlq.topic]`
+
+[.description]
+--
+
+Dead letter Queue name
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_DLQ_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_DLQ_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--| String
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.global-dlq.topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.global-dlq.topic[kafkastreamsprocessor.global-dlq.topic]`
+
+[.description]
+--
+
+Global Dead letter Queue to produce error messages note manage by the application
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--| String
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.global-dlq.max-message-size]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.global-dlq.max-message-size[kafkastreamsprocessor.global-dlq.max-message-size]`
+
+[.description]
+--
+
+Global Dead letter Queue maximum request size
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_PRODUCER_MAX_MESSAGE_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_PRODUCER_MAX_MESSAGE_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--| int
+| java.lang.Integer.MAX_VALUE
+
+a| [[kafka-streams-processor-configuration-keys_resiliency.kafka.globalDlq.enabled]]`link:#kafka-streams-processor-configuration-keys_resiliency.kafka.globalDlq.enabled[resiliency.kafka.globalDlq.enabled]`
+
+[.description]
+--
+Enable the production of the error message in the global DLQ when the application can not manage the error.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++RESILIENCY_KAFKA_GLOBALDLQ_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++RESILIENCY_KAFKA_GLOBALDLQ_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--| boolean
+| false
+
+a| [[kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.maxRetries]]`link:#kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.maxRetries[kafka-streams-processor.retry.maxRetries]`
+
+[.description]
+--
+
+The retries setting determines how many times the producer will attempt to send a message before marking it as failed.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR_RETRY_MAXRETRIES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKA_STREAMS_PROCESSOR_RETRY_MAXRETRIES+++`
+endif::add-copy-button-to-env-var[]
+--| int
+| 0
+
+a| [[kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.retryOn]]`link:#kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.retryOn[kafka-streams-processor.retry.retryOn]`
+
+[.description]
+--
+
+Specify the failures to retry on
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR_RETRY_RETRYON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKA_STREAMS_PROCESSOR_RETRY_RETRYON+++`
+endif::add-copy-button-to-env-var[]
+--| Error.class
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.error-strategy]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.error-strategy[kafkastreamsprocessor.error-strategy]`
+
+[.description]
+--
+
+Kafka Streams Processor error strategy
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++`
+endif::add-copy-button-to-env-var[]
+--| String
+| continue
+
+|===
+

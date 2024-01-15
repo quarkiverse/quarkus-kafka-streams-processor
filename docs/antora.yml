@@ -1,0 +1,5 @@
+name: quarkus-kafka-streams-processor
+title: Quarkus Kafka Streams Processor
+version: dev
+nav:
+  - modules/ROOT/nav.adoc
