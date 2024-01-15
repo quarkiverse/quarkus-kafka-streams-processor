@@ -39,6 +39,13 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
       <!-- https://github.com/trustin/os-maven-plugin#issues-with-eclipse-m2e-or-other-ides -->
       <plugin>
         <groupId>kr.motd.maven</groupId>
