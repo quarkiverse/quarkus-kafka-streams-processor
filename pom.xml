@@ -27,7 +27,7 @@
     <url>https://github.com/quarkiverse/quarkus-kafka-streams-processor</url>
   </scm>
   <properties>
-    <compiler-plugin.version>3.11.0</compiler-plugin.version>
+    <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <!-- NB: JDK 17 is required by spring-kafka-test at build time -->
     <maven.compiler.release>11</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
