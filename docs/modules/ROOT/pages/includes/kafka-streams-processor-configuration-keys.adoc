@@ -1,3 +1,4 @@
+:retryLink: https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#retry
 :summaryTableId: kafka-streams-processor-configuration-keys
 [.configuration-legend]
 icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
@@ -40,17 +41,17 @@ endif::add-copy-button-to-env-var[]
 -- a| string
 |
 
-a| [[kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic]]`link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
+a| [[kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic]]`link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafka.streams.processor<sink>.topic]`
 
 [.description]
 --
 The Kafka topic for outgoing messages for the given sink name.
 
 ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS_sink in uppercase_TOPIC+++[]
+Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR__sink__TOPIC+++[]
 endif::add-copy-button-to-env-var[]
 ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS_sink in uppercase_TOPIC+++`
+Environment variable: `+++KAFKA_STREAMS_PROCESSOR__sink__TOPIC+++`
 endif::add-copy-button-to-env-var[]
 --| string
 |
@@ -118,38 +119,6 @@ endif::add-copy-button-to-env-var[]
 --| boolean
 | false
 
-a| [[kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.maxRetries]]`link:#kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.maxRetries[kafka-streams-processor.retry.maxRetries]`
-
-[.description]
---
-
-The retries setting determines how many times the producer will attempt to send a message before marking it as failed.
-
-ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR_RETRY_MAXRETRIES+++[]
-endif::add-copy-button-to-env-var[]
-ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++KAFKA_STREAMS_PROCESSOR_RETRY_MAXRETRIES+++`
-endif::add-copy-button-to-env-var[]
---| int
-| 0
-
-a| [[kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.retryOn]]`link:#kafka-streams-processor-configuration-keys_kafka-streams-processor.retry.retryOn[kafka-streams-processor.retry.retryOn]`
-
-[.description]
---
-
-Specify the failures to retry on
-
-ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR_RETRY_RETRYON+++[]
-endif::add-copy-button-to-env-var[]
-ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++KAFKA_STREAMS_PROCESSOR_RETRY_RETRYON+++`
-endif::add-copy-button-to-env-var[]
---| Error.class
-|
-
 a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.error-strategy]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.error-strategy[kafkastreamsprocessor.error-strategy]`
 
 [.description]
@@ -166,5 +135,152 @@ endif::add-copy-button-to-env-var[]
 --| String
 | continue
 
-|===
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.max-retries]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.max-retries[kafkastreamsprocessor.retry.max-retries]`
 
+[.description]
+--
+
+Max number of retries. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++`
+endif::add-copy-button-to-env-var[]
+--| String
+| -1
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.delay]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.delay[kafkastreamsprocessor.retry.delay]`
+
+[.description]
+--
+
+The delay between retries. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++`
+endif::add-copy-button-to-env-var[]
+--| long
+| 0
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.delay-unit]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.delay-unit[kafkastreamsprocessor.retry.delay-unit]`
+
+[.description]
+--
+
+The unit for delay. Default milliseconds. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--| ChronoUnit
+| MILLIS
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.max-duration]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.max-duration[kafkastreamsprocessor.retry.max-duration]`
+
+[.description]
+--
+
+The max duration. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++`
+endif::add-copy-button-to-env-var[]
+--| long
+| 180000
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.duration-unit]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.duration-unit[kafkastreamsprocessor.retry.duration-unit]`
+
+[.description]
+--
+
+The unit for max duration. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--| ChronoUnit
+| MILLIS
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.jitter]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.jitter[kafkastreamsprocessor.retry.jitter]`
+
+[.description]
+--
+
+Jitter value to randomly vary retry delays for. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++`
+endif::add-copy-button-to-env-var[]
+--| long
+| 200
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.jitter-delay-unit]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.jitter-delay-unit[kafkastreamsprocessor.retry.jitter-delay-unit]`
+
+[.description]
+--
+
+The delay unit for jitter. Default is milliseconds. See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--| ChronoUnit
+| MILLIS
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.retry-on]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.retry-on[kafkastreamsprocessor.retry.retry-on]`
+
+[.description]
+--
+
+The list of exception types that should trigger a retry.
+Default is the provided io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException.
+See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++`
+endif::add-copy-button-to-env-var[]
+--| Exception class names
+| `[io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException]`
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.abort-on]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.retry.abort-on[kafkastreamsprocessor.retry.abort-on]`
+
+[.description]
+--
+
+The list of exception types that should <i>not</i> trigger a retry.
+Default is empty list
+See {retryLink}[microprofile doc].
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_ABORT_ON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_ABORT_ON+++`
+endif::add-copy-button-to-env-var[]
+--| Exception class names
+| `[]`
+
+|===

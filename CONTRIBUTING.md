@@ -36,6 +36,18 @@ We use this information to acknowledge your contributions in release announcemen
 
 If you're considering anything more than correcting a typo or fixing a minor bug, please discuss it by [creating an issue on our issue tracker](https://github.com/quarkiverse/quarkus-kafka-streams-processor/issues) before submitting a pull request. We're happy to provide guidance but please spend an hour or two researching the subject on your own including searching the forums for prior discussions.
 
+### Native build support
+
+This extension is compatible with native compilation.
+You can validate your changes early following Quarkus' documentation [here](https://quarkus.io/guides/building-native-image), using either a builder image or a local installation of GraalVM.
+
+```sh
+# With GraalVM installed
+mvn install -Dnative
+# With a builder image
+mvn install -Dnative -Dquarkus.native.container-build=true
+```
+
 ### Code reviews
 
 All submissions, need to be reviewed by at least one committer before

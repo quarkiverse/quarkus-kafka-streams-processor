@@ -385,11 +385,11 @@ The default behavior can be overriden via the following configuration, ie:
 .application.properties
 [source,properties]
 ----
-kafka-streams-processor.retry.maxRetries=-1
-kafka-streams-processor.retry.retryOn=io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException
+kafkastreamsprocessor.retry.max-retries=-1
+kafkastreamsprocessor.retry.retry-on=io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException
 ----
 
-As this implementation is based on https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#_retry_usage[Eclipse Microprofile Fault Tolerance] it's also possible to override some default policy (ie: maxDuration, jitter...) under the prefix `kafka-streams-processor.retry.`.
+As this implementation is based on https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#_retry_usage[Eclipse Microprofile Fault Tolerance] it's also possible to override some default policy (ie: maxDuration, jitter...) under the prefix `kafkastreamsprocessor.retry.`.
 
 ==== Ad hoc usage
 

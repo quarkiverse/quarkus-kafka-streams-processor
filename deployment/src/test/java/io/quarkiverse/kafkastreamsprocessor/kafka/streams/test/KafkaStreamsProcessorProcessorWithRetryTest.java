@@ -39,7 +39,7 @@ import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.test.QuarkusUnitTest;
 
-public class KafkaStreamsProcessorProcessorTest {
+public class KafkaStreamsProcessorProcessorWithRetryTest {
 
     private static volatile List<ReflectiveClassBuildItem> registeredClasses;
 
@@ -50,6 +50,10 @@ public class KafkaStreamsProcessorProcessorTest {
             .overrideConfigKey("kafkastreamsprocessor.input.topics", "ping-events")
             .overrideConfigKey("kafkastreamsprocessor.output.topic", "pong-events")
             .overrideConfigKey("quarkus.kafka-streams.topics", "ping-events,pong-events")
+            .overrideConfigKey("kafkastreamsprocessor.retry.retry-on",
+                    "io.quarkiverse.kafkastreamsprocessor.kafka.streams.test.KafkaStreamsProcessorProcessorWithRetryTest$RetryException")
+            .overrideConfigKey("kafkastreamsprocessor.retry.abort-on",
+                    "io.quarkiverse.kafkastreamsprocessor.kafka.streams.test.KafkaStreamsProcessorProcessorWithRetryTest$AbortException")
             .addBuildChainCustomizer(buildCustomizer());
 
     private static Consumer<BuildChainBuilder> buildCustomizer() {
@@ -73,12 +77,23 @@ public class KafkaStreamsProcessorProcessorTest {
         assertThat(allRegisteredClasses, hasItem(MyProcessor.class.getName()));
         // Default retryOn exception for Fault Tolerance
         assertThat(allRegisteredClasses, hasItem(RetryableException.class.getName()));
+        // Explicit retryOn & abortOn exceptions
+        assertThat(allRegisteredClasses, hasItem(RetryException.class.getName()));
+        assertThat(allRegisteredClasses, hasItem(AbortException.class.getName()));
     }
 
     @Test
     void shouldRegisterTypesForReflection() {
         // if it gets there, it succeeded
         assertNull(registeredClasses);
+    }
+
+    public static class RetryException {
+
+    }
+
+    public static class AbortException {
+
     }
 
 }

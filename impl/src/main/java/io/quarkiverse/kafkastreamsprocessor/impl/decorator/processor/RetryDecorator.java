@@ -85,7 +85,7 @@ public class RetryDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn,
             log.info("An exception that has been raised by the processor will not be retried.\n"
                     + "Possible causes:\n"
                     + "- That's not a managed retryable exception\n"
-                    + "- maxRetries or maxDuration limits have been reached");
+                    + "- max-retries or max-duration limits have been reached");
             throw e;
         }
     }

@@ -19,9 +19,12 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.api.exception;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 /**
  * Generic {@link RuntimeException} use by the RetryDecorator to specify that a message should be processed again.
  */
+@RegisterForReflection
 public class RetryableException extends RuntimeException {
     /**
      * {@inheritDoc}
