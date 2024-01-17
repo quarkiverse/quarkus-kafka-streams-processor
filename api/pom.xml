@@ -61,6 +61,15 @@
       <groupId>io.smallrye.config</groupId>
       <artifactId>smallrye-config-core</artifactId>
     </dependency>
+    <!-- for javadoc references only -->
+    <dependency>
+      <groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+      <artifactId>microprofile-fault-tolerance-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-core</artifactId>
+    </dependency>
 
     <!-- Test -->
     <dependency>

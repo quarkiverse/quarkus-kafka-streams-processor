@@ -20,6 +20,7 @@
 
 package io.quarkiverse.kafkastreamsprocessor.api.properties;
 
+import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
@@ -50,4 +51,10 @@ public interface KStreamsProcessorConfig {
      */
     @WithDefault("continue")
     String errorStrategy();
+
+    /**
+     * All configuration related to the RetryDecorator and reprocessing a record when a {@link RetryableException} has
+     * been caught
+     */
+    RetryConfig retry();
 }
