@@ -1,4 +1,4 @@
-= Quarkus Kafka Streams Processor
+= Kafka Streams Processor
 :quarkus-guides: https://quarkus.io/guides
 :cdi-spec: https://docs.jboss.org/cdi/spec/2.0
 :kafka_confluent_version: current
@@ -61,7 +61,7 @@ The following dependency needs to be added:
           <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
           <artifactId>quarkus-kafka-streams-processor-bom</artifactId>
           <version>${quarkus.kafkastreamsprocessor.version}</version>
-          <type>bom</type>
+          <type>pom</type>
           <scope>import</scope>
         </dependency>
       </dependencies>
@@ -664,11 +664,40 @@ The priority is to be set based on the priorities of the existing decorators whi
 .ProcessorDecoratorPriorities.java
 [source,java]
 ----
-include::../../../../api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/processor/ProcessorDecoratorPriorities.java[tag=priorities]
+     /**
+     * Priority of the decorator in charge of tracing, creating a span around the
+     * {@link ContextualProcessor#process(Record)} method.
+     */
+    public static final int TRACING = 100;
+    /**
+     * Priority of the decorator in charge or initializing a "request context" for the duration of the processing of the
+     * ContextualProcessor#process(Record)} method. It is closed afterward.
+     */
+    public static final int CDI_REQUEST_SCOPE = 200;
+    /**
+     * Priority of the decorator that will handle exception and potentially redirect the message in a dead letter queue
+     * topic, if configured.
+     */
+    public static final int DLQ = 300;
+    /**
+     * Priority of the decorator in charge of measuring the processing time and the number of exceptions thrown.
+     */
+    public static final int METRICS = 400;
+    /**
+     * Priority of the decorator in charge of injecting all {@link DecoratedPunctuator} configured by the framework and
+     * your custom potential additions.
+     */
+    public static final int PUNCTUATOR_DECORATION = 500;
+    /**
+     * Priority of the decorator in charge of implementing a form of fault tolerance by means of calling again the
+     * {@link ContextualProcessor#process(Record)} method.
+     */
+    public static final int RETRY = 600;
 ----
 <3> The decorator should have the same generics declaration `<KIn, VIn, KOut, VOut>` as the `Processor<KIn, VIn, KOut, VOut>` interface that it implements
 <4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate passthrough decorated methods that this Decorator class won't decorate.
+It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate
+passthrough decorated methods that this Decorator class won't decorate.
 The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
 <5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
 You can also, as a regular CDI bean, inject any another CDI bean reference to be used in this decorator.
@@ -715,7 +744,8 @@ In this example, we replace a header named `header` with another value `headerva
 
 === Punctuator decorator
 
-A Kafka Streams https://kafka.apache.org/36/javadoc/org/apache/kafka/streams/processor/Punctuator.html[Punctuator] is a callback to use with https://kafka.apache.org/36/javadoc/org/apache/kafka/streams/processor/ProcessorContext.html#schedule(java.time.Duration,org.apache.kafka.streams.processor.PunctuationType,org.apache.kafka.streams.processor.Punctuator)[ProcessorContext#schedule(...)].
+A Kafka Streams https://kafka.apache.org/36/javadoc/org/apache/kafka/streams/processor/Punctuator.html[Punctuator] is a callback to use with
+https://kafka.apache.org/36/javadoc/org/apache/kafka/streams/processor/ProcessorContext.html#schedule(java.time.Duration,org.apache.kafka.streams.processor.PunctuationType,org.apache.kafka.streams.processor.Punctuator)[ProcessorContext#schedule(...)].
 It allows to schedule a periodic operation, depending on batch of incoming messages or on a timely manner.
 
 We propose in the extension a way to decorate _any_ `Punctuator` a microservice would create.
@@ -762,12 +792,22 @@ The priority is to be set based on the priorities of the existing decorators whi
 .PunctuatorDecoratorPriorities.java
 [source,java]
 ----
-include::../../../../api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/punctuator/PunctuatorDecoratorPriorities.java[tag=priorities]
+     /**
+     * Priority of the {@link DecoratedPunctuator} that enabled a "request context" for the duration of the
+     * {@link Punctuator#punctuate(long)} processing.
+     */
+    public static final int CDI_REQUEST_SCOPE = 100;
+    /**
+     * Priority of the {@link DecoratedPunctuator} that catches punctuation exception to avoid making the entire
+     * microservice crash and counts those exceptions in a metric.
+     */
+    public static final int METRICS = 200;
 ----
 <3> The decorator should extend the `DecoratedPunctuator` interface defined by this extension.
 It won't be considered otherwise.
 <4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate passthrough decorated methods that this Decorator class won't decorate.
+It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate]
+annotation to generate passthrough decorated methods that this Decorator class won't decorate.
 The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
 <5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
 Is showcased here also the injection of another bean to be used in this decorator.

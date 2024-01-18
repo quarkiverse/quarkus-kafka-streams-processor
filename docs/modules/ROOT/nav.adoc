@@ -1,1 +1,1 @@
-* xref:index.adoc[Quarkus Kafka Streams Processor]
+* xref:index.adoc[Kafka Streams Processor]
