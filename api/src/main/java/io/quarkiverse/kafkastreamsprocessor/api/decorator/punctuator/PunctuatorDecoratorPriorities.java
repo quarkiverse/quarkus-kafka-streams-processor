@@ -26,7 +26,6 @@ import org.apache.kafka.streams.processor.Punctuator;
  * custom decorator will be called.
  */
 public final class PunctuatorDecoratorPriorities {
-    // tag::priorities[]
     /**
      * Priority of the {@link DecoratedPunctuator} that enabled a "request context" for the duration of the
      * {@link Punctuator#punctuate(long)} processing.
@@ -37,7 +36,6 @@ public final class PunctuatorDecoratorPriorities {
      * microservice crash and counts those exceptions in a metric.
      */
     public static final int METRICS = 200;
-    // end::priorities[]
 
     private PunctuatorDecoratorPriorities() {
 

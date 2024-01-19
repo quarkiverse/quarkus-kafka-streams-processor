@@ -53,7 +53,6 @@ import io.quarkiverse.kafkastreamsprocessor.api.decorator.punctuator.DecoratedPu
  * </pre>
  */
 public final class ProcessorDecoratorPriorities {
-    // tag::priorities[]
     /**
      * Priority of the decorator in charge of tracing, creating a span around the
      * {@link ContextualProcessor#process(Record)} method.
@@ -83,7 +82,6 @@ public final class ProcessorDecoratorPriorities {
      * {@link ContextualProcessor#process(Record)} method.
      */
     public static final int RETRY = 600;
-    // end::priorities[]
 
     private ProcessorDecoratorPriorities() {
 
