@@ -1,11 +1,11 @@
 # Quarkus Kafka Streams Processor
 
-[![Version](https://img.shields.io/maven-central/v/io.quarkiverse.kafkastreamsprocessor/quarkus-kafka-streams-processor?logo=apache-maven&style=flat-square)](https://search.maven.org/artifact/io.quarkiverse.kafkastreamsprocessor/quarkus-kafka-streams-processor)
-
-[//]: # ( TODO after running the build on github)
-[//]: # ([![Build]&#40;<https://img.shields.io/github/actions/workflow/status/quarkiverse/quarkus-kafka-streams-processor/build.yml?branch=main&logo=GitHub&style=flat-square>&#41;]&#40;https://github.com/quarkiverse/quarkus-kafka-streams-processor/actions?query=workflow%3ABuild&#41;)
-
+[![Build](https://github.com/quarkiverse/quarkus-logging-splunk/workflows/Build/badge.svg)](https://github.com/quarkiverse/quarkus-kafka-streams-processor/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
+[![Version](https://img.shields.io/maven-central/v/io.quarkiverse.kafkastreamsprocessor/quarkus-kafka-streams-processor?logo=apache-maven&style=flat-square)](https://search.maven.org/artifact/io.quarkiverse.kafkastreamsprocessor/quarkus-kafka-streams-processor)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Getting Started
 This extension eases the implementation of event-driven architecture streaming microservices based on [Kafka Streams’](https://kafka.apache.org/documentation/streams/) Processor API.
@@ -13,7 +13,6 @@ It avoids Kafka Streams' users a lot of boilerplate code to have a dedicated top
 All that is left to develop is a simple Processor class.
 The extension takes care of the rest.
 
-[//]: # (TODO after uploading the userguide to quarkiverse docs)
 For more details, check the complete [documentation](https://quarkiverse.github.io/quarkiverse-docs/quarkus-kafka-streams-processor/dev/index.html).
 
 ## How to build the extension
