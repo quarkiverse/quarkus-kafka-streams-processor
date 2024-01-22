@@ -8,7 +8,7 @@
   </parent>
   <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
   <artifactId>quarkus-kafka-streams-processor-parent</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>bom</module>
@@ -24,7 +24,7 @@
     <connection>scm:git:git@github.com:quarkiverse/quarkus-kafka-streams-processor.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-kafka-streams-processor.git</developerConnection>
     <url>https://github.com/quarkiverse/quarkus-kafka-streams-processor</url>
-    <tag>1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
   <properties>
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
