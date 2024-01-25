@@ -33,7 +33,6 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 
-// tag::customconf[]
 @Dependent
 public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
     @Override
@@ -48,4 +47,3 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
         configuration.setStoreConfigurations(storeConfigurations);
     }
 }
-// end::customconf[]
