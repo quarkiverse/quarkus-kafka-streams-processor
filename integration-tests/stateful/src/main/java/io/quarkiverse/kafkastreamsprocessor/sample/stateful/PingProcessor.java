@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
  * &lt;previous-value&gt;</b></li>
  * </ul>
  */
-// tag::statefulproc[]
 @Slf4j
 @Processor // <1>
 public class PingProcessor extends ContextualProcessor<String, Ping, String, Ping> {
@@ -72,4 +71,3 @@ public class PingProcessor extends ContextualProcessor<String, Ping, String, Pin
         }
     }
 }
-// end::statefulproc[]

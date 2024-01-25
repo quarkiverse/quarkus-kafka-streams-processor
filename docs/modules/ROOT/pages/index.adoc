@@ -221,7 +221,18 @@ The POJO is read from kafka, or written to kafka, with the POJO's JSON textual r
 .PojoProcessor.java
 [source,java]
 ----
-include::../../../../integration-tests/json-pojo/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/jsonpojo/PojoProcessor.java[]
+@Slf4j
+@Processor // <1>
+public class PojoProcessor extends ContextualProcessor<String, SamplePojo, String, SamplePojo> { // <2>
+    @Override
+    public void process(Record<String, SamplePojo> record) { // <3>
+        String reversedMsg = new StringBuilder(record.value().getStringField()).reverse().toString();
+        log.info("Received value {} sending back {} in response", record.value().getStringField(), reversedMsg);
+        SamplePojo pojo = new SamplePojo(reversedMsg, record.value().getNumericalField() + 37,
+                !record.value().getBooleanField());
+        context().forward(record.withValue(pojo)); // <4>
+    }
+}
 ----
 
 <1> Your Processor is declared with the annotation as for a regular processor.
@@ -281,7 +292,18 @@ The POJO is read from kafka, or written to kafka, with a custom serialization fo
 .PojoProcessor.java
 [source,java]
 ----
-include::{sourcedir}/io/quarkiverse/kafkastreamsprocessor/sample/jsonpojo/PojoProcessor.java[tag=pojoprocessor]
+@Slf4j
+@Processor // <1>
+public class PojoProcessor extends ContextualProcessor<String, SamplePojo, String, SamplePojo> { // <2>
+    @Override
+    public void process(Record<String, SamplePojo> record) { // <3>
+        String reversedMsg = new StringBuilder(record.value().getStringField()).reverse().toString();
+        log.info("Received value {} sending back {} in response", record.value().getStringField(), reversedMsg);
+        SamplePojo pojo = new SamplePojo(reversedMsg, record.value().getNumericalField() + 37,
+                !record.value().getBooleanField());
+        context().forward(record.withValue(pojo)); // <4>
+    }
+}
 ----
 <1> Your Processor is declared with the annotation as for a regular processor.
 <2> The handled value type, in this example, is a simple POJO, nothing fancy.
@@ -588,7 +610,37 @@ In this example, we implement a processor which is using a State-Store.
 .StateStoreProcessor.java
 [source,java]
 ----
-include::{sourcedir}/io/quarkiverse/kafkastreamsprocessor/sample/stateful/PingProcessor.java[tag=statefulproc]
+@Slf4j
+@Processor // <1>
+public class PingProcessor extends ContextualProcessor<String, Ping, String, Ping> {
+    private KeyValueStore<String, String> pingData;
+
+    @Override
+    public void init(ProcessorContext<String, Ping> context) {
+        super.init(context);
+        pingData = context.getStateStore("ping-data"); // <2>
+        context.schedule(Duration.ofMillis(1L), PunctuationType.STREAM_TIME, new DuplicateValuePunctuator(pingData));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(Record<String, Ping> record) {
+        log.info("Process the message: {}", record.value().getMessage());
+
+        String previousValue = pingData.get(record.key());
+        pingData.put(record.key(), record.value().getMessage());
+
+        if (previousValue == null) {
+            context().forward(
+                    record.withValue(Ping.newBuilder().setMessage("Store initialization OK for " + record.key()).build()));
+        } else {
+            context().forward(record.withValue(
+                    Ping.newBuilder().setMessage("Previous value for " + record.key() + " is " + previousValue).build()));
+        }
+    }
+}
 ----
 <1> Your Processor is declared with the annotation as for a regular processor.
 <2> The definition and initialization of your state store.
@@ -598,7 +650,20 @@ include::{sourcedir}/io/quarkiverse/kafkastreamsprocessor/sample/stateful/PingPr
 .SampleConfigurationCustomizer.java
 [source,java]
 ----
-include::{sourcedir}/io/quarkiverse/kafkastreamsprocessor/sample/stateful/SampleConfigurationCustomizer.java[tag=customconf]
+@Dependent
+public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
+    @Override
+    public void fillConfiguration(Configuration configuration) {
+        List<StoreConfiguration> storeConfigurations = new ArrayList<>();
+        // Add a key value store for indexes
+        StoreBuilder<KeyValueStore<String, String>> storeBuilder = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore("ping-data"),
+                Serdes.String(),
+                Serdes.String());
+        storeConfigurations.add(new StoreConfiguration(storeBuilder));
+        configuration.setStoreConfigurations(storeConfigurations);
+    }
+}
 ----
 
 The `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` implementation provided sets the required State-Store configurations into the method's

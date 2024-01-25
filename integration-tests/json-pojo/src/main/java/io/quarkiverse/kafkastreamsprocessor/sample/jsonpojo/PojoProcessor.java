@@ -25,7 +25,6 @@ import org.apache.kafka.streams.processor.api.Record;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import lombok.extern.slf4j.Slf4j;
 
-// tag::pojoprocessor[]
 @Slf4j
 @Processor // <1>
 public class PojoProcessor extends ContextualProcessor<String, SamplePojo, String, SamplePojo> { // <2>
@@ -38,4 +37,3 @@ public class PojoProcessor extends ContextualProcessor<String, SamplePojo, Strin
         context().forward(record.withValue(pojo)); // <4>
     }
 }
-// end::pojoprocessor[]
