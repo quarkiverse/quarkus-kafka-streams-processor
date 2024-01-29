@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;

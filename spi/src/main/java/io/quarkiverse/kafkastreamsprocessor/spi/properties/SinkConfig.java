@@ -17,24 +17,17 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
-
-import java.util.Optional;
-
-import io.smallrye.config.WithDefault;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
 /**
- * Configuration related to the global dead-letter-queue
+ * Configuration related to a
+ * <a href="https://docs.confluent.io/platform/current/streams/architecture.html#processor-topology">sink</a>.
+ * <p>
+ * To be used to configure multi output processors.
  */
-public interface GlobalDlqConfig {
+public interface SinkConfig {
     /**
-     * Global Dead letter Queue to produce error messages not managed by the application
+     * The topic associated to this sink
      */
-    Optional<String> topic();
-
-    /**
-     * Global Dead letter Queue maximum message size
-     */
-    @WithDefault("2147483647")
-    int maxMessageSize();
+    String topic();
 }

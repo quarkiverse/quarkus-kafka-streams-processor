@@ -33,12 +33,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.OutputConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.SinkConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.OutputConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.SinkConfig;
 
 @ExtendWith(MockitoExtension.class)
-public class DefaultSinkToTopicMappingBuilderTest {
+public class SinkToTopicMappingBuilderTest {
     @Mock
     KStreamsProcessorConfig extensionConfiguration;
 
@@ -47,11 +47,11 @@ public class DefaultSinkToTopicMappingBuilderTest {
 
     Map<String, SinkConfig> sinks = new HashMap<>();
 
-    DefaultSinkToTopicMappingBuilder sinkConfiguration;
+    SinkToTopicMappingBuilder sinkConfiguration;
 
     @BeforeEach
     void setUp() {
-        sinkConfiguration = new DefaultSinkToTopicMappingBuilder(extensionConfiguration);
+        sinkConfiguration = new SinkToTopicMappingBuilder(extensionConfiguration);
         when(extensionConfiguration.output()).thenReturn(outputConfig);
         when(outputConfig.sinks()).thenReturn(sinks);
     }

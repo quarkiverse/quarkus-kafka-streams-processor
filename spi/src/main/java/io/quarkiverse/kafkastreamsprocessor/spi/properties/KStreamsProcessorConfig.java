@@ -18,7 +18,7 @@
  * #L%
  */
 
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
 import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
 import io.smallrye.config.ConfigMapping;

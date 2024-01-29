@@ -9,7 +9,7 @@
   <artifactId>quarkus-kafka-streams-processor-bom-parent</artifactId>
   <packaging>pom</packaging>
   <properties>
-    <quarkus-kafka-streams-processor.version>0.0.0-SNAPSHOT</quarkus-kafka-streams-processor.version>
+    <quarkus-kafka-streams-processor.version>1.1.0-SNAPSHOT</quarkus-kafka-streams-processor.version>
   </properties>
   <modules>
     <module>application</module>

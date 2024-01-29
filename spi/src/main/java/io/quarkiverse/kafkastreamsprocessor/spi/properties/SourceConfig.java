@@ -17,16 +17,20 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
-import java.util.Optional;
+import java.util.List;
 
 /**
- * Configuration related to the microservice-specific dead-letter-queue.
+ * Configuration related to one
+ * <a href="https://docs.confluent.io/platform/current/streams/architecture.html#processor-topology">source</a>.
+ * <p>
+ * To be used to have a multi input
+ * </p>
  */
-public interface DlqConfig {
+public interface SourceConfig {
     /**
-     * Topic to use as dead-letter-queue
+     * To which topics will KafkaStreams connect to for this source.
      */
-    Optional<String> topic();
+    List<String> topics();
 }

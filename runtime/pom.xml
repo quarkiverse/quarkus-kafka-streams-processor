@@ -25,7 +25,7 @@
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
-      <artifactId>quarkus-kafka-streams-processor-impl</artifactId>
+      <artifactId>quarkus-kafka-streams-processor-spi</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -42,6 +42,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-micrometer</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
     </dependency>
   </dependencies>
   <build>
