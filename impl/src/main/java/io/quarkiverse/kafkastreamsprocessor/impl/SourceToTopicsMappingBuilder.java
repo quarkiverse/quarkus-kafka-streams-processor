@@ -27,19 +27,38 @@ import java.util.Optional;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.quarkiverse.kafkastreamsprocessor.api.SourceToTopicsMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.SourceConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.SourceConfig;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Object to inject to get access to the resolved mapping between input topics and sources for a multi input processor, using
+ * the
+ * conventions set up by the framework based on config properties like:
+ *
+ * <pre>
+ * kafkastreamsprocessor.input.sources.pong.topics=pong-events
+ * kafkastreamsprocessor.input.sources.pang.topics=pang-events,ping-events
+ * </pre>
+ * <p>
+ * Where:
+ * </p>
+ * <ul>
+ * <li>pong and pang are the sources</li>
+ * <li>ping-events, pong-events and pang-events the Kafka topics</li>
+ * </ul>
+ *
  * Multi-input topic configuration Inspired by <a href=
  * "https://github.com/smallrye/smallrye-reactive-messaging/blob/main/smallrye-reactive-messaging-provider/src/main/java/io/smallrye/reactive/messaging/impl/ConfiguredChannelFactory.java">smallrye-reactive-messaging
  * ConfiguredChannelFactory</a>
  */
 @ApplicationScoped
 @Slf4j
-public class DefaultSourceToTopicsMappingBuilder implements SourceToTopicsMappingBuilder {
+public class SourceToTopicsMappingBuilder {
+    /**
+     * Default source name created by KafkaStreams if no source is configured manually
+     */
+    String DEFAULT_SOURCE_NAME = "receiver-channel";
     /**
      * Configuration of the extension
      */
@@ -52,14 +71,19 @@ public class DefaultSourceToTopicsMappingBuilder implements SourceToTopicsMappin
      *        Configuration of the extension
      */
     @Inject
-    public DefaultSourceToTopicsMappingBuilder(KStreamsProcessorConfig extensionConfiguration) {
+    public SourceToTopicsMappingBuilder(KStreamsProcessorConfig extensionConfiguration) {
         this.extensionConfiguration = extensionConfiguration;
     }
 
     /**
-     * {@inheritDoc}
+     * Looks at the configuration and extracts from it the mapping from the source to the Kafka topic(s).
+     * <p>
+     * This method is exposed so you can do any kind of technical postprocessing based on the Kafka topic and the source
+     * names.
+     * </p>
+     *
+     * @return a map with keys the sink names and values the corresponding list of Kafka topic names
      */
-    @Override
     public Map<String, String[]> sourceToTopicsMapping() {
         // Extract topic name for each channel
         Map<String, String[]> sourceToTopicMapping = buildMapping();

@@ -42,8 +42,8 @@ import org.junit.jupiter.api.Test;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.testframework.StateDirCleaningResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;

@@ -40,9 +40,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonDeserializer;
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerializer;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;

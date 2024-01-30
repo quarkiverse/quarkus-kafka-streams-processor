@@ -24,6 +24,10 @@
       <artifactId>quarkus-kafka-streams-processor-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+      <artifactId>quarkus-kafka-streams-processor-impl</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc-deployment</artifactId>
     </dependency>

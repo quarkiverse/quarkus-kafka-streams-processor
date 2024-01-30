@@ -17,25 +17,24 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
-import java.util.Map;
 import java.util.Optional;
 
-import io.quarkiverse.kafkastreamsprocessor.api.Processor;
+import io.smallrye.config.WithDefault;
 
 /**
- * Regroups the configuration related to the messages in output of the {@link Processor}.
+ * Configuration related to the global dead-letter-queue
  */
-public interface OutputConfig {
+public interface GlobalDlqConfig {
     /**
-     * The processor is mono-output, we designate one topic
+     * Global Dead letter Queue to produce error messages not managed by the application
      */
     Optional<String> topic();
 
     /**
-     * In case the application has to output to multiple topics, this entry should be used to associate sink names with
-     * topics.
+     * Global Dead letter Queue maximum message size
      */
-    Map<String, SinkConfig> sinks();
+    @WithDefault("2147483647")
+    int maxMessageSize();
 }

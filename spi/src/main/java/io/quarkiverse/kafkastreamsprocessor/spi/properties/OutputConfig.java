@@ -17,17 +17,25 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.properties;
+package io.quarkiverse.kafkastreamsprocessor.spi.properties;
+
+import java.util.Map;
+import java.util.Optional;
+
+import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 
 /**
- * Configuration related to a
- * <a href="https://docs.confluent.io/platform/current/streams/architecture.html#processor-topology">sink</a>.
- * <p>
- * To be used to configure multi output processors.
+ * Regroups the configuration related to the messages in output of the {@link Processor}.
  */
-public interface SinkConfig {
+public interface OutputConfig {
     /**
-     * The topic associated to this sink
+     * The processor is mono-output, we designate one topic
      */
-    String topic();
+    Optional<String> topic();
+
+    /**
+     * In case the application has to output to multiple topics, this entry should be used to associate sink names with
+     * topics.
+     */
+    Map<String, SinkConfig> sinks();
 }

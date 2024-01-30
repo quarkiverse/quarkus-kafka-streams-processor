@@ -44,7 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;

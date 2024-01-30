@@ -49,14 +49,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.quarkiverse.kafkastreamsprocessor.api.SinkToTopicMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.api.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.DlqConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 @ExtendWith(MockitoExtension.class)
 class TopologyProducerTest {

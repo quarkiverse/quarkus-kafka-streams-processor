@@ -50,9 +50,9 @@ import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;

@@ -34,15 +34,13 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
-import io.quarkiverse.kafkastreamsprocessor.api.SinkToTopicMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.api.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultTopologySerdesConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TypeUtils;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 /**
  * Processor must be annotated with {@link io.quarkiverse.kafkastreamsprocessor.api.Processor}

@@ -34,12 +34,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.quarkiverse.kafkastreamsprocessor.api.properties.InputConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.SourceConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.InputConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.SourceConfig;
 
 @ExtendWith(MockitoExtension.class)
-public class DefaultSourceToTopicsMappingBuilderTest {
+public class SourceToTopicsMappingBuilderTest {
     @Mock
     KStreamsProcessorConfig extensionConfiguration;
 
@@ -48,11 +48,11 @@ public class DefaultSourceToTopicsMappingBuilderTest {
 
     Map<String, SourceConfig> sources = new HashMap<>();
 
-    DefaultSourceToTopicsMappingBuilder sourceConfiguration;
+    SourceToTopicsMappingBuilder sourceConfiguration;
 
     @BeforeEach
     void setUp() {
-        sourceConfiguration = new DefaultSourceToTopicsMappingBuilder(extensionConfiguration);
+        sourceConfiguration = new SourceToTopicsMappingBuilder(extensionConfiguration);
         when(extensionConfiguration.input()).thenReturn(inputConfig);
         when(inputConfig.sources()).thenReturn(sources);
     }

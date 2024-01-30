@@ -39,7 +39,7 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.testframework.StateDirCleaningResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;

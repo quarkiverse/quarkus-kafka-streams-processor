@@ -26,12 +26,26 @@ import java.util.Optional;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.quarkiverse.kafkastreamsprocessor.api.SinkToTopicMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
-import io.quarkiverse.kafkastreamsprocessor.api.properties.SinkConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.SinkConfig;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * Object to inject to get access to the resolved mapping between sink and topic for a multi output processor, using the
+ * conventions set up by the framework based on config properties like:
+ *
+ * <pre>
+ * kafkastreamsprocessor.output.sinks.pong.topic=pong-events
+ * kafkastreamsprocessor.output.sinks.pang.topic=pang-events
+ * </pre>
+ * <p>
+ * Where:
+ * </p>
+ * <ul>
+ * <li>pong and pang are the sinks</li>
+ * <li>pong-events and pang-events the Kafka topics</li>
+ * </ul>
+ *
  * Multi-output topic configuration.
  * <p>
  * Inspired by <a href=
@@ -44,7 +58,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 @ApplicationScoped
 @Slf4j
-public class DefaultSinkToTopicMappingBuilder implements SinkToTopicMappingBuilder {
+public class SinkToTopicMappingBuilder {
+    /**
+     * Default sink name created by KafkaStreams if no sink is configured manually
+     */
+    String DEFAULT_SINK_NAME = "emitter-channel";
     /**
      * Configuration object of the extension
      */
@@ -57,14 +75,19 @@ public class DefaultSinkToTopicMappingBuilder implements SinkToTopicMappingBuild
      *        Configuration object of the extension
      */
     @Inject
-    public DefaultSinkToTopicMappingBuilder(KStreamsProcessorConfig extensionConfiguration) {
+    public SinkToTopicMappingBuilder(KStreamsProcessorConfig extensionConfiguration) {
         this.extensionConfiguration = extensionConfiguration;
     }
 
     /**
-     * {@inheritDoc}
+     * Looks at the configuration and extracts from it the mapping from the sink to the Kafka topic.
+     * <p>
+     * This method is exposed so you can do any kind of technical postprocessing based on the Kafka topic and the sink
+     * names.
+     * </p>
+     *
+     * @return a map with keys the sink names and values the corresponding Kafka topic name
      */
-    @Override
     public Map<String, String> sinkToTopicMapping() {
         // Extract topic name for each sink if any has been configured
         Map<String, String> sinkToTopicMapping = buildMapping();

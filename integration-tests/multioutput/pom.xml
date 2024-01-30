@@ -86,6 +86,11 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+      <artifactId>quarkus-kafka-streams-processor-impl</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-health</artifactId>
       <scope>runtime</scope>

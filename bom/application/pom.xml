@@ -35,6 +35,11 @@
       </dependency>
       <dependency>
         <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+        <artifactId>quarkus-kafka-streams-processor-spi</artifactId>
+        <version>${quarkus-kafka-streams-processor.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
         <artifactId>quarkus-kafka-streams-processor-text-map-accessors</artifactId>
         <version>${quarkus-kafka-streams-processor.version}</version>
       </dependency>

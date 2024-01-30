@@ -33,9 +33,9 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.errors.ProductionExceptionHandler;
 
-import io.quarkiverse.kafkastreamsprocessor.api.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.impl.KafkaClientSupplierDecorator;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.arc.Unremovable;
 import lombok.extern.slf4j.Slf4j;
 
