@@ -284,6 +284,8 @@ It is available through the following dependency:
 </dependency>
 ----
 
+NOTE: Multiple customizers can be defined, and their execution order controlled through `@Priority` annotations.
+
 ===== Example
 
 In this example, we implement a processor working with a POJO as value type.
@@ -600,6 +602,8 @@ It is available through the following dependency:
   <artifactId>quarkus-kafka-streams-processor-api</artifactId>
 </dependency>
 ----
+
+NOTE: Multiple customizers can be defined, and their execution order controlled through `@Priority` annotations.
 
 === Example
 
