@@ -10,15 +10,6 @@
 
     <artifactId>quarkus-kafka-streams-processor-docs</artifactId>
 
-    <dependencies>
-        <!-- Make sure the doc is built after the other artifacts -->
-        <dependency>
-            <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
-            <artifactId>quarkus-kafka-streams-processor-deployment</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
-
     <build>
         <sourceDirectory>modules/ROOT/examples</sourceDirectory>
         <plugins>
