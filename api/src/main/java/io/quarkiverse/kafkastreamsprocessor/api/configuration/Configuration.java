@@ -51,17 +51,29 @@ public interface Configuration {
     void setSourceValueSerde(Serde<?> serde);
 
     /**
+     * @return The serde for values fed to the {@link Processor}
+     */
+    Serde<?> getSourceValueSerde();
+
+    /**
      * Serializer for values forwarded by the {@link Processor}. Use the setter if you want
      * to override it.
      */
     void setSinkValueSerializer(Serializer<?> serializer);
 
     /**
+     * @return The serializer for values forwarded by the {@link Processor}
+     */
+    Serializer<?> getSinkValueSerializer();
+
+    /**
      * Store configuration to be used by the {@link Processor}. Use the setter if you want
      * to override it.
-     *
-     * @param storeConfigurations
      */
     void setStoreConfigurations(List<StoreConfiguration> storeConfigurations);
 
+    /**
+     * @return The state store configuration to be used by the {@link Processor}
+     */
+    List<StoreConfiguration> getStoreConfigurations();
 }

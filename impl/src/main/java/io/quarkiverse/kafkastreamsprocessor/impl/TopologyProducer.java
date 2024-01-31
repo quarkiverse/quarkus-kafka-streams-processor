@@ -68,7 +68,7 @@ public class TopologyProducer {
      * If not defined the {@link DefaultConfigurationCustomizer} is injected.
      * </p>
      */
-    private final ConfigurationCustomizer configCustomizer;
+    private final Instance<ConfigurationCustomizer> configCustomizers;
 
     /**
      * The source configuration bean which produces the mapping between source and their respective topics
@@ -101,10 +101,10 @@ public class TopologyProducer {
      */
     @Inject
     public TopologyProducer(KStreamsProcessorConfig kStreamsProcessorConfig,
-            ConfigurationCustomizer configCustomizer, SourceToTopicsMappingBuilder sourceToTopicsMappingBuilder,
+            Instance<ConfigurationCustomizer> configCustomizer, SourceToTopicsMappingBuilder sourceToTopicsMappingBuilder,
             SinkToTopicMappingBuilder sinkToTopicMappingBuilder, Instance<ProducerOnSendInterceptor> interceptors) {
         this.kStreamsProcessorConfig = kStreamsProcessorConfig;
-        this.configCustomizer = configCustomizer;
+        this.configCustomizers = configCustomizer;
         this.sourceToTopicsMappingBuilder = sourceToTopicsMappingBuilder;
         this.sinkToTopicMappingBuilder = sinkToTopicMappingBuilder;
         this.interceptors = interceptors;
@@ -136,8 +136,8 @@ public class TopologyProducer {
         TopologyConfigurationImpl configuration = initializeConfiguration(beanManager);
         // Step 2: apply default configuration
         defaultConfiguration.apply(configuration);
-        // Step 3: if an alternative customizer is provided, then apply it (default does nothing)
-        configCustomizer.fillConfiguration(configuration);
+        // Step 3: if alternative customizers are provided, then apply them (default does nothing)
+        configCustomizers.forEach(customizer -> customizer.fillConfiguration(configuration));
         return configuration;
     }
 

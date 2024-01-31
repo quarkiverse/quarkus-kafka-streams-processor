@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +70,7 @@ class TopologyProducerTest {
     SinkToTopicMappingBuilder sinkToTopicMappingBuilder;
 
     @Mock
-    ConfigurationCustomizer configCustomizer;
+    Instance<ConfigurationCustomizer> configCustomizer;
 
     @Mock
     Instance<ProducerOnSendInterceptor> interceptors;
@@ -109,7 +108,7 @@ class TopologyProducerTest {
     private TopologyProducer newTopologyProducer(
             Map<String, String[]> sourceToTopicMapping,
             Map<String, String> sinkToTopicMapping,
-            String dlq, List<String> stores) {
+            String dlq) {
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
         when(dlqConfig.topic()).thenReturn(Optional.ofNullable(dlq));
         when(sourceToTopicsMappingBuilder.sourceToTopicsMapping()).thenReturn(sourceToTopicMapping);
@@ -186,7 +185,7 @@ class TopologyProducerTest {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null, Collections.emptyList());
+                null);
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -201,7 +200,7 @@ class TopologyProducerTest {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("ping", new String[] { "ping-topic", "ping-topic2" }, "pang", new String[] { "pang-topic" }),
                 Map.of("pong", "pong-topic"),
-                null, Collections.emptyList());
+                null);
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -217,7 +216,7 @@ class TopologyProducerTest {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                "local-dlq", Collections.emptyList());
+                "local-dlq");
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -232,7 +231,7 @@ class TopologyProducerTest {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null, Arrays.asList("ping-indexes", "ping-data"));
+                null);
 
         List<StoreConfiguration> storeConfigurations = buildStoreConfiguration();
 
