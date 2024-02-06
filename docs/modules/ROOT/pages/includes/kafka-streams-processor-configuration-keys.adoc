@@ -41,17 +41,17 @@ endif::add-copy-button-to-env-var[]
 -- a| string
 |
 
-a| [[kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic]]`link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafka.streams.processor<sink>.topic]`
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sinks-sink-topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sinks-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
 
 [.description]
 --
 The Kafka topic for outgoing messages for the given sink name.
 
 ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++KAFKA_STREAMS_PROCESSOR__sink__TOPIC+++[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink__TOPIC+++[]
 endif::add-copy-button-to-env-var[]
 ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++KAFKA_STREAMS_PROCESSOR__sink__TOPIC+++`
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink__TOPIC+++`
 endif::add-copy-button-to-env-var[]
 --| string
 |

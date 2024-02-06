@@ -152,7 +152,7 @@ In Kafka Streams Processor the following configuration keys are required:
 
 * `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[kafkastreamsprocessor.input.topic]`
 
-* `link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafkastreamsprocessor.output.topic]` or `link:#kafka-streams-processor-configuration-keys_kafka.streams.processor-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
+* `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic[kafkastreamsprocessor.output.topic]` or `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sinks-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
 
 * `link:#kafka-streams-processor-configuration-keys_quarkus.kafka-streams.topics[quarkus.kafka-streams.topics]`
 
