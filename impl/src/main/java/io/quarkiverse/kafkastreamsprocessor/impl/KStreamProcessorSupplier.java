@@ -135,8 +135,8 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
     }
 
     private static boolean hasAnnotation(Object bean, Class<? extends Annotation> annotation) {
-        // OJF-4000 microprofile annotation add a subClasses level, that why we have to check at the parent level.
-        // The current test with several microprofile annotation shows that not necessary do check upper than the
+        // Microprofile annotations add a subClasses level, that's why we have to check at the parent level.
+        // The current test with several microprofile annotations shows that it's not necessary do check upper than the
         // first superclass, but an iteration has been introduced to support maybe some unknown case.
         Class<?> current = bean.getClass();
         while (current != null) {

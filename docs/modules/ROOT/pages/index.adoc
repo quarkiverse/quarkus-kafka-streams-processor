@@ -385,14 +385,6 @@ For tracking purpose following headers are added to the record:
 * `dead-letter-topic`: The original topic of the record, in this case the output topic where production failed
 * `dead-letter-partition`: The original partition of the record
 
-==== Readiness probe impacts
-
-Note that if the global DLQ has been installed in the platform chart, every Kafka Streams Processor microservice will then take into account the presence of this topic in their readiness probe.
-
-By convention the suffix of the topic of the global DLQ is : `global-dlq` but this topic is prefixed with the following rules:
-Kafka topics are now automatically prefixed by the Kubernetes namespace, in order to support multi-tenant Kafka clusters.
-This will prevent conflicts between applications deployed in different namespaces, but using a shared Kafka cluster.
-
 === Retries
 
 In order to improve resiliency and to avoid losing messages due to the temporary unavailability of an external system (database, HTTP endpoint, ...), the Kafka Streams Processor SDK has a retry logic for the exceptions raised during the process of the message.
