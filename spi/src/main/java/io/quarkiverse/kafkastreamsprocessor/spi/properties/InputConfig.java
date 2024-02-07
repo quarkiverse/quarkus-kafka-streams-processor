@@ -23,11 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.kafka.streams.processor.api.Record;
-
 /**
- * Configuration relating to the incoming messages for each of which
- * {@link org.apache.kafka.streams.processor.api.Processor#process(Record)} is called.
+ * Configuration related to the messages consumed by the Processor
  */
 public interface InputConfig {
     /**

@@ -22,10 +22,8 @@ package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 import java.util.Map;
 import java.util.Optional;
 
-import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-
 /**
- * Regroups the configuration related to the messages in output of the {@link Processor}.
+ * Configuration related to the messages produced by the Processor
  */
 public interface OutputConfig {
     /**
