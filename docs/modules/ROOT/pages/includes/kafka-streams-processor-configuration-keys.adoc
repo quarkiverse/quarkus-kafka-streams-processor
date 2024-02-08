@@ -15,7 +15,7 @@ a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topi
 
 [.description]
 --
-The Kafka topics for incoming messages (comma separated if multiple topics).
+The Kafka streams processor property to define a unique topic for incoming messages
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++[]
@@ -24,6 +24,36 @@ ifndef::add-copy-button-to-env-var[]
 Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++`
 endif::add-copy-button-to-env-var[]
 -- a| string
+|
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topics]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topics[kafkastreamsprocessor.input.topics]`
+
+
+[.description]
+--
+The Kafka streams processor property to define multiple topics for incoming messages (comma separated list).
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPICS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_TOPICS+++`
+endif::add-copy-button-to-env-var[]
+-- a| string
+|
+
+a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor-input-sources-source-topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-input-sources-source-topic[kafkastreamsprocessor.input.sources.<source>.topic]`
+
+[.description]
+--
+The Kafka topic for incoming messages for the given source name.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_SOURCES__source uppercase__TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_SOURCES__source uppercase__TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--| string
 |
 
 a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic]]`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic[kafkastreamsprocessor.output.topic]`
@@ -48,10 +78,10 @@ a| [[kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sin
 The Kafka topic for outgoing messages for the given sink name.
 
 ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink__TOPIC+++[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink uppercase__TOPIC+++[]
 endif::add-copy-button-to-env-var[]
 ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink__TOPIC+++`
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__sink uppercase__TOPIC+++`
 endif::add-copy-button-to-env-var[]
 --| string
 |

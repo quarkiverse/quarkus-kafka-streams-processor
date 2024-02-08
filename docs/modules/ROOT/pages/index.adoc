@@ -134,7 +134,9 @@ The extension will automatically build the following topology:
 
 * Scan for a CDI bean of type `org.apache.kafka.streams.processor.api.Processor<KIn, VIn, KOut, VOut>` (single processor).
 The deprecated type `org.apache.kafka.streams.processor.Processor<K, V>` is also supported for backward-compatibility.
-* Register a source for topics in `kafkastreamsprocessor.input.topic`, String key serializer and Protobuf value deserializer based on the declared type `<V>` of the processor.
+* Register a source for a single topic in `kafkastreamsprocessor.input.topic`, String key serializer and Protobuf value deserializer based on the declared type `<V>` of the processor.
+If multiple topics are declared the configuration should be `kafkastreamsprocessor.input.topics`.
+Also, to manipulate topics coming from different sources the property should include the source name in the declaration as `kafkastreamsprocessor.input.sources.<sources>.topic`.
 * Register as many sinks as topics listed in properties matching `kafkastreamsprocessor.output.sinks.<sink>.topic`, String key serializer and Protobuf value serializer.
 Sink name is taken from the properties name.
 If no `kafkastreamsprocessor.output.sinks.<sink>.topic` properties are defined and a single topic is defined in `kafkastreamsprocessor.output.topic`, a default sink is used.
@@ -150,7 +152,7 @@ They are consumed by the Quarkus kafka-streams extension itself (used at build t
 
 In Kafka Streams Processor the following configuration keys are required:
 
-* `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[kafkastreamsprocessor.input.topic]`
+* `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[kafkastreamsprocessor.input.topic]`, `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topics[kafkastreamsprocessor.input.topics]` or `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-input-sources-source-topic[kafkastreamsprocessor.input.sources.<source>.topic]`
 
 * `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic[kafkastreamsprocessor.output.topic]` or `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sinks-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
 
