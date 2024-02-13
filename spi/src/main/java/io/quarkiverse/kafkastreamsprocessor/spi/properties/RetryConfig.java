@@ -91,7 +91,7 @@ public interface RetryConfig {
     /**
      * The list of exception types that should trigger a retry.
      * <p>
-     * Default is the provided {@link io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException}.
+     * Default is the extension's RetryableException
      * </p>
      *
      * @see Retry#retryOn()

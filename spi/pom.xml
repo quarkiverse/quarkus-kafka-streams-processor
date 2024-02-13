@@ -19,11 +19,6 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
-
-    <dependency>
-      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
-      <artifactId>quarkus-kafka-streams-processor-api</artifactId>
-    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-core</artifactId>
@@ -36,6 +31,10 @@
     <dependency>
       <groupId>org.eclipse.microprofile.config</groupId>
       <artifactId>microprofile-config-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+      <artifactId>microprofile-fault-tolerance-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
