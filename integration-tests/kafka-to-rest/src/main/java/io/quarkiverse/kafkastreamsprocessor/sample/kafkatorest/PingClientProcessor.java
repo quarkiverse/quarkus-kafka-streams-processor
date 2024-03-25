@@ -28,6 +28,8 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.annotation.Timed;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +46,8 @@ public class PingClientProcessor extends ContextualProcessor<String, PingMessage
     }
 
     @Override
-    //    @Timed
-    //    @Counted(value = "processedMessageCount", description = "Total number of messages processed")
+    @Timed
+    @Counted(value = "processedMessageCount", description = "Total number of messages processed")
     public void process(Record<String, PingMessage.Ping> record) {
         Integer partition = null;
 
