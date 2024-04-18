@@ -99,4 +99,22 @@ so that the contributor gets immediate feedback, while at the same time keeping 
 The process requires only one additional step to enable Actions on your fork (clicking the green button in the actions
 tab). [See the full video walkthrough](https://youtu.be/egqbx-Q-Cbg) for more details on how to do this.
 
+### How to release
 
+[here](https://hub.quarkiverse.io/release/) is the official documentation to release in a quakiverse repository.
+
+To perform a release, one must provide a Pull-request changing the current-version and next-version properties in the .github/project.yml file.
+
+Example:
+
+```diff
+release:
+-   current-version: "1.0.0"
+-   next-version: "1.1.0-SNAPSHOT"    
++   current-version: "1.1.0"
++   next-version: "1.2.0-SNAPSHOT"  
+```
+
+>[!WARNING]
+>- Don't merge another Pull-request during the pipeline following the merge of the release Pull-request
+>- The release Pull-request **has to** be created from the main repository
