@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.impl;
+package io.quarkiverse.kafkastreamsprocessor.spi;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +26,8 @@ import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.config.Config;
 
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.SourceConfig;
@@ -73,6 +75,15 @@ public class SourceToTopicsMappingBuilder {
     @Inject
     public SourceToTopicsMappingBuilder(KStreamsProcessorConfig extensionConfiguration) {
         this.extensionConfiguration = extensionConfiguration;
+    }
+
+    /**
+     * Alternative constructor to build the object manually purely with access to {@link Config}
+     *
+     * @param config the smallrye-config central object
+     */
+    public SourceToTopicsMappingBuilder(Config config) {
+        this(KStreamsProcessorConfigGenerator.buildConfig(config));
     }
 
     /**

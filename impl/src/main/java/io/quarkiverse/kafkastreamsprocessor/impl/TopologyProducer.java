@@ -40,6 +40,8 @@ import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurat
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultTopologySerdesConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TypeUtils;
+import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
+import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 /**

@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.impl;
+package io.quarkiverse.kafkastreamsprocessor.spi;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

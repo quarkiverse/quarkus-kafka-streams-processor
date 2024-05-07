@@ -52,6 +52,8 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCusto
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
+import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
+import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
