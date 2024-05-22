@@ -20,15 +20,11 @@
 package io.quarkiverse.kafkastreamsprocessor.kafka.streams.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasKey;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,7 +34,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
-import io.quarkiverse.kafkastreamsprocessor.spi.TopologyConfigBuildItem;
 import io.quarkus.builder.BuildChainBuilder;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
@@ -47,8 +42,6 @@ import io.quarkus.test.QuarkusUnitTest;
 public class KafkaStreamsProcessorProcessorTest {
 
     private static volatile List<ReflectiveClassBuildItem> registeredClasses;
-
-    private static volatile TopologyConfigBuildItem topologyConfigBuildItem;
 
     @RegisterExtension
     static QuarkusUnitTest runner = new QuarkusUnitTest()
@@ -63,12 +56,9 @@ public class KafkaStreamsProcessorProcessorTest {
         return chainBuilder -> chainBuilder.addBuildStep(
                 context -> {
                     registeredClasses = context.consumeMulti(ReflectiveClassBuildItem.class);
-                    topologyConfigBuildItem = context.consume(TopologyConfigBuildItem.class);
                     checkProperClassesAreRegistered();
-                    checkTopologyConfigurationBuildItem();
                 })
                 .consumes(ReflectiveClassBuildItem.class)
-                .consumes(TopologyConfigBuildItem.class)
                 .produces(GeneratedResourceBuildItem.class)
                 .build();
     }
@@ -83,13 +73,6 @@ public class KafkaStreamsProcessorProcessorTest {
         assertThat(allRegisteredClasses, hasItem(MyProcessor.class.getName()));
         // Default retryOn exception for Fault Tolerance
         assertThat(allRegisteredClasses, hasItem(RetryableException.class.getName()));
-    }
-
-    private static void checkTopologyConfigurationBuildItem() {
-        assertThat(topologyConfigBuildItem.getSinkToTopicMapping(), equalTo(Map.of("emitter-channel", "pong-events")));
-        assertThat(topologyConfigBuildItem.getSourceToTopicsMapping(), hasKey("receiver-channel"));
-        assertThat(topologyConfigBuildItem.getSourceToTopicsMapping().get("receiver-channel"),
-                arrayContaining(equalTo("ping-events")));
     }
 
     @Test

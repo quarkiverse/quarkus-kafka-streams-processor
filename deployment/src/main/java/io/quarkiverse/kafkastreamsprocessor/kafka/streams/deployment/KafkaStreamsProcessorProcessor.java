@@ -19,8 +19,6 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.kafka.streams.deployment;
 
-import java.util.Map;
-
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.jandex.AnnotationInstance;
@@ -28,10 +26,6 @@ import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.DotName;
 
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-import io.quarkiverse.kafkastreamsprocessor.impl.SinkToTopicMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.impl.SourceToTopicsMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.runtime.KStreamsProcessorConfigRuntime;
-import io.quarkiverse.kafkastreamsprocessor.spi.TopologyConfigBuildItem;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
@@ -78,17 +72,5 @@ public class KafkaStreamsProcessorProcessor {
                         .methods(false)
                         .fields(false)
                         .build()));
-    }
-
-    @BuildStep
-    public void registerTopologyBuildItem(BuildProducer<TopologyConfigBuildItem> configMappingBuildItemProducer,
-            KStreamsProcessorConfigRuntime kStreamsProcessorConfig) {
-        Map<String, String[]> sourceToTopicsMapping = new SourceToTopicsMappingBuilder(kStreamsProcessorConfig)
-                .sourceToTopicsMapping();
-        Map<String, String> sinkToTopicMapping = new SinkToTopicMappingBuilder(kStreamsProcessorConfig)
-                .sinkToTopicMapping();
-
-        configMappingBuildItemProducer
-                .produce(new TopologyConfigBuildItem(sourceToTopicsMapping, sinkToTopicMapping));
     }
 }

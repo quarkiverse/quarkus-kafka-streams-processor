@@ -38,11 +38,11 @@ import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.apache.kafka.streams.processor.internals.InternalProcessorContext;
 
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
-import io.quarkiverse.kafkastreamsprocessor.impl.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.impl.TopologyProducer;
 import io.quarkiverse.kafkastreamsprocessor.impl.errors.DlqMetadataHandler;
 import io.quarkiverse.kafkastreamsprocessor.impl.errors.ErrorHandlingStrategy;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
+import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
