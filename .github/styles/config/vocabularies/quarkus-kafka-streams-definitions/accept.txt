@@ -1,0 +1,12 @@
+DLQ
+JSON
+kubernetes
+NFRs
+openshift
+opentelemetry
+POJO[?s]
+Protobuf
+Quarkus
+Splunk
+XML
+YAML

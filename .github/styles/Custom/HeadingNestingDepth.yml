@@ -1,0 +1,7 @@
+---
+extends: existence
+message: 'The subheading "%s" is nested too deeply. The max heading nesting depth is set to 3.'
+level: error
+scope: raw
+raw:
+  - '(?<=\n)={4,}\s.+'
