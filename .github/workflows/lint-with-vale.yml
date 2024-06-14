@@ -1,6 +1,6 @@
 name: lint-with-vale.yml
 on:
-  pull_request_target:
+  pull_request:
     paths:
       - 'docs/modules/ROOT/pages/**'
       - '.github/workflows/lint-with-vale.yml'
@@ -9,6 +9,8 @@ jobs:
   vale:
     name: Linting with Vale
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v3
       - uses: errata-ai/vale-action@reviewdog
