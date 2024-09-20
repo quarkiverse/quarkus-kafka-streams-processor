@@ -46,6 +46,7 @@ import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.StatusCode;
@@ -168,14 +169,15 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
         final TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
 
         // going through all propagation field names defined in the OTel configuration
-        // we look if any of them has been set with a non null value in the headers of the incoming message
+        // we look if any of them has been set with a non-null value in the headers of the incoming message
+        Context extractedContext = null;
         if (propagator.fields()
                 .stream()
                 .map(record.headers()::lastHeader)
                 .anyMatch(Objects::nonNull)) {
-            // if that is the case, let's extract a Context initialized with the parent trace id and span id
-            // present as headers in the incoming message
-            Context extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
+            // if that is the case, let's extract a Context initialized with the parent trace id, span id
+            // and baggage present as headers in the incoming message
+            extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
             // use the context as parent span for the built span
             spanBuilder.setParent(extractedContext);
             // we clean the headers to avoid their propagation in any outgoing message (knowing that by
@@ -183,9 +185,12 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
             propagator.fields().forEach(record.headers()::remove);
         }
         Span span = spanBuilder.startSpan();
-        try (Scope scope = span.makeCurrent()) {
+        // baggage need to be explicitly set as current otherwise it is not propagated (baggage is independent of span
+        // in opentelemetry) and actually lost as kafka headers are cleaned
+        try (Scope ignored = (extractedContext != null) ? Baggage.fromContext(extractedContext).makeCurrent() : Scope.noop();
+                Scope scope = span.makeCurrent()) {
             try {
-                // now that the context has been to the new started child span of this microservice we replace
+                // now that the context has been set to the new started child span of this microservice, we replace
                 // the headers in the incoming message so when an outgoing message is produced with the copied
                 // header values it already has the span id from this new child span
                 propagator.inject(Context.current(), record.headers(), textMapSetter);
