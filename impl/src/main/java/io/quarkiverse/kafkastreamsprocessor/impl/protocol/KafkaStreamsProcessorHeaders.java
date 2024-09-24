@@ -56,6 +56,11 @@ public final class KafkaStreamsProcessorHeaders {
     public static final String W3C_TRACE_ID = "traceparent";
 
     /**
+     * W3C tracing baggage. It is propagated by the opentelemetry if configured to do so.
+     */
+    public static final String W3C_BAGGAGE = "baggage";
+
+    /**
      * The reason of the failure.
      */
     public static final String DLQ_REASON = "dead-letter-reason";
