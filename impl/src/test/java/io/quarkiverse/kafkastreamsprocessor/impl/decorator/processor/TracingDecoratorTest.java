@@ -20,6 +20,8 @@
 package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
 
 import static io.opentelemetry.sdk.testing.assertj.TracesAssert.assertThat;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.W3C_BAGGAGE;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.W3C_TRACE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -70,6 +72,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.baggage.Baggage;
+import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.SpanId;
@@ -78,8 +82,12 @@ import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceId;
 import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.IdGenerator;
 import io.quarkiverse.kafkastreamsprocessor.impl.TestException;
@@ -313,6 +321,31 @@ public class TracingDecoratorTest {
         assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("time=1970-01-01T00:00Z"))));
     }
 
+    @Test
+    void shouldPropagateOpentelemetryW3CBaggage() {
+        // header value format here: https://www.w3.org/TR/baggage/#baggage-http-header-format
+        Headers headers = new RecordHeaders().add(W3C_TRACE_ID, TRACE_PARENT.getBytes())
+                .add(W3C_BAGGAGE, "key1=value1,key2=value2".getBytes());
+        Record<String, Ping> record = new Record<>(null, Ping.newBuilder().setMessage("blabla").build(), 0L, headers);
+
+        // the opentelemetry injected and used throughout the unit tests in this class is not configured with W3C baggage propagator
+        // as coming from the OpenTelemetryExtension, so we need to create a new one with baggage propagator.
+        try (OpenTelemetrySdk openTelemetryWithBaggageSdk = OpenTelemetrySdk.builder()
+                .setPropagators(ContextPropagators.create(TextMapPropagator.composite(W3CTraceContextPropagator.getInstance(),
+                        W3CBaggagePropagator.getInstance())))
+                .build()) {
+            decorator = new TracingDecorator<>(new LogOpentelemetryBaggageProcessor(), openTelemetryWithBaggageSdk,
+                    kafkaTextMapGetter, kafkaTextMapSetter, openTelemetryWithBaggageSdk.getTracer("test"), PROCESSOR_NAME,
+                    jsonPrinter);
+            decorator.init(processorContext);
+
+            decorator.process(record);
+
+            assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key1 value1"))));
+            assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key2 value2"))));
+        }
+    }
+
     @Slf4j
     static class ReadMDCProcessor implements Processor<String, Ping, String, Ping> {
         String traceId;
@@ -328,6 +361,14 @@ public class TracingDecoratorTest {
         @Override
         public void process(Record<String, Ping> record) {
             throw new TestException();
+        }
+    }
+
+    @Slf4j
+    static class LogOpentelemetryBaggageProcessor implements Processor<String, Ping, String, Ping> {
+        @Override
+        public void process(Record<String, Ping> record) {
+            Baggage.current().forEach((key, baggageEntry) -> log.debug("baggage: {} {}", key, baggageEntry.getValue()));
         }
     }
 
