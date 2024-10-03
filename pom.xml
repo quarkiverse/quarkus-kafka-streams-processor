@@ -33,7 +33,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.version>3.8.3</quarkus.version>
+    <quarkus.version>3.8.6</quarkus.version>
 
     <protobuf.version>3.24.1</protobuf.version>
   </properties>
@@ -98,37 +98,37 @@
             <lineEnding>LF</lineEnding>
           </configuration>
         </plugin>
-        </plugins>
-      </pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>license-maven-plugin</artifactId>
-          <version>2.4.0</version>
-          <executions>
-            <execution>
-              <id>add-license-header</id>
-              <goals>
-                <goal>check-file-header</goal>
-              </goals>
-              <phase>process-sources</phase>
-            </execution>
-          </executions>
-          <configuration>
-            <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
-            <licenseName>apache_v2</licenseName>
-            <inceptionYear>2024</inceptionYear>
-            <organizationName>Amadeus s.a.s.</organizationName>
-            <projectName>Quarkus Kafka Streams Processor</projectName>
-            <includes>
-              <include>**/*.java</include>
-            </includes>
-            <excludes>
-              <exclude>**/*$$*.java</exclude>
-            </excludes>
-          </configuration>
-        </plugin>
       </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.4.0</version>
+        <executions>
+          <execution>
+            <id>add-license-header</id>
+            <goals>
+              <goal>check-file-header</goal>
+            </goals>
+            <phase>process-sources</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+          <licenseName>apache_v2</licenseName>
+          <inceptionYear>2024</inceptionYear>
+          <organizationName>Amadeus s.a.s.</organizationName>
+          <projectName>Quarkus Kafka Streams Processor</projectName>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*$$*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
   <profiles>
     <profile>
