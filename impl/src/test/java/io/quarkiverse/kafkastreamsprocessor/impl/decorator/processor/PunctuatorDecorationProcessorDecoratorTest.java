@@ -53,7 +53,7 @@ class PunctuatorDecorationProcessorDecoratorTest {
     @Mock
     InternalProcessorContext<String, PingMessage.Ping> context;
 
-  @Test
+    @Test
     void contextWrapped() {
         when(decoratedPunctuators.get()).thenReturn(decoratedPunctuator);
         Processor<String, PingMessage.Ping, String, PingMessage.Ping> processor = new Processor<>() {
@@ -68,14 +68,14 @@ class PunctuatorDecorationProcessorDecoratorTest {
             }
         };
 
-    PunctuatorDecorationProcessorDecorator<String, PingMessage.Ping, String, PingMessage.Ping> decorator = new PunctuatorDecorationProcessorDecorator<>(
-            processor,
-            decoratedPunctuators);
-  decorator.init(context);
-  decorator.process(new Record<>("blabla",PingMessage.Ping.newBuilder().setMessage("blabla").build(),0L,null));
-  decorator.close();
+        PunctuatorDecorationProcessorDecorator<String, PingMessage.Ping, String, PingMessage.Ping> decorator = new PunctuatorDecorationProcessorDecorator<>(
+                processor,
+                decoratedPunctuators);
+        decorator.init(context);
+        decorator.process(new Record<>("blabla", PingMessage.Ping.newBuilder().setMessage("blabla").build(), 0L, null));
+        decorator.close();
 
-    verify(context).schedule(Duration.ofSeconds(10), PunctuationType.WALL_CLOCK_TIME, decoratedPunctuator);
+        verify(context).schedule(Duration.ofSeconds(10), PunctuationType.WALL_CLOCK_TIME, decoratedPunctuator);
         verify(decoratedPunctuator).setRealPunctuatorInstance(punctuator);
     }
 

@@ -61,14 +61,14 @@ public class PingClientProcessorTest {
         processor.init(context);
     }
 
-  @Test
-  public void replies_with_pong() {
-    when(client.ping()).thenReturn("world");
-    when(context.recordMetadata()).thenReturn(Optional.of(recordMetadata));
+    @Test
+    public void replies_with_pong() {
+        when(client.ping()).thenReturn("world");
+        when(context.recordMetadata()).thenReturn(Optional.of(recordMetadata));
 
-    processor.process(new Record<>("key", PingMessage.Ping.newBuilder().setMessage("hello").build(), 0L));
+        processor.process(new Record<>("key", PingMessage.Ping.newBuilder().setMessage("hello").build(), 0L));
 
-    verify(context).forward(captor.capture());
-    assertEquals("world of hello", captor.getValue().value().getMessage());
-  }
+        verify(context).forward(captor.capture());
+        assertEquals("world of hello", captor.getValue().value().getMessage());
+    }
 }

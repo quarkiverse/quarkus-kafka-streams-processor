@@ -45,13 +45,13 @@ public class RebalancingTopicHealthCheckTest {
         healthCheck.kafkaStreams = streams;
     }
 
-  @Test
-  public void testStateRunningHealthOK() {
-    when(streams.state()).thenReturn(KafkaStreams.State.RUNNING);
-    HealthCheckResponse response = healthCheck.call();
-    assertThat(response.getStatus(), equalTo(HealthCheckResponse.Status.UP));
-    assertThat(response.getData().get().get("state"), equalTo("RUNNING"));
-  }
+    @Test
+    public void testStateRunningHealthOK() {
+        when(streams.state()).thenReturn(KafkaStreams.State.RUNNING);
+        HealthCheckResponse response = healthCheck.call();
+        assertThat(response.getStatus(), equalTo(HealthCheckResponse.Status.UP));
+        assertThat(response.getData().get().get("state"), equalTo("RUNNING"));
+    }
 
     @Test
     public void testUndefinedStateHealthKO() {
@@ -60,13 +60,13 @@ public class RebalancingTopicHealthCheckTest {
         assertThat(response.getData().get().get("state"), nullValue());
     }
 
-  @Test
-  public void testStateRebalancingHealthKO() {
-    when(streams.state()).thenReturn(KafkaStreams.State.REBALANCING);
-    HealthCheckResponse response = healthCheck.call();
-    assertThat(response.getStatus(), equalTo(HealthCheckResponse.Status.DOWN));
-    assertThat(response.getData().get().get("state"), equalTo("REBALANCING"));
-  }
+    @Test
+    public void testStateRebalancingHealthKO() {
+        when(streams.state()).thenReturn(KafkaStreams.State.REBALANCING);
+        HealthCheckResponse response = healthCheck.call();
+        assertThat(response.getStatus(), equalTo(HealthCheckResponse.Status.DOWN));
+        assertThat(response.getData().get().get("state"), equalTo("REBALANCING"));
+    }
 
     @Test
     public void testStateKOIfKakfaStreamsNotInjected() {

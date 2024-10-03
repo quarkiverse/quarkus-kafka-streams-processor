@@ -90,24 +90,26 @@ class PingClientProcessorQuarkusWithRetryTest {
         consumer.close(Durations.ONE_SECOND);
     }
 
-  @Test
-  void singleMessageWithRetry() {
-    // response "PONG"
-    when(client.ping())
-        .thenThrow(mock(RetryableException.class))
-        .thenThrow(mock(RetryableException.class))
-        .thenThrow(mock(RetryableException.class))
-        .thenReturn("PONG");
+    @Test
+    void singleMessageWithRetry() {
+        // response "PONG"
+        when(client.ping())
+                .thenThrow(mock(RetryableException.class))
+                .thenThrow(mock(RetryableException.class))
+                .thenThrow(mock(RetryableException.class))
+                .thenReturn("PONG");
 
-    producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), Ping.newBuilder().setMessage("hello").build()));
-    producer.flush();
+        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(),
+                Ping.newBuilder().setMessage("hello").build()));
+        producer.flush();
 
-    ConsumerRecord<String, Ping> singleRecord = KafkaTestUtils.getSingleRecord(consumer, kStreamsProcessorConfig.output().topic().get(),
-      Durations.TEN_SECONDS);
-    consumer.commitSync();
+        ConsumerRecord<String, Ping> singleRecord = KafkaTestUtils.getSingleRecord(consumer,
+                kStreamsProcessorConfig.output().topic().get(),
+                Durations.TEN_SECONDS);
+        consumer.commitSync();
 
-    assertEquals("PONG of hello", singleRecord.value().getMessage());
-    verify(client, times(4)).ping(); // 3 retry + 1
-  }
+        assertEquals("PONG of hello", singleRecord.value().getMessage());
+        verify(client, times(4)).ping(); // 3 retry + 1
+    }
 
 }
