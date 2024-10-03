@@ -690,41 +690,25 @@ The extension proposes some capabilities to customize more finely the behaviour 
 === Processor decorator
 
 The following decoration layer is already extensively used in this extension's source code and allows to use composition around the main processor class you have to define.
-Depending on the version of Quarkus you are using, the pattern differs:
+The pattern to implement is:
 
-.ProcessorDecorator.java with Quarkus 3.2 or 3.11.0+
 [source,java]
 ----
-@Decorator // <1>
+@Dependent // <1>
 @Priority(150) // <2>
-public class ProcessorDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> { // <3>
-    @lombok.experimental.Delegate(excludes = Excludes.class)
-    private final Processor<KIn, VIn, KOut, VOut> delegate; // <4>
-
-    private final MyBean bean;
-
-    @Inject
-    public TracingDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate, MyBean bean) { // <5>
-        this.delegate = delegate;
-        this.bean = bean;
-    }
-
+public class ProcessorDecorator extends AbstractProcessorDecorator { // <3>
     @Override
-    public void process(Record<KIn, VIn> record) { // <6>
+    public void process(Record record) { // <4>
       // use bean before
-      delegate.process(record);
+      getDelegate().process(record);
       // use bean after
-    }
-
-    private interface Excludes {
-        <KIn, VIn> void process(Record<KIn, VIn> record);
     }
 }
 ----
 
-<1> Decorator annotation to profit from the {cdi-spec}/cdi-spec.html#decorators[decorator] feature of CDI
-<2> Force the instantiation of the decorator with the Priority annotation.
-Indeed, otherwise the decorator is not taken into account by Quarkus.
+<1> We have to mark the bean `Dependent` so it is instantiated at every use.
+Indeed, `KStreamProcessorSupplier` needs to return a new `Processor` instance everytime it is called, by Kafka Streams' specification.
+<2> We add a `Priority`, to control exactly the order of decorators.
 The priority is to be set based on the priorities of the existing decorators which are:
 +
 .ProcessorDecoratorPriorities.java
@@ -760,48 +744,11 @@ The priority is to be set based on the priorities of the existing decorators whi
      */
     public static final int RETRY = 600;
 ----
-<3> The decorator should have the same generics declaration `<KIn, VIn, KOut, VOut>` as the `Processor<KIn, VIn, KOut, VOut>` interface that it implements
-<4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate passthrough decorated methods that this Decorator class won't decorate.
-The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
-<5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
-You can also, as a regular CDI bean, inject any another CDI bean reference to be used in this decorator.
-<6> Example of decorated method, here the main `process` method of `Processor` API of Kafka Streams.
-
-.ProcessorDecorator.java for Quarkus 3.8 -> 3.10
-[source,java]
-----
-@Dependent // <1>
-@Priority(150) // <2>
-public class ProcessorDecorator extends AbstractProcessorDecorator { // <3>
-    @Override
-    public void process(Record record) { // <4>
-      // use bean before
-      getDelegate().process(record);
-      // use bean after
-    }
-}
-----
-
-<1> We have to mark the bean `Dependent` so it is instantiated at every use.
-Indeed, `KStreamProcessorSupplier` needs to return a new `Processor` instance everytime it is called, by Kafka Streams' specification.
-<2> We add a `Priority`, with same pattern as a CDI decorator.
 <3> We remove the generic types from the class signature, because CDI does not like generics in beans.
 <4> Example of override of process method and call to underlying decorator.
 
 Such a decorator will automatically been taken into account by CDI.
 The priority will control at which point your decorator will be called among all other decorators.
-
-[CAUTION]
-====
-We noticed with a new integration-test that is using a custom serde, that usage of custom CDI `Decorator` is causing microservices to randomly crash at startup.
-This happens for specific versions of Quarkus.
-Known impacted versions are 3.8.x, 3.9.x and 3.10.x.
-The 3.2 LTS and upcoming 3.15 LTS versions do not suffer from this symptom.
-The **only** solution found was to remove usage of `@Decorator` for `Processor` decorators for microservices based on Quarkus 3.8 LTS.
-This change will be reverted in quarkus-kafka-streams-processor 3.0.
-This is probably the https://github.com/quarkusio/quarkus/pull/41258[PR] on Quarkus side that has fixed the issue in Quarkus 3.11.
-====
 
 === Producer interceptor
 
