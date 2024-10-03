@@ -41,7 +41,7 @@ import io.quarkus.arc.ManagedContext;
 @ExtendWith(MockitoExtension.class)
 class CdiRequestContextDecoratorTest {
 
-    CdiRequestContextDecorator<String, String, String, String> decorator;
+    CdiRequestContextDecorator decorator;
 
     @Mock
     ArcContainer container;
@@ -55,7 +55,8 @@ class CdiRequestContextDecoratorTest {
   @BeforeEach
   public void setup() {
     when(container.requestContext()).thenReturn(requestContext);
-    decorator = new CdiRequestContextDecorator<>(processor, container);
+    decorator = new CdiRequestContextDecorator(container);
+    decorator.setDelegate(processor);
   }
 
     @Test
