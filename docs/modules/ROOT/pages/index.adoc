@@ -769,13 +769,27 @@ You can also, as a regular CDI bean, inject any another CDI bean reference to be
 Such a decorator will automatically been taken into account by CDI through the combination of `Decorator` and `Priority` annotations.
 The priority will control at which point your decorator will be called among all other decorators.
 
+[WARNING]
+====
+For Quarkus version prior to 3.11.0, you might notice a random failure of your QuarkusTest with a `ClassNotFoundException` of your custom decorator class.
+This is fixed in the following https://github.com/quarkusio/quarkus/pull/43245[PR].
+It can be mitigated by adding the following configuration:
+
+[source,properties]
+----
+quarkus.test.flat-class-path=true
+----
+
+Fortunately, the `quarkus-kafka-streams-processor-impl` module already sets this configuration for you.
+====
+
 === Producer interceptor
 
-Kafka Streams already has the notion of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
+Kafka Streams already has the concept of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
 But as the rest of Kafka Streams SPI, it is based on a class name and a default constructor for instantiation.
 It does not support CDI resolution.
 
-This is why this extension's API defines a `ProducerOnSendInterceptor` interface that is instrumentated through CDI.
+This is why this extension's API defines a `ProducerOnSendInterceptor` interface that is instrumented through CDI.
 Example of usage:
 
 .MyProducerInterceptor.java
