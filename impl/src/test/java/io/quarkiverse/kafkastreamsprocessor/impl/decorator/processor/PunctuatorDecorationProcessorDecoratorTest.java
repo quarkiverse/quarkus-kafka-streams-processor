@@ -68,9 +68,8 @@ class PunctuatorDecorationProcessorDecoratorTest {
             }
         };
 
-    PunctuatorDecorationProcessorDecorator<String, PingMessage.Ping, String, PingMessage.Ping> decorator = new PunctuatorDecorationProcessorDecorator<>(
-            processor,
-            decoratedPunctuators);
+    PunctuatorDecorationProcessorDecorator decorator = new PunctuatorDecorationProcessorDecorator(decoratedPunctuators);
+    decorator.setDelegate(processor);
   decorator.init(context);
   decorator.process(new Record<>("blabla",PingMessage.Ping.newBuilder().setMessage("blabla").build(),0L,null));
   decorator.close();
