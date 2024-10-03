@@ -86,18 +86,19 @@ class PingClientProcessorQuarkusWithoutRetryCatchTest {
         consumer.close(Durations.ONE_SECOND);
     }
 
-  @Test
-  void singleMessageWithoutRetry() {
-    // throw Exception
-    when(client.ping())
-      .thenThrow(mock(RuntimeException.class));
+    @Test
+    void singleMessageWithoutRetry() {
+        // throw Exception
+        when(client.ping())
+                .thenThrow(mock(RuntimeException.class));
 
-    producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), Ping.newBuilder().setMessage("hello").build()));
-    producer.flush();
+        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(),
+                Ping.newBuilder().setMessage("hello").build()));
+        producer.flush();
 
-    assertThrows(IllegalStateException.class, () -> {
-      KafkaTestUtils.getSingleRecord(consumer, kStreamsProcessorConfig.output().topic().get(),
-        Durations.TEN_SECONDS);
-    });
-  }
+        assertThrows(IllegalStateException.class, () -> {
+            KafkaTestUtils.getSingleRecord(consumer, kStreamsProcessorConfig.output().topic().get(),
+                    Durations.TEN_SECONDS);
+        });
+    }
 }

@@ -63,7 +63,7 @@ public class SourceToTopicsMappingBuilderTest {
         sources.put(name, sourceConfig);
     }
 
-  private void configureTopics(String... topics) {
+    private void configureTopics(String... topics) {
         when(inputConfig.topics()).thenReturn(Optional.of(Arrays.asList(topics)));
     }
 

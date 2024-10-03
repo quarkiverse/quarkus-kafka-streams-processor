@@ -51,10 +51,10 @@ class QuarkusIntegrationCompatibleKafkaDevServicesResourceTest {
 
     QuarkusTestResourceLifecycleManager.TestInjector testInjector = new DefaultTestInjectorCopy(testInstance);
 
-  @BeforeEach
-  void setUp() {
-    when(context.devServicesProperties()).thenReturn(devServiceProps);
-  }
+    @BeforeEach
+    void setUp() {
+        when(context.devServicesProperties()).thenReturn(devServiceProps);
+    }
 
     @Test
     public void noKafkaBootstrapServersForwardedSoNothingSet() {

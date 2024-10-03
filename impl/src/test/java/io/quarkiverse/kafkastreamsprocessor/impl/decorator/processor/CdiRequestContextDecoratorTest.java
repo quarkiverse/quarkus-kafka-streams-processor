@@ -52,11 +52,11 @@ class CdiRequestContextDecoratorTest {
     @Mock
     ManagedContext requestContext;
 
-  @BeforeEach
-  public void setup() {
-    when(container.requestContext()).thenReturn(requestContext);
-    decorator = new CdiRequestContextDecorator<>(processor, container);
-  }
+    @BeforeEach
+    public void setup() {
+        when(container.requestContext()).thenReturn(requestContext);
+        decorator = new CdiRequestContextDecorator<>(processor, container);
+    }
 
     @Test
     public void shouldActivateDeactivateWhenProcessIsCalled() {
@@ -66,10 +66,10 @@ class CdiRequestContextDecoratorTest {
         verify(requestContext).terminate();
     }
 
-  @Test
-  public void shouldNotActivateRequestScopeIfAlreadyActivated() {
-    when(requestContext.isActive()).thenReturn(true);
-    decorator.process(new Record<>("Hello", "World", 0L));
-    verify(requestContext, never()).activate();
-  }
+    @Test
+    public void shouldNotActivateRequestScopeIfAlreadyActivated() {
+        when(requestContext.isActive()).thenReturn(true);
+        decorator.process(new Record<>("Hello", "World", 0L));
+        verify(requestContext, never()).activate();
+    }
 }
