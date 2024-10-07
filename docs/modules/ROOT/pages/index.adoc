@@ -10,6 +10,8 @@ It avoids Kafka Streams' users a lot of boilerplate code to have a dedicated top
 All that is left to develop is a simple Processor class.
 The extension takes care of the rest.
 
+An text wich as horible typo .
+
 == Streaming processor
 
 A streaming microservice has some requirements:
