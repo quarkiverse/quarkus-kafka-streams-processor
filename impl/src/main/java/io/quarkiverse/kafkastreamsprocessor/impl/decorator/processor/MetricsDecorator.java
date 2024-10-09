@@ -21,27 +21,23 @@ package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
 
 import jakarta.annotation.Priority;
 import jakarta.decorator.Decorator;
-import jakarta.decorator.Delegate;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.Record;
 
+import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 
 /**
  * Decorator to enrich Kafka Streams metrics with a counter of exception raised by {@link Processor#process(Record)}.
  */
-@Decorator
+//@Decorator
 @Priority(ProcessorDecoratorPriorities.METRICS)
-public class MetricsDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
-    /**
-     * Injection point for composition.
-     */
-    @lombok.experimental.Delegate(excludes = Excludes.class)
-    private final Processor<KIn, VIn, KOut, VOut> delegate;
-
+@Dependent
+public class MetricsDecorator extends AbstractProcessorDecorator {
     /**
      * Counter of exception raised by {@link Processor#process(Record)}.
      */
@@ -50,15 +46,11 @@ public class MetricsDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
     /**
      * Injection constructor.
      *
-     * @param delegate
-     *        injection point for composition
      * @param metrics
      *        container of all the metrics defined by the framework
      */
     @Inject
-    public MetricsDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate,
-            KafkaStreamsProcessorMetrics metrics) {
-        this.delegate = delegate;
+    public MetricsDecorator(KafkaStreamsProcessorMetrics metrics) {
         this.metrics = metrics;
     }
 
@@ -70,9 +62,9 @@ public class MetricsDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
      * {@inheritDoc}
      */
     @Override
-    public void process(Record<KIn, VIn> record) {
+    public void process(Record record) {
         try {
-            delegate.process(record);
+            getDelegate().process(record);
         } catch (Exception e) { // NOSONAR: Catching any error
             metrics.processorErrorCounter().increment();
             throw e;

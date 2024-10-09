@@ -48,14 +48,15 @@ public class MetricsDecoratorTest {
 
     Ping inputMessage = Ping.newBuilder().setMessage("message").build();
 
-    MetricsDecorator<String, Ping, String, Ping> processorDecorator;
+    MetricsDecorator processorDecorator;
 
     @Mock
     ArcContainer arcContainer;
 
     @BeforeEach
     public void setUp() {
-        processorDecorator = new MetricsDecorator<>(kafkaProcessor, metrics);
+        processorDecorator = new MetricsDecorator(metrics);
+        processorDecorator.setDelegate(kafkaProcessor);
     }
 
     @Test

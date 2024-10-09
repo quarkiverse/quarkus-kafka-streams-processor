@@ -20,15 +20,16 @@
 package io.quarkiverse.kafkastreamsprocessor.impl;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Instance;
-import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -36,6 +37,7 @@ import jakarta.inject.Singleton;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
+import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -60,6 +62,8 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
      */
     private final Instance<Kafka2ProcessorAdapter<?, ?>> adapterInstances;
 
+    private final Instance<AbstractProcessorDecorator> processorDecorators;
+
     /**
      * Injection constructor.
      *
@@ -76,17 +80,20 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
     @Inject
     public KStreamProcessorSupplier(Instance<Processor<?, ?, ?, ?>> kafka3BeanInstances,
             Instance<org.apache.kafka.streams.processor.Processor<?, ?>> beanInstances,
-            Instance<Kafka2ProcessorAdapter<?, ?>> adapterInstances, BeanManager beanManager) {
+            Instance<Kafka2ProcessorAdapter<?, ?>> adapterInstances, BeanManager beanManager,
+            Instance<AbstractProcessorDecorator> processorDecorators) {
         this.kafka3BeanInstances = kafka3BeanInstances;
         this.beanInstances = beanInstances;
         this.adapterInstances = adapterInstances;
+        this.processorDecorators = processorDecorators;
 
-        log.info("Configured Processor decorators are in order: {}",
-                beanManager.resolveDecorators(Set.of(Processor.class))
-                        .stream()
-                        .map(Bean::getBeanClass)
-                        .map(Class::getName)
-                        .collect(Collectors.joining(", ")));
+        List<String> processorDecoratorNames = new ArrayList<>(processorDecorators.stream()
+                .map(Object::getClass)
+                .map(Class::getName)
+                .collect(Collectors.toUnmodifiableList()));
+        Collections.reverse(processorDecoratorNames);
+        log.info("Configured Processor decorators are in order: {}", String.join(", ", processorDecoratorNames));
+
     }
 
     /**
@@ -131,7 +138,16 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
                     "Processors cannot have a scope other than @Dependant, since KafkaStreams implementation classes are not thread-safe");
         }
 
-        return (Processor<KIn, VIn, KOut, VOut>) processor;
+        return wrapProcessor((Processor<KIn, VIn, KOut, VOut>) processor);
+    }
+
+    private Processor<KIn, VIn, KOut, VOut> wrapProcessor(Processor<KIn, VIn, KOut, VOut> processor) {
+        Processor<KIn, VIn, KOut, VOut> wrappedProcessor = processor;
+        for (AbstractProcessorDecorator decorator : processorDecorators) {
+            decorator.setDelegate(wrappedProcessor);
+            wrappedProcessor = decorator;
+        }
+        return wrappedProcessor;
     }
 
     private static boolean hasAnnotation(Object bean, Class<? extends Annotation> annotation) {
