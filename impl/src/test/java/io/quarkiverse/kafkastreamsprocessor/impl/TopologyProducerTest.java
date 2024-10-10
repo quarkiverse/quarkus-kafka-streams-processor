@@ -115,7 +115,8 @@ class TopologyProducerTest {
         when(dlqConfig.topic()).thenReturn(Optional.ofNullable(dlq));
         when(sourceToTopicsMappingBuilder.sourceToTopicsMapping()).thenReturn(sourceToTopicMapping);
         when(sinkToTopicMappingBuilder.sinkToTopicMapping()).thenReturn(sinkToTopicMapping);
-        TopologyProducer topologyProducer = new TopologyProducer(kStreamsProcessorConfig, configCustomizer, sourceToTopicsMappingBuilder, sinkToTopicMappingBuilder, interceptors);
+        TopologyProducer topologyProducer = new TopologyProducer(kStreamsProcessorConfig, configCustomizer,
+                sourceToTopicsMappingBuilder, sinkToTopicMappingBuilder, interceptors);
         return topologyProducer;
     }
 

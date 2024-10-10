@@ -27,15 +27,15 @@ class KStreamsProcessorConfigGeneratorTest {
     @Mock
     Config config;
 
-  private void mockProperties(Map<String, String> keyValues) {
-    when(config.getPropertyNames()).thenReturn(keyValues.keySet());
-    keyValues.forEach((k, v) -> {
-      lenient().when(config.getValue(k, String.class)).thenReturn(v);
-      lenient().when(config.getOptionalValue(k, String.class)).thenReturn(Optional.of(v));
-      lenient().when(config.getValues(k, String.class)).thenReturn(List.of(v.split(",")));
-      lenient().when(config.getOptionalValues(k, String.class)).thenReturn(Optional.of(List.of(v.split(","))));
-    });
-  }
+    private void mockProperties(Map<String, String> keyValues) {
+        when(config.getPropertyNames()).thenReturn(keyValues.keySet());
+        keyValues.forEach((k, v) -> {
+            lenient().when(config.getValue(k, String.class)).thenReturn(v);
+            lenient().when(config.getOptionalValue(k, String.class)).thenReturn(Optional.of(v));
+            lenient().when(config.getValues(k, String.class)).thenReturn(List.of(v.split(",")));
+            lenient().when(config.getOptionalValues(k, String.class)).thenReturn(Optional.of(List.of(v.split(","))));
+        });
+    }
 
     @Test
     void singleSink() {

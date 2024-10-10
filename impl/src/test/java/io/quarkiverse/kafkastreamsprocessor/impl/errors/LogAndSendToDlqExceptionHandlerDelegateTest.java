@@ -97,37 +97,37 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
 
     @BeforeEach
     void setUp() {
-      when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
+        when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
     }
 
-  @Test
-  void shouldNotBlockAndSendToDlqIfPossible() {
-    when(record.key()).thenReturn(RECORD_KEY_BYTES);
-    when(record.value()).thenReturn(RECORD_VALUE_BYTES);
-    when(record.timestamp()).thenReturn(RECORD_TIMESTAMP);
-    when(record.topic()).thenReturn(INPUT_TOPIC);
-    when(record.partition()).thenReturn(PARTITION);
-    when(record.headers()).thenReturn(headers);
-    when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
-    when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
-    RecordHeaders headersWithMetadata = new RecordHeaders();
-    when(metadataHandler.withMetadata(any(Headers.class), anyString(), anyInt(), any(Exception.class)))
-        .thenReturn(headersWithMetadata);
-    when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducerMock);
+    @Test
+    void shouldNotBlockAndSendToDlqIfPossible() {
+        when(record.key()).thenReturn(RECORD_KEY_BYTES);
+        when(record.value()).thenReturn(RECORD_VALUE_BYTES);
+        when(record.timestamp()).thenReturn(RECORD_TIMESTAMP);
+        when(record.topic()).thenReturn(INPUT_TOPIC);
+        when(record.partition()).thenReturn(PARTITION);
+        when(record.headers()).thenReturn(headers);
+        when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
+        when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
+        RecordHeaders headersWithMetadata = new RecordHeaders();
+        when(metadataHandler.withMetadata(any(Headers.class), anyString(), anyInt(), any(Exception.class)))
+                .thenReturn(headersWithMetadata);
+        when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducerMock);
 
-    handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-      kStreamsProcessorConfig);
-    handler.configure(Collections.emptyMap());
+        handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
+                kStreamsProcessorConfig);
+        handler.configure(Collections.emptyMap());
 
-    DeserializationHandlerResponse response = handler.handle(context, record, exception);
-    assertEquals(DeserializationHandlerResponse.CONTINUE, response);
+        DeserializationHandlerResponse response = handler.handle(context, record, exception);
+        assertEquals(DeserializationHandlerResponse.CONTINUE, response);
 
-    verify(dlqProducerMock)
-        .send(eq(new ProducerRecord<>(DLQ_TOPIC, null, RECORD_TIMESTAMP, RECORD_KEY_BYTES, RECORD_VALUE_BYTES,
-            headersWithMetadata)), any(Callback.class));
-    verify(metadataHandler).withMetadata(eq(headers), eq(INPUT_TOPIC), eq(PARTITION), eq(exception));
-    assertThat(metrics.processorErrorCounter().count(), closeTo(1d, 0.01d));
-  }
+        verify(dlqProducerMock)
+                .send(eq(new ProducerRecord<>(DLQ_TOPIC, null, RECORD_TIMESTAMP, RECORD_KEY_BYTES, RECORD_VALUE_BYTES,
+                        headersWithMetadata)), any(Callback.class));
+        verify(metadataHandler).withMetadata(eq(headers), eq(INPUT_TOPIC), eq(PARTITION), eq(exception));
+        assertThat(metrics.processorErrorCounter().count(), closeTo(1d, 0.01d));
+    }
 
     @Test
     void shouldOnlyContinueIfDefaultErrorStrategy() {
@@ -136,7 +136,7 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
         when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
         handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-          kStreamsProcessorConfig);
+                kStreamsProcessorConfig);
         handler.configure(Collections.emptyMap());
 
         DeserializationHandlerResponse response = handler.handle(context, record, exception);
@@ -152,7 +152,7 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
         when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
         handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-          kStreamsProcessorConfig);
+                kStreamsProcessorConfig);
 
         assertThrows(IllegalStateException.class, () -> handler.configure(Collections.emptyMap()));
     }

@@ -55,7 +55,7 @@ class DefaultTopologySerdesConfigurationTest {
         customizer = new DefaultTopologySerdesConfiguration(objectMapper);
     }
 
-  @Test
+    @Test
     void shouldSetIntrospectionSerializerByDefault() {
         when(configuration.getProcessorPayloadType()).thenReturn((Class) JSonPojo.class);
         when(configuration.getSinkValueSerializer()).thenReturn(null);
@@ -74,16 +74,16 @@ class DefaultTopologySerdesConfigurationTest {
         assertThat(configuration.getSourceValueSerde(), is(equalTo(customSerde)));
     }
 
-  @Test
+    @Test
     void shouldSetProtobufSerdeWhenProcessorIsProtobuf() {
         when(configuration.getProcessorPayloadType()).thenReturn((Class) PingMessage.Ping.class);
         customizer.apply(configuration);
         verify(configuration).setSourceValueSerde(isA(KafkaProtobufSerde.class));
     }
 
-  @Test
+    @Test
     void shouldSetJacksonSerdeWhenProcessorIsAPojo() {
-        when(configuration.getProcessorPayloadType()).thenReturn((Class)JSonPojo.class);
+        when(configuration.getProcessorPayloadType()).thenReturn((Class) JSonPojo.class);
         customizer.apply(configuration);
         verify(configuration).setSourceValueSerde(isA(JacksonSerde.class));
     }

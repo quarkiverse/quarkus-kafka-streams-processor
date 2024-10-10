@@ -62,9 +62,9 @@ public class SinkToTopicMappingBuilderTest {
         sinks.put(name, sinkConfig);
     }
 
-  private void configureTopic(String topic) {
-    when(outputConfig.topic()).thenReturn(Optional.of(topic));
-  }
+    private void configureTopic(String topic) {
+        when(outputConfig.topic()).thenReturn(Optional.of(topic));
+    }
 
     @Test
     void sinkToTopicMapping_whenSingleSink_shouldGenerateMapping() {
