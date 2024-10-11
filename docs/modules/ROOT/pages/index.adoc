@@ -309,6 +309,7 @@ public class PojoProcessor extends ContextualProcessor<String, SamplePojo, Strin
     }
 }
 ----
+
 <1> Your Processor is declared with the annotation as for a regular processor.
 <2> The handled value type, in this example, is a simple POJO, nothing fancy.
 <3> Same POJO value in the _process()_ method.
@@ -423,6 +424,7 @@ public class PingerService {
     }
 }
 ----
+
 <1> Define the method to retry with `org.eclipse.microprofile.faulttolerance.Retry` annotation
 
 .application.properties
@@ -484,7 +486,6 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 | The number of times a Punctuator's execution failed with an exception since the start of the microservice.
 |===
 
-
 .Dead Letter Queue Metrics
 [options="header",cols="30%,20%,40%"]
 |===
@@ -500,7 +501,6 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 | Counter
 | The number of messages sent to global DLQ.
 |===
-
 
 == A comparison between Reactive Messaging Kafka and Kafka Streams
 
@@ -536,6 +536,7 @@ The purpose of increasing concurrency is to be able to cope with streaming micro
     return api.remoteCall();
   }
 ----
+
 <1> `@Incoming` is declaring this method as a subscriber for the channel named `ping-events`
 <2> `@Outgoing` is declaring this method as a producer for the channel named `pong-events`
 <3> `@io.smallrye.reactive.messaging.annotations.Blocking` Indicates that this method is running out of the processing thread, inside a worker thread and the order of the messages is not important.
@@ -640,6 +641,7 @@ public class PingProcessor extends ContextualProcessor<String, Ping, String, Pin
     }
 }
 ----
+
 <1> Your Processor is declared with the annotation as for a regular processor.
 <2> The definition and initialization of your state store.
 
@@ -688,9 +690,9 @@ The extension proposes some capabilities to customize more finely the behaviour 
 === Processor decorator
 
 The following decoration layer is already extensively used in this extension's source code and allows to use composition around the main processor class you have to define.
-Example of a new decorator:
+Depending on the version of Quarkus you are using, the pattern differs:
 
-.ProcessorDecorator.java
+.ProcessorDecorator.java with Quarkus 3.2 or 3.11.0+
 [source,java]
 ----
 @Decorator // <1>
@@ -719,6 +721,7 @@ public class ProcessorDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, 
     }
 }
 ----
+
 <1> Decorator annotation to profit from the {cdi-spec}/cdi-spec.html#decorators[decorator] feature of CDI
 <2> Force the instantiation of the decorator with the Priority annotation.
 Indeed, otherwise the decorator is not taken into account by Quarkus.
@@ -759,23 +762,54 @@ The priority is to be set based on the priorities of the existing decorators whi
 ----
 <3> The decorator should have the same generics declaration `<KIn, VIn, KOut, VOut>` as the `Processor<KIn, VIn, KOut, VOut>` interface that it implements
 <4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate
-passthrough decorated methods that this Decorator class won't decorate.
+It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate passthrough decorated methods that this Decorator class won't decorate.
 The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
 <5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
 You can also, as a regular CDI bean, inject any another CDI bean reference to be used in this decorator.
 <6> Example of decorated method, here the main `process` method of `Processor` API of Kafka Streams.
 
-Such a decorator will automatically been taken into account by CDI through the combination of `Decorator` and `Priority` annotations.
+.ProcessorDecorator.java for Quarkus 3.8 -> 3.10
+[source,java]
+----
+@Dependent // <1>
+@Priority(150) // <2>
+public class ProcessorDecorator extends AbstractProcessorDecorator { // <3>
+    @Override
+    public void process(Record record) { // <4>
+      // use bean before
+      getDelegate().process(record);
+      // use bean after
+    }
+}
+----
+
+<1> We have to mark the bean `Dependent` so it is instantiated at every use.
+Indeed, `KStreamProcessorSupplier` needs to return a new `Processor` instance everytime it is called, by Kafka Streams' specification.
+<2> We add a `Priority`, with same pattern as a CDI decorator.
+<3> We remove the generic types from the class signature, because CDI does not like generics in beans.
+<4> Example of override of process method and call to underlying decorator.
+
+Such a decorator will automatically been taken into account by CDI.
 The priority will control at which point your decorator will be called among all other decorators.
+
+[CAUTION]
+====
+We noticed with a new integration-test that is using a custom serde, that usage of custom CDI `Decorator` is causing microservices to randomly crash at startup.
+This happens for specific versions of Quarkus.
+Known impacted versions are 3.8.x, 3.9.x and 3.10.x.
+The 3.2 LTS and upcoming 3.15 LTS versions do not suffer from this symptom.
+The **only** solution found was to remove usage of `@Decorator` for `Processor` decorators for microservices based on Quarkus 3.8 LTS.
+This change will be reverted in quarkus-kafka-streams-processor 3.0.
+This is probably the https://github.com/quarkusio/quarkus/pull/41258[PR] on Quarkus side that has fixed the issue in Quarkus 3.11.
+====
 
 === Producer interceptor
 
-Kafka Streams already has the notion of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
+Kafka Streams already has the concept of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
 But as the rest of Kafka Streams SPI, it is based on a class name and a default constructor for instantiation.
 It does not support CDI resolution.
 
-This is why this extension's API defines a `ProducerOnSendInterceptor` interface that is instrumentated through CDI.
+This is why this extension's API defines a `ProducerOnSendInterceptor` interface that is instrumented through CDI.
 Example of usage:
 
 .MyProducerInterceptor.java
@@ -796,6 +830,7 @@ public class HeaderAddingProducerInterceptor implements ProducerOnSendIntercepto
     }
 }
 ----
+
 <1> Producer interceptors are discovered by CDI by the `ApplicationScoped` annotation
 <2> The interceptor class should extend `ProducerOnSendInterceptor`.
 `ProducerOnSendInterceptor` extends `ProducerInterceptor<byte[], byte[]>` and overrides some of its methods with default implementations to exempt their forced implementations further down the line.
@@ -847,6 +882,7 @@ public class CdiRequestContextPunctuatorDecorator implements DecoratedPunctuator
     }
 }
 ----
+
 <1> Decorator annotation to profit from the {cdi-spec}/cdi-spec.html#decorators[decorator] feature of CDI
 <2> Force the instantiation of the decorator with the Priority annotation.
 Indeed, otherwise the decorator is not taken into account by Quarkus.

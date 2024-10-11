@@ -15,6 +15,7 @@
     <module>multioutput</module>
     <module>simple</module>
     <module>stateful</module>
+    <module>custom-serde</module>
   </modules>
   <build>
     <plugins>

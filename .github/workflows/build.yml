@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "quarkus-3.8"
     paths-ignore:
       - '.gitignore'
       - 'CODEOWNERS'
