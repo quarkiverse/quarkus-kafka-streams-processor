@@ -73,7 +73,6 @@ import com.google.protobuf.util.JsonFormat;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.baggage.Baggage;
-import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.SpanId;
@@ -82,16 +81,12 @@ import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceId;
 import io.opentelemetry.api.trace.TraceState;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
-import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.IdGenerator;
 import io.quarkiverse.kafkastreamsprocessor.impl.TestException;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
+import io.quarkiverse.kafkastreamsprocessor.impl.utils.OpenTelemetryWithBaggageExtension;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapGetter;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
@@ -112,7 +107,7 @@ public class TracingDecoratorTest {
     private static final java.util.logging.Logger rootLogger = LogManager.getLogManager().getLogger("io.quarkiverse");
 
     @RegisterExtension
-    static final OpenTelemetryExtension otel = OpenTelemetryExtension.create();
+    static final OpenTelemetryWithBaggageExtension otel = OpenTelemetryWithBaggageExtension.create();
 
     TracingDecorator decorator;
 
@@ -140,7 +135,7 @@ public class TracingDecoratorTest {
         rootLogger.addHandler(inMemoryLogHandler);
         rootLogger.setLevel(Level.DEBUG);
         when(topologyConfiguration.getProcessorPayloadType()).thenReturn((Class) MockType.class);
-        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter, kafkaTextMapSetter,
+        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
                 tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
         decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
@@ -208,7 +203,7 @@ public class TracingDecoratorTest {
                     .build(), 0L, headers);
 
             decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
-                    kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+                    tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
             decorator.setDelegate(new ThrowExceptionProcessor());
             decorator.init(processorContext);
 
@@ -310,7 +305,7 @@ public class TracingDecoratorTest {
         Processor<String, String, String, String> kafkaProcessor = mock(Processor.class);
         ProcessorContext<String, String> processorContext = mock(ProcessorContext.class);
         TracingDecorator decorator = new TracingDecorator(GlobalOpenTelemetry.get(), kafkaTextMapGetter,
-                kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
         decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
 
@@ -329,24 +324,15 @@ public class TracingDecoratorTest {
         Headers headers = new RecordHeaders().add(W3C_TRACE_ID, TRACE_PARENT.getBytes())
                 .add(W3C_BAGGAGE, "key1=value1,key2=value2".getBytes());
         Record<String, Ping> record = new Record<>(null, Ping.newBuilder().setMessage("blabla").build(), 0L, headers);
+        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
+                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+        decorator.setDelegate(new LogOpentelemetryBaggageProcessor());
+        decorator.init(processorContext);
 
-        // the opentelemetry injected and used throughout the unit tests in this class is not configured with W3C baggage propagator
-        // as coming from the OpenTelemetryExtension, so we need to create a new one with baggage propagator.
-        try (OpenTelemetrySdk openTelemetryWithBaggageSdk = OpenTelemetrySdk.builder()
-                .setPropagators(ContextPropagators.create(TextMapPropagator.composite(W3CTraceContextPropagator.getInstance(),
-                        W3CBaggagePropagator.getInstance())))
-                .build()) {
-            decorator = new TracingDecorator(openTelemetryWithBaggageSdk,
-                    kafkaTextMapGetter, kafkaTextMapSetter, openTelemetryWithBaggageSdk.getTracer("test"), PROCESSOR_NAME,
-                    jsonPrinter);
-            decorator.setDelegate(new LogOpentelemetryBaggageProcessor());
-            decorator.init(processorContext);
+        decorator.process(record);
 
-            decorator.process(record);
-
-            assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key1 value1"))));
-            assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key2 value2"))));
-        }
+        assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key1 value1"))));
+        assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("baggage: key2 value2"))));
     }
 
     @Slf4j
