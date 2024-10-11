@@ -21,14 +21,13 @@ package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
 
 import jakarta.annotation.Priority;
 import jakarta.decorator.Decorator;
-import jakarta.enterprise.context.Dependent;
+import jakarta.decorator.Delegate;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.Record;
 import org.eclipse.microprofile.faulttolerance.Retry;
 
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,10 +35,15 @@ import lombok.extern.slf4j.Slf4j;
  * Decorate a {@link Processor#process} with the {@link Retry} fault tolerance annotation.
  */
 @Slf4j
-//@Decorator
+@Decorator
 @Priority(ProcessorDecoratorPriorities.RETRY)
-@Dependent
-public class RetryDecorator extends AbstractProcessorDecorator {
+public class RetryDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
+    /**
+     * Injection point for composition
+     */
+    @lombok.experimental.Delegate(excludes = Excludes.class)
+    private final Processor<KIn, VIn, KOut, VOut> delegate;
+
     /**
      * The delegate object that has the processor method with the {@link Retry} annotation.
      * <p>
@@ -54,12 +58,15 @@ public class RetryDecorator extends AbstractProcessorDecorator {
     /**
      * Injection constructor
      *
+     * @param delegate
+     *        injection point for composition
      * @param retryDecoratorDelegate
      *        the separate class with a process method annotated with {@link Retry}
      */
     @Inject
-    public RetryDecorator(
+    public RetryDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate,
             RetryDecoratorDelegate retryDecoratorDelegate) {
+        this.delegate = delegate;
         this.retryDecoratorDelegate = retryDecoratorDelegate;
     }
 
@@ -71,9 +78,9 @@ public class RetryDecorator extends AbstractProcessorDecorator {
      * {@inheritDoc}
      */
     @Override
-    public void process(Record record) {
+    public void process(Record<KIn, VIn> record) {
         try {
-            retryDecoratorDelegate.retryableProcess(getDelegate(), record);
+            retryDecoratorDelegate.retryableProcess(delegate, record);
         } catch (RuntimeException e) {
             log.info("An exception that has been raised by the processor will not be retried.\n"
                     + "Possible causes:\n"

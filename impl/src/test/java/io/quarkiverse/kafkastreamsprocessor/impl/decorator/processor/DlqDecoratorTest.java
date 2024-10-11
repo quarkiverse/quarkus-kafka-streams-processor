@@ -62,7 +62,7 @@ public class DlqDecoratorTest {
     private static final String RECORD_KEY = "key";
     private static final String RECORD_VALUE = "value";
 
-    DlqDecorator decorator;
+    DlqDecorator<String, String, String, String> decorator;
 
     DlqProcessorContextDecorator<String, String> contextDecorator;
 
@@ -86,8 +86,7 @@ public class DlqDecoratorTest {
 
     @BeforeEach
     public void setUp() {
-        decorator = new DlqDecorator(Set.of(FUNCTIONAL_SINK), dlqMetadataHandler, metrics, true);
-        decorator.setDelegate(kafkaProcessor);
+        decorator = new DlqDecorator<>(kafkaProcessor, Set.of(FUNCTIONAL_SINK), dlqMetadataHandler, metrics, true);
         decorator.init(context);
         headers = new RecordHeaders();
         record = new Record<>(RECORD_KEY, RECORD_VALUE, 0L, headers);
@@ -132,8 +131,7 @@ public class DlqDecoratorTest {
 
     @Test
     public void shouldDoNothingIfDeactivated() {
-        decorator = new DlqDecorator(Set.of(FUNCTIONAL_SINK), dlqMetadataHandler, metrics, false);
-        decorator.setDelegate(kafkaProcessor);
+        decorator = new DlqDecorator<>(kafkaProcessor, Set.of(FUNCTIONAL_SINK), dlqMetadataHandler, metrics, false);
 
         decorator.init(context);
         decorator.process(record);

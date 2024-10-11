@@ -20,16 +20,17 @@
 package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
 
 import jakarta.annotation.Priority;
-import jakarta.enterprise.context.Dependent;
+import jakarta.decorator.Decorator;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.Record;
 
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
 /**
  * This class is responsible to manage the lifecycle of {@link jakarta.enterprise.context.RequestScoped} beans. It
@@ -40,11 +41,16 @@ import io.quarkus.arc.ArcContainer;
  * <p>
  * <strong>Warning:</strong> "Quarkus Tests" Junit extension is already managing the request scope on its own.
  */
-//@Decorator
-@Dependent
+@Decorator
 @Priority(ProcessorDecoratorPriorities.CDI_REQUEST_SCOPE)
-//@RequiredArgsConstructor(access = AccessLevel.MODULE)
-public class CdiRequestContextDecorator extends AbstractProcessorDecorator {
+@RequiredArgsConstructor(access = AccessLevel.MODULE)
+public class CdiRequestContextDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
+    /**
+     * Injection point for composition
+     */
+    @lombok.experimental.Delegate(excludes = Excludes.class)
+    private final Processor<KIn, VIn, KOut, VOut> delegate;
+
     /**
      * The container object from Arc to inquire on request contextualization availability and activation
      */
@@ -52,14 +58,13 @@ public class CdiRequestContextDecorator extends AbstractProcessorDecorator {
 
     /**
      * Constructor for injection of the delegate.
+     *
+     * @param delegate
+     *        injection point for composition
      */
     @Inject
-    public CdiRequestContextDecorator() {
-        this(Arc.container());
-    }
-
-    public CdiRequestContextDecorator(ArcContainer container) {
-        this.container = container;
+    public CdiRequestContextDecorator(@jakarta.decorator.Delegate Processor<KIn, VIn, KOut, VOut> delegate) {
+        this(delegate, Arc.container());
     }
 
     /**
@@ -69,16 +74,20 @@ public class CdiRequestContextDecorator extends AbstractProcessorDecorator {
      * {@inheritDoc}
      */
     @Override
-    public void process(Record record) {
+    public void process(Record<KIn, VIn> record) {
         if (container.requestContext().isActive()) {
-            getDelegate().process(record);
+            delegate.process(record);
         } else {
             container.requestContext().activate();
             try {
-                getDelegate().process(record);
+                delegate.process(record);
             } finally {
                 container.requestContext().terminate();
             }
         }
+    }
+
+    private interface Excludes {
+        <KIn, VIn> void process(Record<KIn, VIn> record);
     }
 }

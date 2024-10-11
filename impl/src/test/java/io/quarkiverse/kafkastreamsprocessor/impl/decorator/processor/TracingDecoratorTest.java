@@ -114,7 +114,7 @@ public class TracingDecoratorTest {
     @RegisterExtension
     static final OpenTelemetryExtension otel = OpenTelemetryExtension.create();
 
-    TracingDecorator decorator;
+    TracingDecorator<String, Ping, String, Ping> decorator;
 
     @Mock
     JsonFormat.Printer jsonPrinter;
@@ -140,9 +140,8 @@ public class TracingDecoratorTest {
         rootLogger.addHandler(inMemoryLogHandler);
         rootLogger.setLevel(Level.DEBUG);
         when(topologyConfiguration.getProcessorPayloadType()).thenReturn((Class) MockType.class);
-        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter, kafkaTextMapSetter,
+        decorator = new TracingDecorator<>(kafkaProcessor, otel.getOpenTelemetry(), kafkaTextMapGetter, kafkaTextMapSetter,
                 tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
-        decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
     }
 
@@ -207,9 +206,8 @@ public class TracingDecoratorTest {
                     .setMessage("blabla")
                     .build(), 0L, headers);
 
-            decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
+            decorator = new TracingDecorator<>(new ThrowExceptionProcessor(), otel.getOpenTelemetry(), kafkaTextMapGetter,
                     kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
-            decorator.setDelegate(new ThrowExceptionProcessor());
             decorator.init(processorContext);
 
             assertDoesNotThrow(() -> decorator.process(record));
@@ -309,9 +307,9 @@ public class TracingDecoratorTest {
     void shouldLogRawToStringValueIfNotProtobuf() throws Throwable {
         Processor<String, String, String, String> kafkaProcessor = mock(Processor.class);
         ProcessorContext<String, String> processorContext = mock(ProcessorContext.class);
-        TracingDecorator decorator = new TracingDecorator(GlobalOpenTelemetry.get(), kafkaTextMapGetter,
+        TracingDecorator<String, String, String, String> decorator = new TracingDecorator<>(
+                kafkaProcessor, GlobalOpenTelemetry.get(), kafkaTextMapGetter,
                 kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
-        decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
 
         RuntimeException exception = new TestException();
@@ -336,10 +334,9 @@ public class TracingDecoratorTest {
                 .setPropagators(ContextPropagators.create(TextMapPropagator.composite(W3CTraceContextPropagator.getInstance(),
                         W3CBaggagePropagator.getInstance())))
                 .build()) {
-            decorator = new TracingDecorator(openTelemetryWithBaggageSdk,
+            decorator = new TracingDecorator<>(new LogOpentelemetryBaggageProcessor(), openTelemetryWithBaggageSdk,
                     kafkaTextMapGetter, kafkaTextMapSetter, openTelemetryWithBaggageSdk.getTracer("test"), PROCESSOR_NAME,
                     jsonPrinter);
-            decorator.setDelegate(new LogOpentelemetryBaggageProcessor());
             decorator.init(processorContext);
 
             decorator.process(record);

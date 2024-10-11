@@ -24,7 +24,6 @@ import java.time.Duration;
 import jakarta.annotation.Priority;
 import jakarta.decorator.Decorator;
 import jakarta.decorator.Delegate;
-import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
@@ -35,7 +34,6 @@ import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.internals.InternalProcessorContext;
 
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.punctuator.DecoratedPunctuator;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +44,15 @@ import lombok.RequiredArgsConstructor;
  *
  * @see PunctuatorDecorationProcessorContextDecorator
  */
-//@Decorator
+@Decorator
 @Priority(ProcessorDecoratorPriorities.PUNCTUATOR_DECORATION)
-@Dependent
-public class PunctuatorDecorationProcessorDecorator extends AbstractProcessorDecorator {
+public class PunctuatorDecorationProcessorDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
+    /**
+     * Injection point for composition
+     */
+    @lombok.experimental.Delegate(excludes = Excludes.class)
+    private final Processor<KIn, VIn, KOut, VOut> delegate;
+
     /**
      * List of all the {@link Punctuator} decorators defined in this library and potential extensions made with the API.
      */
@@ -58,13 +61,16 @@ public class PunctuatorDecorationProcessorDecorator extends AbstractProcessorDec
     /**
      * Injection constructor.
      *
+     * @param delegate
+     *        injection point for composition
      * @param decoratedPunctuators
      *        the list of all {@link Punctuator} decorators defined in this library and potential extensions made with
      *        the API.
      */
     @Inject
-    public PunctuatorDecorationProcessorDecorator(
+    public PunctuatorDecorationProcessorDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate,
             Instance<DecoratedPunctuator> decoratedPunctuators) {
+        this.delegate = delegate;
         this.decoratedPunctuators = decoratedPunctuators;
     }
 
@@ -78,8 +84,8 @@ public class PunctuatorDecorationProcessorDecorator extends AbstractProcessorDec
      * @see PunctuatorDecorationProcessorContextDecorator
      */
     @Override
-    public void init(ProcessorContext context) {
-        getDelegate().init(new PunctuatorDecorationProcessorContextDecorator<>((InternalProcessorContext) context,
+    public void init(ProcessorContext<KOut, VOut> context) {
+        delegate.init(new PunctuatorDecorationProcessorContextDecorator<>((InternalProcessorContext<KOut, VOut>) context,
                 decoratedPunctuators));
     }
 

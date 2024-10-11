@@ -23,8 +23,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.annotation.Priority;
+import jakarta.decorator.Decorator;
 import jakarta.decorator.Delegate;
-import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.common.KafkaException;
@@ -37,7 +37,6 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.apache.kafka.streams.processor.internals.InternalProcessorContext;
 
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import io.quarkiverse.kafkastreamsprocessor.impl.TopologyProducer;
 import io.quarkiverse.kafkastreamsprocessor.impl.errors.DlqMetadataHandler;
@@ -54,10 +53,14 @@ import lombok.RequiredArgsConstructor;
  * Uses a dead-letter sink from the topology, rather than a raw producer, to benefit from the same KStreams guarantees
  * (at least once / exactly once).
  */
-//@Decorator
+@Decorator
 @Priority(ProcessorDecoratorPriorities.DLQ)
-@Dependent
-public class DlqDecorator extends AbstractProcessorDecorator {
+public class DlqDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
+    /**
+     * Inject point for composition
+     */
+    @lombok.experimental.Delegate(excludes = Excludes.class)
+    private final Processor<KIn, VIn, KOut, VOut> delegate;
 
     /**
      * A set of sink names that are involved in the business logic.
@@ -86,10 +89,11 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      * Keeping a reference to the ProcessorContext to be able to use it in the {@link Processor#process(Record)} method
      * whilst not implementing the little too narrowing {@link ContextualProcessor}.
      */
-    private ProcessorContext context;
+    private ProcessorContext<KOut, VOut> context;
 
-    DlqDecorator(Set<String> functionalSinks, DlqMetadataHandler dlqMetadataHandler,
+    DlqDecorator(Processor<KIn, VIn, KOut, VOut> delegate, Set<String> functionalSinks, DlqMetadataHandler dlqMetadataHandler,
             KafkaStreamsProcessorMetrics metrics, boolean activated) {
+        this.delegate = delegate;
         this.functionalSinks = functionalSinks;
         this.dlqMetadataHandler = dlqMetadataHandler;
         this.metrics = metrics;
@@ -99,6 +103,8 @@ public class DlqDecorator extends AbstractProcessorDecorator {
     /**
      * Injection constructor
      *
+     * @param delegate
+     *        inject point for composition, as mandated by the {@link Decorator} mechanism from CDI
      * @param sinkToTopicMappingBuilder
      *        utility to get access to the mapping between sinks and Kafka topics
      * @param dlqMetadataHandler
@@ -111,11 +117,11 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      *        and the configuration Kafka topic to use for dead letter queue (optional)
      */
     @Inject
-    public DlqDecorator(
+    public DlqDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate,
             SinkToTopicMappingBuilder sinkToTopicMappingBuilder, DlqMetadataHandler dlqMetadataHandler,
             KafkaStreamsProcessorMetrics metrics,
             KStreamsProcessorConfig kStreamsProcessorConfig) { // NOSONAR Optional with microprofile-config
-        this(sinkToTopicMappingBuilder.sinkToTopicMapping().keySet(), dlqMetadataHandler, metrics,
+        this(delegate, sinkToTopicMappingBuilder.sinkToTopicMapping().keySet(), dlqMetadataHandler, metrics,
                 ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
                         kStreamsProcessorConfig.dlq().topic()));
     }
@@ -129,12 +135,12 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      * {@inheritDoc}
      */
     @Override
-    public void init(final ProcessorContext context) {
+    public void init(final ProcessorContext<KOut, VOut> context) {
         if (activated) {
-            this.context = new DlqProcessorContextDecorator<>((InternalProcessorContext) context, functionalSinks);
-            getDelegate().init(this.context);
+            this.context = new DlqProcessorContextDecorator<>((InternalProcessorContext<KOut, VOut>) context, functionalSinks);
+            delegate.init(this.context);
         } else {
-            getDelegate().init(context);
+            delegate.init(context);
         }
     }
 
@@ -148,10 +154,10 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      * {@inheritDoc}
      */
     @Override
-    public void process(Record record) {
+    public void process(Record<KIn, VIn> record) {
         if (activated) {
             try {
-                getDelegate().process(record);
+                delegate.process(record);
             } catch (KafkaException e) {
                 // Do not forward to DLQ
                 throw e;
@@ -160,14 +166,14 @@ public class DlqDecorator extends AbstractProcessorDecorator {
                 if (recordMetadata.isPresent()) {
                     dlqMetadataHandler.addMetadata(record.headers(), recordMetadata.get().topic(),
                             recordMetadata.get().partition(), e);
-                    context.forward(record, TopologyProducer.DLQ_SINK_NAME);
+                    context.forward((Record<KOut, VOut>) record, TopologyProducer.DLQ_SINK_NAME);
                     // Re-throw so the exception gets logged
                     metrics.microserviceDlqSentCounter().increment();
                     throw e;
                 }
             }
         } else {
-            getDelegate().process(record);
+            delegate.process(record);
         }
     }
 
