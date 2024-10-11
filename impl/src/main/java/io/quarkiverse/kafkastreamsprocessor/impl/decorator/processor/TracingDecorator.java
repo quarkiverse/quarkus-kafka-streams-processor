@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Priority;
 import jakarta.decorator.Decorator;
-import jakarta.decorator.Delegate;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.common.KafkaException;
@@ -54,13 +54,12 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapGetter;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -72,16 +71,10 @@ import lombok.extern.slf4j.Slf4j;
  * {@link org.apache.kafka.clients.consumer.ConsumerInterceptor}, which executes on the polling thread.
  */
 @Slf4j
-@Decorator
+//@Decorator
 @Priority(ProcessorDecoratorPriorities.TRACING)
-@RequiredArgsConstructor(access = AccessLevel.MODULE)
-public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VIn, KOut, VOut> {
-    /**
-     * Injection point for composition
-     */
-    @lombok.experimental.Delegate(excludes = Excludes.class)
-    private final Processor<KIn, VIn, KOut, VOut> delegate;
-
+@Dependent
+public class TracingDecorator extends AbstractProcessorDecorator {
     /**
      * The {@link OpenTelemetry} configured by Quarkus
      */
@@ -115,13 +108,11 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
     /**
      * Reference to {@link ProcessorContext} cause we can't extend {@link ContextualProcessor} for decoration to work.
      */
-    private ProcessorContext<KOut, VOut> context;
+    private ProcessorContext context;
 
     /**
      * Injection constructor.
      *
-     * @param delegate
-     *        injection point for composition
      * @param openTelemetry
      *        The {@link OpenTelemetry} configured by Quarkus
      * @param textMapGetter
@@ -134,12 +125,22 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
      *        The TopologyConfiguration after customization.
      */
     @Inject
-    public TracingDecorator(@Delegate Processor<KIn, VIn, KOut, VOut> delegate, OpenTelemetry openTelemetry,
+    public TracingDecorator(OpenTelemetry openTelemetry,
             KafkaTextMapGetter textMapGetter, KafkaTextMapSetter textMapSetter, Tracer tracer,
             TopologyConfigurationImpl configuration) {
-        this(delegate, openTelemetry, textMapGetter, textMapSetter, tracer,
+        this(openTelemetry, textMapGetter, textMapSetter, tracer,
                 configuration.getProcessorPayloadType().getName(),
                 JsonFormat.printer());
+    }
+
+    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter, KafkaTextMapSetter textMapSetter,
+            Tracer tracer, String applicationName, JsonFormat.Printer jsonPrinter) {
+        this.openTelemetry = openTelemetry;
+        this.textMapGetter = textMapGetter;
+        this.textMapSetter = textMapSetter;
+        this.tracer = tracer;
+        this.applicationName = applicationName;
+        this.jsonPrinter = jsonPrinter;
     }
 
     /**
@@ -150,8 +151,8 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
      * {@inheritDoc}
      */
     @Override
-    public void init(final ProcessorContext<KOut, VOut> context) {
-        delegate.init(context);
+    public void init(final ProcessorContext context) {
+        getDelegate().init(context);
         this.context = context;
     }
 
@@ -164,7 +165,7 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
      * {@inheritDoc}
      */
     @Override
-    public void process(Record<KIn, VIn> record) {
+    public void process(Record record) {
         SpanBuilder spanBuilder = tracer.spanBuilder(applicationName);
         final TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
 
@@ -194,7 +195,7 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
                 // the headers in the incoming message so when an outgoing message is produced with the copied
                 // header values it already has the span id from this new child span
                 propagator.inject(Context.current(), record.headers(), textMapSetter);
-                delegate.process(record);
+                getDelegate().process(record);
                 span.setStatus(StatusCode.OK);
             } catch (KafkaException e) {
                 // we got a Kafka exception, we record the exception in the span, log but rethrow the exception
@@ -216,7 +217,7 @@ public class TracingDecorator<KIn, VIn, KOut, VOut> implements Processor<KIn, VI
         }
     }
 
-    void logInputMessageMetadata(Record<KIn, VIn> record) {
+    void logInputMessageMetadata(Record record) {
         if (log.isDebugEnabled()) {
             Map<String, String> headers = toMap(record.headers());
             LoggedRecord.LoggedRecordBuilder builder = LoggedRecord.builder()
