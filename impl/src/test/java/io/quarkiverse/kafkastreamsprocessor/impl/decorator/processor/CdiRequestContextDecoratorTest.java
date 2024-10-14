@@ -56,6 +56,7 @@ class CdiRequestContextDecoratorTest {
     public void setup() {
         decorator = new CdiRequestContextDecorator(container);
         decorator.setDelegate(processor);
+        when(container.requestContext()).thenReturn(requestContext);
     }
 
     @Test
