@@ -60,7 +60,8 @@ public class ErrorHandlingStrategy {
             if (dlqTopic.isPresent()) {
                 return true;
             } else {
-                throw new IllegalStateException("DLQ strategy enabled but dlq.topic configuration property is missing");
+                throw new IllegalStateException(
+                        "DLQ strategy enabled but kafkastreamsprocessor.dlq.topic configuration property is missing");
             }
         }
         return false;
