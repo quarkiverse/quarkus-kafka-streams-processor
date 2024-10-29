@@ -19,33 +19,60 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkus.test.Mock;
+
+@ExtendWith({ MockitoExtension.class })
 class ErrorHandlingStrategyTest {
+
+    @Mock
+    KStreamsProcessorConfig extensionConfiguration;
+
+    @Mock
+    DlqConfig dlqConfig;
+
+    @BeforeEach
+    void setUp() {
+        when(extensionConfiguration.dlq()).thenReturn(dlqConfig);
+    }
+
     @Test
     void shouldSendToDlqIfRequested() {
+        when(dlqConfig.topic()).thenReturn(Optional.of("aTopicName"));
+
         assertTrue(
-                ErrorHandlingStrategy.shouldSendToDlq(ErrorHandlingStrategy.DEAD_LETTER_QUEUE, Optional.of("aTopicName")));
+                new ErrorHandlingStrategy(ErrorHandlingStrategy.DEAD_LETTER_QUEUE, extensionConfiguration).shouldSendToDlq());
     }
 
     @Test
     void shouldThrowIfDlqRequestedButNoTopic() {
         Optional<String> noTopic = Optional.empty();
+        when(dlqConfig.topic()).thenReturn(noTopic);
+
         assertThrows(IllegalStateException.class,
-                () -> ErrorHandlingStrategy.shouldSendToDlq(ErrorHandlingStrategy.DEAD_LETTER_QUEUE, noTopic));
+                () -> new ErrorHandlingStrategy(ErrorHandlingStrategy.DEAD_LETTER_QUEUE, extensionConfiguration)
+                        .shouldSendToDlq());
     }
 
     @Test
     void shouldNotSendToDlqWithOtherStrategy() {
-        assertFalse(
-                ErrorHandlingStrategy.shouldSendToDlq(ErrorHandlingStrategy.FAIL, Optional.of("aTopicName")));
-        assertFalse(
-                ErrorHandlingStrategy.shouldSendToDlq(ErrorHandlingStrategy.CONTINUE, Optional.of("aTopicName")));
+        when(dlqConfig.topic()).thenReturn(Optional.of("aTopicName"));
+
+        assertTrue(
+            new ErrorHandlingStrategy(ErrorHandlingStrategy.FAIL, extensionConfiguration).shouldSendToDlq());
+        assertTrue(
+            new ErrorHandlingStrategy(ErrorHandlingStrategy.CONTINUE, extensionConfiguration).shouldSendToDlq());
     }
 }

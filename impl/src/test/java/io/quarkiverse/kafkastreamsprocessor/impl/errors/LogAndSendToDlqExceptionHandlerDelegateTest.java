@@ -22,7 +22,6 @@ package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -71,6 +70,9 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
     private DlqConfig dlqConfig;
 
     @Mock
+    private ErrorHandlingStrategy errorHandlingStrategy;
+
+    @Mock
     private ProcessorContext context;
 
     @Mock
@@ -109,14 +111,14 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
     when(record.partition()).thenReturn(PARTITION);
     when(record.headers()).thenReturn(headers);
     when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
-    when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
+    when(errorHandlingStrategy.shouldSendToDlq()).thenReturn(true);
     RecordHeaders headersWithMetadata = new RecordHeaders();
     when(metadataHandler.withMetadata(any(Headers.class), anyString(), anyInt(), any(Exception.class)))
         .thenReturn(headersWithMetadata);
     when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducerMock);
 
     handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-      kStreamsProcessorConfig);
+      kStreamsProcessorConfig, errorHandlingStrategy);
     handler.configure(Collections.emptyMap());
 
     DeserializationHandlerResponse response = handler.handle(context, record, exception);
@@ -131,12 +133,12 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
 
     @Test
     void shouldOnlyContinueIfDefaultErrorStrategy() {
-        when(kStreamsProcessorConfig.errorStrategy()).thenReturn("continue");
+      when(errorHandlingStrategy.shouldSendToDlq()).thenReturn(false);
         when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
         when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
         handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-          kStreamsProcessorConfig);
+          kStreamsProcessorConfig, errorHandlingStrategy);
         handler.configure(Collections.emptyMap());
 
         DeserializationHandlerResponse response = handler.handle(context, record, exception);
@@ -146,14 +148,4 @@ class LogAndSendToDlqExceptionHandlerDelegateTest {
         assertThat(metrics.processorErrorCounter().count(), closeTo(1d, 0.01d));
     }
 
-    @Test
-    void shouldFailFastIfDlqStrategyWithoutTopic() {
-        when(dlqConfig.topic()).thenReturn(Optional.empty());
-        when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
-        when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
-        handler = new LogAndSendToDlqExceptionHandlerDelegate(kafkaClientSupplier, metrics, metadataHandler,
-          kStreamsProcessorConfig);
-
-        assertThrows(IllegalStateException.class, () -> handler.configure(Collections.emptyMap()));
-    }
 }

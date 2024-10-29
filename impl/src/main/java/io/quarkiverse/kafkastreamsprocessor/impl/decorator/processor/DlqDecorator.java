@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.annotation.Priority;
-import jakarta.decorator.Delegate;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
@@ -44,7 +43,6 @@ import io.quarkiverse.kafkastreamsprocessor.impl.errors.DlqMetadataHandler;
 import io.quarkiverse.kafkastreamsprocessor.impl.errors.ErrorHandlingStrategy;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -54,7 +52,7 @@ import lombok.RequiredArgsConstructor;
  * Uses a dead-letter sink from the topology, rather than a raw producer, to benefit from the same KStreams guarantees
  * (at least once / exactly once).
  */
-//@Decorator
+// @Decorator
 @Priority(ProcessorDecoratorPriorities.DLQ)
 @Dependent
 public class DlqDecorator extends AbstractProcessorDecorator {
@@ -105,19 +103,16 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      *        the enricher of metadata before sending message to the dead letter queue
      * @param metrics
      *        container of all metrics of the framework
-     * @param kStreamsProcessorConfig
-     *        It contains the configuration for the error strategy configuration property value (default
-     *        {@link ErrorHandlingStrategy#CONTINUE})
-     *        and the configuration Kafka topic to use for dead letter queue (optional)
+     * @param errorHandlingStrategy
+     *        tells whether DLQ is activated
      */
     @Inject
     public DlqDecorator(
             SinkToTopicMappingBuilder sinkToTopicMappingBuilder, DlqMetadataHandler dlqMetadataHandler,
             KafkaStreamsProcessorMetrics metrics,
-            KStreamsProcessorConfig kStreamsProcessorConfig) { // NOSONAR Optional with microprofile-config
+            ErrorHandlingStrategy errorHandlingStrategy) { // NOSONAR Optional with microprofile-config
         this(sinkToTopicMappingBuilder.sinkToTopicMapping().keySet(), dlqMetadataHandler, metrics,
-                ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
-                        kStreamsProcessorConfig.dlq().topic()));
+                errorHandlingStrategy.shouldSendToDlq());
     }
 
     /**

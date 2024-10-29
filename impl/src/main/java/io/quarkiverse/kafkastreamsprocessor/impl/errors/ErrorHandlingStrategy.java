@@ -19,11 +19,17 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 
-import java.util.Optional;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 /**
  * Constants related to Kafka error handling
  */
+@ApplicationScoped
 public class ErrorHandlingStrategy {
     /**
      * Configuration property to check for the Kafka error handling strategy
@@ -45,28 +51,30 @@ public class ErrorHandlingStrategy {
      */
     public static final String FAIL = "fail";
 
+    private final String errorStrategy;
+
+    private final KStreamsProcessorConfig kStreamsProcessorConfig;
+
+    @Inject
+    public ErrorHandlingStrategy(@ConfigProperty(name = CONFIG_PROPERTY, defaultValue = CONTINUE) String errorStrategy,
+            KStreamsProcessorConfig config) {
+        this.errorStrategy = errorStrategy;
+        this.kStreamsProcessorConfig = config;
+    }
+
     /**
      * Tells whether microservice-specific DLQ is activated and has a dedicated topic
      *
-     * @param errorStrategy
-     *        the error strategy chosen by an application between <code>continue</code>, <code>dead-letter-queue</code>
-     *        and <code>fail</code>, configured with <code>kafka.error.strategy</code>
-     * @param dlqTopic
-     *        the optional topic that is mandatory if the chosen error strategy is <code>dead-letter-queue</code>
      * @return whether DLQ mechanism is activated by the configuration or not
      */
-    public static boolean shouldSendToDlq(String errorStrategy, Optional<String> dlqTopic) {
-        if (ErrorHandlingStrategy.DEAD_LETTER_QUEUE.equals(errorStrategy)) {
-            if (dlqTopic.isPresent()) {
+    public boolean shouldSendToDlq() {
+        if (DEAD_LETTER_QUEUE.equals(errorStrategy)) {
+            if (kStreamsProcessorConfig.dlq().topic().isPresent()) {
                 return true;
             } else {
                 throw new IllegalStateException("DLQ strategy enabled but dlq.topic configuration property is missing");
             }
         }
         return false;
-    }
-
-    private ErrorHandlingStrategy() {
-        // Prevent instantiation of utility class
     }
 }

@@ -47,8 +47,12 @@ public interface KStreamsProcessorConfig {
 
     /**
      * Kafka error handling strategy
+     *
+     * @deprecated Has actually no effect whatsoever, as it is rather the kafka config entry
+     *             <code>kafka.error.strategy</code> that activates in KafkaStreams the DLQ mechanism.
      */
     @WithDefault("continue")
+    @Deprecated(forRemoval = true, since = "3.0.2")
     String errorStrategy();
 
     /**

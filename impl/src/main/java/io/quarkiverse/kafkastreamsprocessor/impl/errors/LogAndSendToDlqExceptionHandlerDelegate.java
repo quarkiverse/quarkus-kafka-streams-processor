@@ -72,6 +72,8 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
      */
     private final KStreamsProcessorConfig kStreamsProcessorConfig;
 
+    private final ErrorHandlingStrategy errorHandlingStrategy;
+
     /** True if the dead letter queue strategy is selected and properly configured */
     boolean sendToDlq;
 
@@ -91,11 +93,13 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
     public LogAndSendToDlqExceptionHandlerDelegate(KafkaClientSupplier kafkaClientSupplier,
             KafkaStreamsProcessorMetrics metrics,
             DlqMetadataHandler dlqMetadataHandler,
-            KStreamsProcessorConfig kStreamsProcessorConfig) {
+            KStreamsProcessorConfig kStreamsProcessorConfig,
+            ErrorHandlingStrategy errorHandlingStrategy) {
         this.clientSupplier = kafkaClientSupplier;
         this.metrics = metrics;
         this.dlqMetadataHandler = dlqMetadataHandler;
         this.kStreamsProcessorConfig = kStreamsProcessorConfig;
+        this.errorHandlingStrategy = errorHandlingStrategy;
     }
 
     /**
@@ -147,8 +151,7 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
     @Override
     public void configure(final Map<String, ?> configs) {
         // Resolve the DLQ strategy once to fail fast in case of misconfiguration
-        sendToDlq = ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
-                kStreamsProcessorConfig.dlq().topic());
+        sendToDlq = errorHandlingStrategy.shouldSendToDlq();
         if (sendToDlq) {
             Map<String, Object> dlqConfigMap = new HashMap<>(configs);
             dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
