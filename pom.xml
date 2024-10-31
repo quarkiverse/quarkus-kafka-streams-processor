@@ -19,7 +19,6 @@
     <module>impl</module>
     <module>deployment</module>
     <module>runtime</module>
-    <module>docs</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:quarkiverse/quarkus-kafka-streams-processor.git</connection>
@@ -132,15 +131,15 @@
   </build>
   <profiles>
     <profile>
-      <id>it</id>
+      <id>not-to-release</id>
       <activation>
         <property>
-          <name>performRelease</name>
-          <value>!true</value>
+          <name>!performRelease</name>
         </property>
       </activation>
       <modules>
         <module>integration-tests</module>
+        <module>docs</module>
       </modules>
     </profile>
     <profile>
