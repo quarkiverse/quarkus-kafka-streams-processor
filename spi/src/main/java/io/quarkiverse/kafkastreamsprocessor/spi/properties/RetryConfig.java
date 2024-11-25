@@ -97,7 +97,7 @@ public interface RetryConfig {
      * @see Retry#retryOn()
      */
     @WithDefault("io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException")
-    List<Class<? extends Throwable>> retryOn();
+    List<String> retryOn();
 
     /**
      * The list of exception types that should <i>not</i> trigger a retry.
@@ -108,5 +108,5 @@ public interface RetryConfig {
      * @see Retry#abortOn()
      */
     @WithDefault("")
-    Optional<List<Class<? extends Throwable>>> abortOn();
+    Optional<List<String>> abortOn();
 }
