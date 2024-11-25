@@ -46,7 +46,6 @@ import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
 
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.StatusCode;
@@ -59,7 +58,6 @@ import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDec
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapGetter;
-import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -84,11 +82,6 @@ public class TracingDecorator extends AbstractProcessorDecorator {
      * Extracts Context from the Kafka headers of a message
      */
     private final KafkaTextMapGetter textMapGetter;
-
-    /**
-     * Injects Context in the Kafka headers of a message
-     */
-    private final KafkaTextMapSetter textMapSetter;
 
     /**
      * The tracer instance to create spans
@@ -117,27 +110,22 @@ public class TracingDecorator extends AbstractProcessorDecorator {
      *        The {@link OpenTelemetry} configured by Quarkus
      * @param textMapGetter
      *        Extracts Context from the Kafka headers of a message
-     * @param textMapSetter
-     *        Injects Context in the Kafka headers of a message
      * @param tracer
      *        The tracer instance to create spans
      * @param configuration
      *        The TopologyConfiguration after customization.
      */
     @Inject
-    public TracingDecorator(OpenTelemetry openTelemetry,
-            KafkaTextMapGetter textMapGetter, KafkaTextMapSetter textMapSetter, Tracer tracer,
+    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter, Tracer tracer,
             TopologyConfigurationImpl configuration) {
-        this(openTelemetry, textMapGetter, textMapSetter, tracer,
-                configuration.getProcessorPayloadType().getName(),
+        this(openTelemetry, textMapGetter, tracer, configuration.getProcessorPayloadType().getName(),
                 JsonFormat.printer());
     }
 
-    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter, KafkaTextMapSetter textMapSetter,
+    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter,
             Tracer tracer, String applicationName, JsonFormat.Printer jsonPrinter) {
         this.openTelemetry = openTelemetry;
         this.textMapGetter = textMapGetter;
-        this.textMapSetter = textMapSetter;
         this.tracer = tracer;
         this.applicationName = applicationName;
         this.jsonPrinter = jsonPrinter;
@@ -168,52 +156,55 @@ public class TracingDecorator extends AbstractProcessorDecorator {
     public void process(Record record) {
         SpanBuilder spanBuilder = tracer.spanBuilder(applicationName);
         final TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
+        Scope parentScope = null;
 
-        // going through all propagation field names defined in the OTel configuration
-        // we look if any of them has been set with a non-null value in the headers of the incoming message
-        Context extractedContext = null;
-        if (propagator.fields()
-                .stream()
-                .map(record.headers()::lastHeader)
-                .anyMatch(Objects::nonNull)) {
-            // if that is the case, let's extract a Context initialized with the parent trace id, span id
-            // and baggage present as headers in the incoming message
-            extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
-            // use the context as parent span for the built span
-            spanBuilder.setParent(extractedContext);
-            // we clean the headers to avoid their propagation in any outgoing message (knowing that by
-            // default Kafka Streams copies all headers of the incoming message into any outgoing message)
-            propagator.fields().forEach(record.headers()::remove);
-        }
-        Span span = spanBuilder.startSpan();
-        // baggage need to be explicitly set as current otherwise it is not propagated (baggage is independent of span
-        // in opentelemetry) and actually lost as kafka headers are cleaned
-        try (Scope ignored = (extractedContext != null) ? Baggage.fromContext(extractedContext).makeCurrent() : Scope.noop();
-                Scope scope = span.makeCurrent()) {
-            try {
-                // now that the context has been set to the new started child span of this microservice, we replace
-                // the headers in the incoming message so when an outgoing message is produced with the copied
-                // header values it already has the span id from this new child span
-                propagator.inject(Context.current(), record.headers(), textMapSetter);
-                getDelegate().process(record);
-                span.setStatus(StatusCode.OK);
-            } catch (KafkaException e) {
-                // we got a Kafka exception, we record the exception in the span, log but rethrow the exception
-                // with the idea that it will be caught by one of the DLQ in error management
-                span.recordException(e);
-                span.setStatus(StatusCode.ERROR, e.getMessage());
-                logInputMessageMetadata(record);
-                throw e;
-            } catch (RuntimeException e) { // NOSONAR
-                // very last resort, even the DLQs are not working, then we still record the exception and
-                // log the message but do not rethrow the exception otherwise we'd end up in an infinite loop
-                log.error("Runtime error caught while processing the message", e);
-                span.recordException(e);
-                span.setStatus(StatusCode.ERROR, e.getMessage());
-                logInputMessageMetadata(record);
+        try {
+            // going through all propagation field names defined in the OTel configuration
+            // we look if any of them has been set with a non-null value in the headers of the incoming message
+            if (propagator.fields()
+                    .stream()
+                    .map(record.headers()::lastHeader)
+                    .anyMatch(Objects::nonNull)) {
+                // if that is the case, let's extract a Context initialized with the parent trace id, span id
+                // and baggage present as headers in the incoming message
+                Context extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
+                // use the context as parent span for the built span
+                spanBuilder.setParent(extractedContext);
+                // we clean the headers to avoid their propagation in any outgoing message (knowing that by
+                // default Kafka Streams copies all headers of the incoming message into any outgoing message)
+                propagator.fields().forEach(record.headers()::remove);
+                // we make the parent context current to not loose the baggage
+                parentScope = extractedContext.makeCurrent();
+            }
+            Span span = spanBuilder.startSpan();
+            // baggage need to be explicitly set as current otherwise it is not propagated (baggage is independent of span
+            // in opentelemetry) and actually lost as kafka headers are cleaned
+            try (Scope ignored = span.makeCurrent()) {
+                try {
+                    getDelegate().process(record);
+                    span.setStatus(StatusCode.OK);
+                } catch (KafkaException e) {
+                    // we got a Kafka exception, we record the exception in the span, log but rethrow the exception
+                    // with the idea that it will be caught by one of the DLQ in error management
+                    span.recordException(e);
+                    span.setStatus(StatusCode.ERROR, e.getMessage());
+                    logInputMessageMetadata(record);
+                    throw e;
+                } catch (RuntimeException e) { // NOSONAR
+                    // very last resort, even the DLQs are not working, then we still record the exception and
+                    // log the message but do not rethrow the exception otherwise we'd end up in an infinite loop
+                    log.error("Runtime error caught while processing the message", e);
+                    span.recordException(e);
+                    span.setStatus(StatusCode.ERROR, e.getMessage());
+                    logInputMessageMetadata(record);
+                }
+            } finally {
+                span.end();
             }
         } finally {
-            span.end();
+            if (parentScope != null) {
+                parentScope.close();
+            }
         }
     }
 

@@ -19,25 +19,16 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl;
 
-import static io.opentelemetry.sdk.testing.assertj.TracesAssert.assertThat;
 import static io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping.newBuilder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
@@ -47,24 +38,13 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Record;
-import org.apache.kafka.streams.test.TestRecord;
-import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 
-import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
-import io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders;
-import io.quarkiverse.kafkastreamsprocessor.impl.utils.TestSpanExporter;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
@@ -91,15 +71,6 @@ public class KStreamTopologyDriverTest {
 
     TestOutputTopic<String, Ping> testOutputTopic;
 
-    @Inject
-    Tracer tracer;
-
-    @Inject
-    OpenTelemetry openTelemetry;
-
-    @Inject
-    TestSpanExporter testSpanExporter;
-
     @BeforeEach
     public void setup() {
         Properties config = new Properties();
@@ -111,19 +82,6 @@ public class KStreamTopologyDriverTest {
         testOutputTopic = testDriver.createOutputTopic(kStreamsProcessorConfig.output().topic().get(),
                 new StringDeserializer(),
                 new KafkaProtobufDeserializer<>(Ping.parser()));
-
-        clearSpans();
-    }
-
-    @AfterEach
-    public void clearOtel() {
-        clearSpans();
-    }
-
-    private void clearSpans() {
-        // force a flush to make sure there are no remaining spans still in the buffers
-        ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush();
-        testSpanExporter.getSpans().clear();
     }
 
     @Test
@@ -138,61 +96,6 @@ public class KStreamTopologyDriverTest {
         Ping nullInput = newBuilder().setMessage("null").build();
         testInputTopic.pipeInput(nullInput);
         assertTrue(testOutputTopic.isEmpty());
-    }
-
-    @Test
-    public void tracingShouldBePropagatedW3C() {
-        Span parentSpan = tracer.spanBuilder("parent").startSpan();
-        try (Scope parentScope = parentSpan.makeCurrent()) {
-
-            Ping input = newBuilder().setMessage("world").build();
-            RecordHeaders headers = new RecordHeaders();
-            openTelemetry.getPropagators()
-                    .getTextMapPropagator()
-                    .inject(Context.current(), headers, kafkaTextMapSetter);
-            TestRecord record = new TestRecord("key", input, headers);
-            testInputTopic.pipeInput(record);
-            MatcherAssert.assertThat(toMap(testOutputTopic.readRecord().getHeaders()),
-                    hasEntry(equalTo(KafkaStreamsProcessorHeaders.W3C_TRACE_ID),
-                            containsString(parentSpan.getSpanContext().getTraceId())));
-        } finally {
-            parentSpan.end();
-        }
-    }
-
-    private static Map<String, String> toMap(Iterable<Header> headers) {
-        Map<String, String> result = new HashMap<>();
-        for (Header h : headers) {
-            result.put(h.key(), new String(h.value(), StandardCharsets.UTF_8));
-        }
-        return result;
-    }
-
-    @Test
-    public void spanShouldBeCreatedW3C() {
-
-        Span parentSpan = tracer.spanBuilder("parent").startSpan();
-        try (Scope ignored = parentSpan.makeCurrent()) {
-            Ping input = newBuilder().setMessage("world").build();
-            RecordHeaders headers = new RecordHeaders();
-            openTelemetry.getPropagators()
-                    .getTextMapPropagator()
-                    .inject(Context.current(), headers, kafkaTextMapSetter);
-            TestRecord<String, Ping> record = new TestRecord<>("key", input, headers);
-
-            testInputTopic.pipeInput(record);
-            testOutputTopic.readRecord();
-        } finally {
-            parentSpan.end();
-        }
-
-        ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush();
-
-        assertThat(testSpanExporter.getSpans()).hasTracesSatisfyingExactly(
-                trace -> trace.hasSpansSatisfyingExactly(
-                        span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()),
-                        span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
-                                .hasParentSpanId(parentSpan.getSpanContext().getSpanId())));
     }
 
     @Processor
