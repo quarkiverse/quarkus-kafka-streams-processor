@@ -130,19 +130,7 @@
   </build>
   <profiles>
     <profile>
-      <id>docs</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>!true</value>
-        </property>
-      </activation>
-      <modules>
-        <module>docs</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>it</id>
+      <id>not-to-release</id>
       <activation>
         <property>
           <name>performRelease</name>
@@ -151,6 +139,7 @@
       </activation>
       <modules>
         <module>integration-tests</module>
+        <module>docs</module>
       </modules>
     </profile>
     <profile>

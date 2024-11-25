@@ -26,11 +26,6 @@ import java.util.Optional;
  */
 public class ErrorHandlingStrategy {
     /**
-     * Configuration property to check for the Kafka error handling strategy
-     */
-    public static final String CONFIG_PROPERTY = "kafka.error.strategy";
-
-    /**
      * Default strategy: drop the message and continue processing
      */
     public static final String CONTINUE = "continue";
