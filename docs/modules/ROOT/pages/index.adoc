@@ -404,7 +404,7 @@ Its responsibility is to retry indefinitely the `@io.quarkiverse.kafkastreamspro
 
 ==== Configuration
 
-The default behavior can be overriden via the following configuration, ie:
+The default behavior can be overridden via the following configuration:
 
 .application.properties
 [source,properties]
@@ -413,7 +413,7 @@ kafkastreamsprocessor.retry.max-retries=-1
 kafkastreamsprocessor.retry.retry-on=io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException
 ----
 
-As this implementation is based on https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#_retry_usage[Eclipse Microprofile Fault Tolerance] it's also possible to override some default policy (ie: maxDuration, jitter...) under the prefix `kafkastreamsprocessor.retry.`.
+As this implementation is based on https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#_retry_usage[Eclipse Microprofile Fault Tolerance] it's also possible to override some default policy (i.e.: maxDuration, jitter...) under the prefix `kafkastreamsprocessor.retry.`.
 
 ==== Ad hoc usage
 
@@ -447,7 +447,7 @@ Users have to pay attention to some specificities of https://docs.confluent.io/p
 There's a possible impact on Prometheus because this could drastically increase the amount of data needed to store the time series.
 To understand how IDs label are computed, one can read the following documentation on https://docs.confluent.io/platform/{kafka_confluent_version}/streams/monitoring.html#get-runtime-information-on-kafkastreams-clients[KafkaStreams runtime information]
 
-To mitigate the impact, it is a good practice to fix arbitrary prefix to dynamic labels but still, the dynamicity cannot be removed entirely.
+To mitigate the impact, it is a good practice to fix arbitrary prefix to dynamic labels but still, the variability cannot be removed entirely.
 
 As an example, all Kafka metrics have in common the label `client_id`, the resulting computation of the label by the SDK is:
 
@@ -489,7 +489,7 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 
 | kafkastreamsprocessor.punctuation.errors
 | Counter
-| The number of times a Punctuator's execution failed with an exception since the start of the microservice.
+| The number of times the execution of a `Punctuator` failed with an exception since the start of the microservice.
 |===
 
 .Dead Letter Queue Metrics
@@ -744,7 +744,7 @@ The priority is to be set based on the priorities of the existing decorators whi
     public static final int TRACING = 100;
     /**
      * Priority of the decorator in charge or initializing a "request context" for the duration of the processing of the
-     * ContextualProcessor#process(Record)} method. It is closed afterward.
+     * {@link ContextualProcessor#process(Record)} method. It is closed afterward.
      */
     public static final int CDI_REQUEST_SCOPE = 200;
     /**
@@ -769,7 +769,7 @@ The priority is to be set based on the priorities of the existing decorators whi
 ----
 <3> The decorator should have the same generics declaration `<KIn, VIn, KOut, VOut>` as the `Processor<KIn, VIn, KOut, VOut>` interface that it implements
 <4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate] annotation to generate passthrough decorated methods that this Decorator class won't decorate.
+It is annotated with https://projectlombok.org/features/experimental/Delegate[Delegate] annotation from Lombok to generate passthrough decorated methods that this Decorator class won't decorate.
 The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
 <5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
 You can also, as a regular CDI bean, inject any another CDI bean reference to be used in this decorator.
@@ -832,7 +832,7 @@ public class HeaderAddingProducerInterceptor implements ProducerOnSendIntercepto
     @Override
     public ProducerRecord<byte[], byte[]> onSend(ProducerRecord<byte[], byte[]> producerRecord) { // <4>
         producerRecord.headers().remove("header");
-        producerRecord.headers().add("header", "headervalue".getBytes(StandardCharsets.UTF_8));
+        producerRecord.headers().add("header", "headerValue".getBytes(StandardCharsets.UTF_8));
         return producerRecord;
     }
 }
@@ -912,8 +912,8 @@ The priority is to be set based on the priorities of the existing decorators whi
 <3> The decorator should extend the `DecoratedPunctuator` interface defined by this extension.
 It won't be considered otherwise.
 <4> Delegate reference to use when decorating methods.
-It is annotated with lombok's https://projectlombok.org/features/experimental/Delegate[Delegate]
-annotation to generate passthrough decorated methods that this Decorator class won't decorate.
+It is annotated with https://projectlombok.org/features/experimental/Delegate[Delegate]
+annotation from Lombok to generate passthrough decorated methods that this Decorator class won't decorate.
 The selection is done through a blacklist of method signatures gathered in a private `Excludes` interface declared at the end of the class.
 <5> Injection constructor which must have a delegate argument annotated with the `Delegate` annotation from CDI.
 Is showcased here also the injection of another bean to be used in this decorator.
