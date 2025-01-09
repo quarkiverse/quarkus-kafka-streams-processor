@@ -10,6 +10,7 @@ It avoids Kafka Streams' users a lot of boilerplate code to have a dedicated top
 All that is left to develop is a simple Processor class.
 The extension takes care of the rest.
 
+[#_streaming_processor]
 == Streaming processor
 
 A streaming microservice has some requirements:
@@ -22,6 +23,7 @@ A streaming microservice has some requirements:
 There are currently several bootstraps or libraries that support writing stream processor-based applications on different broker technologies.
 This extension's processor solution is based on Kafka Streams' Processor API.
 
+[#_kafka_streams]
 === Kafka Streams
 
 Kafka Streams is an https://github.com/apache/kafka/tree/trunk/streams[opensource client library] that allows to write streaming applications.
@@ -195,6 +197,7 @@ Fo example, the possible way to override a pass-through property in a Kafka Stre
 -Dquarkus.kafka-streams.producer.linger.ms=50
 ----
 
+[#_data_serialization]
 == Data serialization
 
 Data serialization refers to the process of converting complex data structures or objects into a format that can be easily transmitted over a network.
@@ -246,6 +249,7 @@ public class PojoProcessor extends ContextualProcessor<String, SamplePojo, Strin
 
 In order to customize the JSON serialization, the SDK relies on the `ObjectMapper` customization from {quarkus-guides}/rest-json#json[Quarkus]
 
+[#_serialization_to_protobuf_and_its_caveats]
 === Serialization to Protobuf and its caveats
 
 Protobuf values and String are the first class citizen data types in Kafka Streams Processor messaging.
@@ -333,6 +337,7 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
 The `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` implementation provided sets the required Serializer and Deserializer into the method's `io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration` object.
 In this example, we set a custom serialization through the usage of Kafka Serdes.
 
+[#_error_management]
 == Error management
 
 === Strategy for error management
@@ -433,6 +438,7 @@ public class PingerService {
 io.quarkiverse.kafkastreamsprocessor.example.PingerService/Retry/maxRetries=3
 ----
 
+[#_monitoring]
 == Monitoring
 
 === Kafka metrics cardinality
@@ -687,6 +693,7 @@ Exceptions are also counted with a dedicated metric.
 
 The extension proposes some capabilities to customize more finely the behaviour of the different layers of decoration in addition to the ones that this extension brings to the table.
 
+[#_processor_decorator]
 === Processor decorator
 
 The following decoration layer is already extensively used in this extension's source code and allows to use composition around the main processor class you have to define.
