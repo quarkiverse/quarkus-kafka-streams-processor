@@ -8,6 +8,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>quarkus-kafka-streams-processor-custom-serde-sample</artifactId>
+  <name>quarkus-kafka-streams-processor-custom-serde-sample</name>
 
   <dependencyManagement>
     <dependencies>

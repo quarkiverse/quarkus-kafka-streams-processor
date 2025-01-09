@@ -7,6 +7,7 @@
     <version>4.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-kafka-streams-processor-spi</artifactId>
+  <name>quarkus-kafka-streams-processor-spi</name>
   <dependencyManagement>
     <dependencies>
       <dependency>
