@@ -17,40 +17,36 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.impl.decorator.producer;
+package io.quarkiverse.kafkastreamsprocessor.impl.decorator.outputrecord;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.streams.processor.api.Record;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerInterceptorPriorities;
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
+import io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptor;
+import io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptorPriorities;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 
 /**
  * Producer interceptor that injects the tracing headers for propagation.
- *
- * @deprecated Will be deactivated in favor of
- *             {@link io.quarkiverse.kafkastreamsprocessor.impl.decorator.outputrecord.TracingOutputRecordInterceptor}
  */
 @ApplicationScoped
-@Deprecated(forRemoval = true, since = "4.1")
-public class TracingProducerInterceptor implements ProducerOnSendInterceptor {
+public class TracingOutputRecordInterceptor implements OutputRecordInterceptor {
     private final OpenTelemetry openTelemetry;
 
     private final KafkaTextMapSetter kafkaTextMapSetter;
 
     @Inject
-    public TracingProducerInterceptor(OpenTelemetry openTelemetry, KafkaTextMapSetter kafkaTextMapSetter) {
+    public TracingOutputRecordInterceptor(OpenTelemetry openTelemetry, KafkaTextMapSetter kafkaTextMapSetter) {
         this.openTelemetry = openTelemetry;
         this.kafkaTextMapSetter = kafkaTextMapSetter;
     }
 
     @Override
-    public ProducerRecord<byte[], byte[]> onSend(ProducerRecord<byte[], byte[]> record) {
+    public Record interceptOutputRecord(Record record) {
         openTelemetry.getPropagators().getTextMapPropagator().fields().forEach(record.headers()::remove);
         openTelemetry.getPropagators()
                 .getTextMapPropagator()
@@ -60,6 +56,6 @@ public class TracingProducerInterceptor implements ProducerOnSendInterceptor {
 
     @Override
     public int priority() {
-        return ProducerInterceptorPriorities.TRACING;
+        return OutputRecordInterceptorPriorities.TRACING;
     }
 }
