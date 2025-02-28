@@ -104,6 +104,7 @@ class TopologyProducerTest {
         when(processorSupplier.get()).thenReturn(mock(org.apache.kafka.streams.processor.api.Processor.class),
                 mock(org.apache.kafka.streams.processor.api.Processor.class));
         configuration = mock(TopologyConfigurationImpl.class);
+        when(configuration.getSourceKeySerde()).thenReturn(mock(Serde.class));
         when(configuration.getSourceValueSerde()).thenReturn(mock(Serde.class));
     }
 

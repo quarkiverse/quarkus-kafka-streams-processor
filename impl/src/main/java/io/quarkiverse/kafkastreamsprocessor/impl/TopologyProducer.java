@@ -27,8 +27,6 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.api.Processor;
@@ -145,12 +143,17 @@ public class TopologyProducer {
 
     private static TopologyConfigurationImpl initializeConfiguration(BeanManager beanManager) {
         Class<?> processorType = TypeUtils.reifiedProcessorType(beanManager);
+        Class<?> keyType = TypeUtils.extractKeyType(processorType);
+        if (keyType == null || Object.class.equals(keyType)) {
+            throw new IllegalArgumentException(
+                    "Could not determine key type of Processor class " + processorType.getName());
+        }
         Class<?> payloadType = TypeUtils.extractPayloadType(processorType);
         if (payloadType == null || Object.class.equals(payloadType)) {
             throw new IllegalArgumentException(
                     "Could not determine payload type of Processor class " + processorType.getName());
         }
-        return new TopologyConfigurationImpl(payloadType);
+        return new TopologyConfigurationImpl(keyType, payloadType);
     }
 
     /**
@@ -171,15 +174,18 @@ public class TopologyProducer {
 
         // Now we can build the Topology !
         Topology topology = new Topology();
-        sourceToTopicMapping.forEach((String source, String[] topics) -> topology.addSource(source,
-                new StringDeserializer(), configuration.getSourceValueSerde().deserializer(), topics));
+        sourceToTopicMapping.forEach(
+                (String source, String[] topics) -> topology.addSource(source, configuration.getSourceKeySerde().deserializer(),
+                        configuration.getSourceValueSerde().deserializer(), topics));
         topology.addProcessor(PROCESSOR_NAME,
                 kStreamProcessorSupplier,
                 sourceToTopicMapping.keySet().toArray(new String[] {}));
-        sinkToTopicMapping.forEach((String sink, String topic) -> topology.addSink(sink, topic, new StringSerializer(),
-                configuration.getSinkValueSerializer(), PROCESSOR_NAME));
+        sinkToTopicMapping
+                .forEach((String sink, String topic) -> topology.addSink(sink, topic, configuration.getSinkKeySerializer(),
+                        configuration.getSinkValueSerializer(), PROCESSOR_NAME));
         if (kStreamsProcessorConfig.dlq().topic().isPresent()) {
-            topology.addSink(DLQ_SINK_NAME, kStreamsProcessorConfig.dlq().topic().get(), new StringSerializer(),
+            topology.addSink(DLQ_SINK_NAME, kStreamsProcessorConfig.dlq().topic().get(),
+                    configuration.getSourceKeySerde().serializer(),
                     configuration.getSourceValueSerde().serializer(), PROCESSOR_NAME);
         }
 

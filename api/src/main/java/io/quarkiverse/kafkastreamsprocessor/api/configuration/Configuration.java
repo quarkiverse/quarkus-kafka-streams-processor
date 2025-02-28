@@ -36,6 +36,14 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfigu
 public interface Configuration {
 
     /**
+     * Class representing the type of keys handled by the {@link Processor}.
+     * <p>
+     * Default is {@link String}.
+     * </p>
+     */
+    Class<?> getProcessorKeyType();
+
+    /**
      * Class representing the type of values handled by the {@link Processor}. This value
      * is initialized internally by the TopologyProducer. It is read-only because you shouldn't modify it, although you
      * can read it.
@@ -43,6 +51,17 @@ public interface Configuration {
      * It is primarily used to instantiate the default value deserializer using generics.
      */
     Class<?> getProcessorPayloadType();
+
+    /**
+     * Serde for the keys fed to the {@link Processor}. Use the setter if you want to
+     * override it.
+     */
+    void setSourceKeySerde(Serde<?> serde);
+
+    /**
+     * @return The serde for keys fed to the {@link Processor}
+     */
+    Serde<?> getSourceKeySerde();
 
     /**
      * Serde for the value fed to the {@link Processor}. Use the setter if you want to
@@ -54,6 +73,17 @@ public interface Configuration {
      * @return The serde for values fed to the {@link Processor}
      */
     Serde<?> getSourceValueSerde();
+
+    /**
+     * Serializer for values forwarded by the {@link Processor}. Use the setter if you want
+     * to override it.
+     */
+    void setSinkKeySerializer(Serializer<?> serializer);
+
+    /**
+     * @return The serializer for values forwarded by the {@link Processor}
+     */
+    Serializer<?> getSinkKeySerializer();
 
     /**
      * Serializer for values forwarded by the {@link Processor}. Use the setter if you want

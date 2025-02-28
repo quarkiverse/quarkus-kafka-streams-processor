@@ -21,16 +21,13 @@ package io.quarkiverse.kafkastreamsprocessor.impl;
 
 import jakarta.inject.Inject;
 
-import org.apache.kafka.common.serialization.Serializer;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.MessageLite;
 
 /**
  * Bridge serializer based on introspection that allows a JSON first input message policy.
  */
-public class IntrospectionSerializer implements Serializer<Object> {
+public class IntrospectionSerializer extends AbstractIntrospectionSerializer {
     private final ObjectMapper objectMapper;
 
     /**
@@ -44,27 +41,8 @@ public class IntrospectionSerializer implements Serializer<Object> {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    // Returning null is a valid behaviour here
-    @SuppressWarnings("java:S1168")
-    public byte[] serialize(String topic, java.lang.Object data) {
-        // null needs to treated specially since the client most likely just wants to send
-        // an individual null value. null in Kafka has a special meaning for deletion in a
-        // topic with the compact retention policy.
-        if (data == null) {
-            return null;
-        }
-        if (data instanceof MessageLite) {
-            return ((MessageLite) data).toByteArray();
-        } else {
-            return serializeAsJson(data);
-        }
-    }
-
-    private byte[] serializeAsJson(Object data) {
+    byte[] serializeNonProtobuf(Object data) {
         try {
             return objectMapper.writeValueAsBytes(data);
         } catch (JsonProcessingException e) {

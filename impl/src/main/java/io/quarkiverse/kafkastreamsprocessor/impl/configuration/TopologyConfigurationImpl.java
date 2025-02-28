@@ -38,7 +38,10 @@ import lombok.Data;
 @Data
 public class TopologyConfigurationImpl implements Configuration {
 
+    private final Class<?> processorKeyType;
     private final Class<?> processorPayloadType;
+    private Serializer<?> sinkKeySerializer;
+    private Serde<?> sourceKeySerde;
     private Serializer<?> sinkValueSerializer;
     private Serde<?> sourceValueSerde;
     private List<StoreConfiguration> storeConfigurations = Collections.emptyList();
@@ -49,7 +52,8 @@ public class TopologyConfigurationImpl implements Configuration {
      * @param processorPayloadType
      *        the input payload type
      */
-    public TopologyConfigurationImpl(Class<?> processorPayloadType) {
+    public TopologyConfigurationImpl(Class<?> processorKeyType, Class<?> processorPayloadType) {
+        this.processorKeyType = processorKeyType;
         this.processorPayloadType = processorPayloadType;
     }
 
