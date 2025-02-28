@@ -19,16 +19,15 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.configuration;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +37,7 @@ import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerde;
 
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerde;
 import io.quarkiverse.kafkastreamsprocessor.impl.IntrospectionSerializer;
+import io.quarkiverse.kafkastreamsprocessor.impl.StringIntrospectionSerializer;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
 
 class DefaultTopologySerdesConfigurationTest {
@@ -56,7 +56,8 @@ class DefaultTopologySerdesConfigurationTest {
     }
 
     @Test
-    void shouldSetIntrospectionSerializerByDefault() {
+    void valueDefaultIntrospectionSerializer() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) String.class);
         when(configuration.getProcessorPayloadType()).thenReturn((Class) JSonPojo.class);
         when(configuration.getSinkValueSerializer()).thenReturn(null);
         customizer.apply(configuration);
@@ -64,30 +65,70 @@ class DefaultTopologySerdesConfigurationTest {
     }
 
     @Test
-    void shouldSetCustomizedSinkSerializerAndValueSerde() {
+    void leaveConfiguredValueSourceSerdeAndSinkSerializer() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) String.class);
         Serde customSerde = mock(Serde.class);
         Serializer customSerialiazer = mock(Serializer.class);
         when(configuration.getSinkValueSerializer()).thenReturn(customSerialiazer);
         when(configuration.getSourceValueSerde()).thenReturn(customSerde);
         customizer.apply(configuration);
-        assertThat(configuration.getSinkValueSerializer(), is(equalTo(customSerialiazer)));
-        assertThat(configuration.getSourceValueSerde(), is(equalTo(customSerde)));
+        verify(configuration, never()).setSinkValueSerializer(any());
+        verify(configuration, never()).setSourceValueSerde(any());
     }
 
     @Test
-    void shouldSetProtobufSerdeWhenProcessorIsProtobuf() {
+    void valueProtobufSerde() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) String.class);
         when(configuration.getProcessorPayloadType()).thenReturn((Class) PingMessage.Ping.class);
         customizer.apply(configuration);
         verify(configuration).setSourceValueSerde(isA(KafkaProtobufSerde.class));
     }
 
     @Test
-    void shouldSetJacksonSerdeWhenProcessorIsAPojo() {
+    void valueJacksonSerde() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) String.class);
         when(configuration.getProcessorPayloadType()).thenReturn((Class) JSonPojo.class);
         customizer.apply(configuration);
         verify(configuration).setSourceValueSerde(isA(JacksonSerde.class));
     }
 
     class JSonPojo {
+    }
+
+    @Test
+    void keyStringIntrospectionSerializer() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) JSonPojo.class);
+        when(configuration.getProcessorPayloadType()).thenReturn((Class) String.class);
+        when(configuration.getSinkKeySerializer()).thenReturn(null);
+        customizer.apply(configuration);
+        verify(configuration).setSinkKeySerializer(any(StringIntrospectionSerializer.class));
+    }
+
+    @Test
+    void leaveCustomKeySourceSerdeAndSinkSerializer() {
+        when(configuration.getProcessorPayloadType()).thenReturn((Class) String.class);
+        Serde customSerde = mock(Serde.class);
+        Serializer customSerialiazer = mock(Serializer.class);
+        when(configuration.getSinkKeySerializer()).thenReturn(customSerialiazer);
+        when(configuration.getSourceKeySerde()).thenReturn(customSerde);
+        customizer.apply(configuration);
+        verify(configuration, never()).setSinkKeySerializer(any());
+        verify(configuration, never()).setSourceKeySerde(any());
+    }
+
+    @Test
+    void keyProtobufSerde() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) PingMessage.Ping.class);
+        when(configuration.getProcessorPayloadType()).thenReturn((Class) String.class);
+        customizer.apply(configuration);
+        verify(configuration).setSourceKeySerde(isA(KafkaProtobufSerde.class));
+    }
+
+    @Test
+    void keyStringSerde() {
+        when(configuration.getProcessorKeyType()).thenReturn((Class) JSonPojo.class);
+        when(configuration.getProcessorPayloadType()).thenReturn((Class) String.class);
+        customizer.apply(configuration);
+        verify(configuration).setSourceKeySerde(isA(Serdes.StringSerde.class));
     }
 }

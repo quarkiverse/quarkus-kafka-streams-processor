@@ -24,6 +24,7 @@ import static io.quarkiverse.kafkastreamsprocessor.impl.configuration.TypeUtils.
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.Topology;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerde;
 import io.quarkiverse.kafkastreamsprocessor.impl.IntrospectionSerializer;
+import io.quarkiverse.kafkastreamsprocessor.impl.StringIntrospectionSerializer;
 
 /**
  * Default serde configuration for the {@link Topology}.
@@ -75,6 +77,14 @@ public class DefaultTopologySerdesConfiguration {
     }
 
     private void configureSourceValueSerde(TopologyConfigurationImpl configuration) {
+        if (configuration.getSourceKeySerde() == null) {
+            if (MessageLite.class.isAssignableFrom(configuration.getProcessorKeyType())) {
+                Parser<? extends MessageLite> parser = createParserFromType(configuration.getProcessorKeyType());
+                configuration.setSourceKeySerde(new KafkaProtobufSerde<>(parser));
+            } else {
+                configuration.setSourceKeySerde(Serdes.String());
+            }
+        }
         if (configuration.getSourceValueSerde() == null) {
             if (MessageLite.class.isAssignableFrom(configuration.getProcessorPayloadType())) {
                 Parser<? extends MessageLite> parser = createParserFromType(configuration.getProcessorPayloadType());
@@ -86,9 +96,11 @@ public class DefaultTopologySerdesConfiguration {
     }
 
     private void configureSinkValueSerializer(TopologyConfigurationImpl configuration) {
+        if (configuration.getSinkKeySerializer() == null) {
+            configuration.setSinkKeySerializer(new StringIntrospectionSerializer());
+        }
         if (configuration.getSinkValueSerializer() == null) {
-            IntrospectionSerializer serializer = new IntrospectionSerializer(objectMapper);
-            configuration.setSinkValueSerializer(serializer);
+            configuration.setSinkValueSerializer(new IntrospectionSerializer(objectMapper));
         }
     }
 }

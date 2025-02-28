@@ -33,6 +33,8 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
+import lombok.RequiredArgsConstructor;
+
 /**
  * Helper class for type inference from kstream processor generic types
  */
@@ -73,7 +75,7 @@ public final class TypeUtils {
     }
 
     /**
-     * Determine the type payload type (V or Vin generic type arg of processor API). With Kafka 3.x, we can no longer look
+     * Determine the type's payload type (V or Vin generic type arg of processor API). With Kafka 3.x, we can no longer look
      * at the signature of the process method as Record is also a generic type. However, we can look at the type hierarchy
      * of the processor.
      * <p>
@@ -84,27 +86,51 @@ public final class TypeUtils {
      *         arguments.
      */
     public static Class<?> extractPayloadType(Type type) {
-        // If current class is parametrized, stop here.
-        if (type instanceof ParameterizedType && ((ParameterizedType) type).getActualTypeArguments().length >= 2) {
-            return TypeFactory.rawClass(((ParameterizedType) type).getActualTypeArguments()[1]);
-        }
+        return new TypeExtractor(1).extractType(type);
+    }
 
-        // Recursion on superclass
-        Class<?> clazz = TypeFactory.rawClass(type);
-        if (clazz.getGenericSuperclass() != null) {
-            Class<?> payloadType = extractPayloadType(clazz.getGenericSuperclass());
-            if (payloadType != null) {
-                return payloadType;
-            }
-        }
+    /**
+     * Determine the type's key type (K or Kin generic type arg of processor API). With Kafka 3.x, we can no longer look
+     * at the signature of the process method as Record is also a generic type. However, we can look at the type hierarchy
+     * of the processor.
+     * <p>
+     * Recursion stops at the first superclass or superinterface which is a parametrized type, and we assume the payload
+     * type is the 1st type argument, which works both for Kafka 2 and Kafka 3 APIs.
+     *
+     * @return The key type class, or null if the type hierarchy doesn't contain a parametrized type with at least 2
+     *         arguments.
+     */
+    public static Class<?> extractKeyType(Type type) {
+        return new TypeExtractor(0).extractType(type);
+    }
 
-        // Recursion on superinterfaces
-        for (Type interfaceType : clazz.getGenericInterfaces()) {
-            Class<?> payloadType = extractPayloadType(interfaceType);
-            if (payloadType != null) {
-                return payloadType;
+    @RequiredArgsConstructor
+    private static class TypeExtractor {
+        private final int genericIndex;
+
+        public Class<?> extractType(Type type) {
+            // If current class is parametrized, stop here.
+            if (type instanceof ParameterizedType && ((ParameterizedType) type).getActualTypeArguments().length >= 2) {
+                return TypeFactory.rawClass(((ParameterizedType) type).getActualTypeArguments()[genericIndex]);
             }
+
+            // Recursion on superclass
+            Class<?> clazz = TypeFactory.rawClass(type);
+            if (clazz.getGenericSuperclass() != null) {
+                Class<?> aType = extractType(clazz.getGenericSuperclass());
+                if (aType != null) {
+                    return aType;
+                }
+            }
+
+            // Recursion on superinterfaces
+            for (Type interfaceType : clazz.getGenericInterfaces()) {
+                Class<?> aType = extractType(interfaceType);
+                if (aType != null) {
+                    return aType;
+                }
+            }
+            return null;
         }
-        return null;
     }
 }
