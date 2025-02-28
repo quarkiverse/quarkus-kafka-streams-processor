@@ -58,25 +58,36 @@ public final class ProcessorDecoratorPriorities {
      * {@link ContextualProcessor#process(Record)} method.
      */
     public static final int TRACING = 100;
+
     /**
      * Priority of the decorator in charge or initializing a "request context" for the duration of the processing of the
      * ContextualProcessor#process(Record)} method. It is closed afterward.
      */
     public static final int CDI_REQUEST_SCOPE = 200;
+
+    /**
+     * Priority for the decorator that wraps the {@link org.apache.kafka.streams.processor.api.ProcessorContext} to
+     * intercept calls to its <code>forward</code> methods.
+     */
+    public static final int CONTEXT_FORWARD = 250;
+
     /**
      * Priority of the decorator that will handle exception and potentially redirect the message in a dead letter queue
      * topic, if configured.
      */
     public static final int DLQ = 300;
+
     /**
      * Priority of the decorator in charge of measuring the processing time and the number of exceptions thrown.
      */
     public static final int METRICS = 400;
+
     /**
      * Priority of the decorator in charge of injecting all {@link DecoratedPunctuator} configured by the framework and
      * your custom potential additions.
      */
     public static final int PUNCTUATOR_DECORATION = 500;
+
     /**
      * Priority of the decorator in charge of implementing a form of fault tolerance by means of calling again the
      * {@link ContextualProcessor#process(Record)} method.

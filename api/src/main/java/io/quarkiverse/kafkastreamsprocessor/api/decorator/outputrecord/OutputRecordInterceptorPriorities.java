@@ -17,22 +17,18 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.api.decorator.producer;
+package io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord;
 
 /**
- * Priorities of the producer interceptors the framework provides.
- *
- * @deprecated Change any producer interceptor into a
- *             {@link io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptor}.
+ * Priorities of the output record interceptors the framework provides.
  */
-@Deprecated(forRemoval = true, since = "4.1")
-public final class ProducerInterceptorPriorities {
+public final class OutputRecordInterceptorPriorities {
     /**
      * Priority of the interceptor that will inject the tracing headers for propagation.
      */
     public static final int TRACING = 100;
 
-    private ProducerInterceptorPriorities() {
+    private OutputRecordInterceptorPriorities() {
 
     }
 }

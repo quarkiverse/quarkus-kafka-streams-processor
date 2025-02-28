@@ -26,7 +26,11 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 /**
  * Interface to extend to by able to decorate the production of the response message to the outgoing topic.
+ *
+ * @deprecated Change any producer interceptor into a
+ *             {@link io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptor}.
  */
+@Deprecated(forRemoval = true, since = "4.1")
 public interface ProducerOnSendInterceptor extends ProducerInterceptor<byte[], byte[]> {
     /**
      * By default, if not overriden, the interceptor has the following priority.

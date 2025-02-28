@@ -39,11 +39,7 @@ import lombok.experimental.Delegate;
  * Class introduced in 2.0, for compatibility with Quarkus 3.8 random failure to start when using custom processor
  * decorators.
  * </p>
- *
- * @deprecated It will be removed in 3.0, with the integration of Quarkus 3.15 where we will be able to go back to pure
- *             CDI decorators.
  */
-@Deprecated(forRemoval = true, since = "2.0")
 public abstract class AbstractProcessorDecorator implements Processor {
     /**
      * The decorated processor, holding either the next decorator layer or the final processor.

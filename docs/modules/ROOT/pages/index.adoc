@@ -120,7 +120,7 @@ For keys, only type `String` is supported.
 For values, see <<_data_serialization, supported types>>.
 <3> The `process` method is called for each incoming message.
 Any processing must be done synchronously.
-<4> The `forward` method allows to produce an outgoing message.
+<4> The `outputrecord` method allows to produce an outgoing message.
 Internally Kafka Streams links the acknowledgment on the outgoing message with the commit of the associated incoming message.
 
 === Topology builder
@@ -746,6 +746,11 @@ The priority is to be set based on the priorities of the existing decorators whi
      */
     public static final int PUNCTUATOR_DECORATION = 500;
     /**
+     * Priority for the decorator that wraps the {@link org.apache.kafka.streams.processor.api.ProcessorContext} to
+     * intercept calls to its <code>forward</code> methods.
+     */
+    public static final int CONTEXT_FORWARD = 550;
+    /**
      * Priority of the decorator in charge of implementing a form of fault tolerance by means of calling again the
      * {@link ContextualProcessor#process(Record)} method.
      */
@@ -757,7 +762,52 @@ The priority is to be set based on the priorities of the existing decorators whi
 Such a decorator will automatically been taken into account by CDI.
 The priority will control at which point your decorator will be called among all other decorators.
 
-=== Producer interceptor
+[#_output_record_interceptor]
+=== Output record interceptor
+
+A `Processor` usually ends with the forwarding of an outgoing message.
+For that purpose, the `ProcessorContext#foward` methods are to be used.
+
+From `quarkus-kafka-streams-processor` 4.1, calls to those methods can be intercepted.
+If you define a bean of type `OutputRecordInterceptor`, it will be taken up by the framework and executed.
+There is an order to multiple instances of interceptors, driven by the value returned by `OutputRecordInterceptor#priority`.
+
+Example of interceptor:
+
+[source,java]
+----
+@ApplicationScoped
+public class MyOutputRecordInterceptor implements OutputRecordInterceptor {
+    @Override
+    public Record interceptOutputRecord(Record record) {
+        record.headers().add("MyHeader", "MyValue".getBytes(StandardCharsets.UTF_8));
+        return record;
+    }
+
+    @Override
+    public int priority() {
+        return 150; // <1>
+    }
+}
+----
+
+<1> Priority of this interceptor.
+Default priority is 100.
+References for priorities of existing interceptors this library provides:
++
+[source,java]
+----
+    /**
+     * Priority of the interceptor that will inject the tracing headers for propagation.
+     */
+    public static final int TRACING = 100;
+----
++
+Lower priority are executed first.
+
+=== Producer interceptor [deprecated]
+
+WARNING: Producer interceptors are from 4.1 deprecated. They should be reimplemented as xref:_output_record_interceptor[OutputRecordInterceptor].
 
 Kafka Streams already has the concept of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
 But as the rest of Kafka Streams SPI, it is based on a class name and a default constructor for instantiation.
