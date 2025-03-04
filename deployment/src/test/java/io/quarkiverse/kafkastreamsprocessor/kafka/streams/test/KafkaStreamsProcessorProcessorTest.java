@@ -50,6 +50,7 @@ public class KafkaStreamsProcessorProcessorTest {
             .overrideConfigKey("kafkastreamsprocessor.input.topics", "ping-events")
             .overrideConfigKey("kafkastreamsprocessor.output.topic", "pong-events")
             .overrideConfigKey("quarkus.kafka-streams.topics", "ping-events,pong-events")
+            .overrideConfigKey("quarkus.kafka.devservices.provider", "kafka-native")
             .addBuildChainCustomizer(buildCustomizer());
 
     private static Consumer<BuildChainBuilder> buildCustomizer() {

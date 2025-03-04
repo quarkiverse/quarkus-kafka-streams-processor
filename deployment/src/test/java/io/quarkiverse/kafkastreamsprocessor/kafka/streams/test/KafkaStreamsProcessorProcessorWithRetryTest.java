@@ -54,6 +54,7 @@ public class KafkaStreamsProcessorProcessorWithRetryTest {
                     "io.quarkiverse.kafkastreamsprocessor.kafka.streams.test.KafkaStreamsProcessorProcessorWithRetryTest$RetryException")
             .overrideConfigKey("kafkastreamsprocessor.retry.abort-on",
                     "io.quarkiverse.kafkastreamsprocessor.kafka.streams.test.KafkaStreamsProcessorProcessorWithRetryTest$AbortException")
+            .overrideConfigKey("quarkus.kafka.devservices.provider", "kafka-native")
             .addBuildChainCustomizer(buildCustomizer());
 
     private static Consumer<BuildChainBuilder> buildCustomizer() {
