@@ -136,7 +136,8 @@ public class TracingDecoratorTest {
         rootLogger.setLevel(Level.DEBUG);
         when(topologyConfiguration.getProcessorPayloadType()).thenReturn((Class) MockType.class);
         decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
-                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+            kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(),
+            jsonPrinter);
         decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
     }
@@ -147,9 +148,9 @@ public class TracingDecoratorTest {
         try (Scope parentScope = parentSpan.makeCurrent()) {
             Headers headers = new RecordHeaders();
             otel.getOpenTelemetry()
-                    .getPropagators()
-                    .getTextMapPropagator()
-                    .inject(Context.current(), headers, kafkaTextMapSetter);
+                .getPropagators()
+                .getTextMapPropagator()
+                .inject(Context.current(), headers, kafkaTextMapSetter);
             Record<String, Ping> record = new Record<>(null, null, 0L, headers);
 
             decorator.process(record);
@@ -166,13 +167,13 @@ public class TracingDecoratorTest {
     public void shouldStartAndFinishSpan() {
         // manually build parent span to inject some TraceState and test the state is well recorded in the created span
         Span parentSpan = Span.wrap(SpanContext.create(IdGenerator.random().generateTraceId(), IdGenerator.random()
-                .generateSpanId(), TraceFlags.getSampled(), TraceState.builder().put("state1", "value2").build()));
+            .generateSpanId(), TraceFlags.getSampled(), TraceState.builder().put("state1", "value2").build()));
         try (Scope parentScope = parentSpan.makeCurrent()) {
             RecordHeaders headers = new RecordHeaders();
             otel.getOpenTelemetry()
-                    .getPropagators()
-                    .getTextMapPropagator()
-                    .inject(Context.current(), headers, kafkaTextMapSetter);
+                .getPropagators()
+                .getTextMapPropagator()
+                .inject(Context.current(), headers, kafkaTextMapSetter);
             Record<String, Ping> record = new Record<>(null, null, 0L, headers);
 
             decorator.process(record);
@@ -181,12 +182,12 @@ public class TracingDecoratorTest {
         }
 
         assertThat(otel.getSpans())
-                .hasTracesSatisfyingExactly(
-                        trace -> trace.hasSpansSatisfyingExactly(
-                                span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
-                                        .hasName(PROCESSOR_NAME)
-                                        .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
-                                        .hasTraceState(TraceState.builder().put("state1", "value2").build())));
+            .hasTracesSatisfyingExactly(
+                trace -> trace.hasSpansSatisfyingExactly(
+                    span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
+                        .hasName(PROCESSOR_NAME)
+                        .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
+                        .hasTraceState(TraceState.builder().put("state1", "value2").build())));
     }
 
     @Test
@@ -195,15 +196,16 @@ public class TracingDecoratorTest {
         try (Scope parentScope = parentSpan.makeCurrent()) {
             Headers headers = new RecordHeaders();
             otel.getOpenTelemetry()
-                    .getPropagators()
-                    .getTextMapPropagator()
-                    .inject(Context.current(), headers, kafkaTextMapSetter);
+                .getPropagators()
+                .getTextMapPropagator()
+                .inject(Context.current(), headers, kafkaTextMapSetter);
             Record<String, Ping> record = new Record<>(null, Ping.newBuilder()
-                    .setMessage("blabla")
-                    .build(), 0L, headers);
+                .setMessage("blabla")
+                .build(), 0L, headers);
 
             decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
-                    tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+                kafkaTextMapSetter,
+                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
             decorator.setDelegate(new ThrowExceptionProcessor());
             decorator.init(processorContext);
 
@@ -215,12 +217,12 @@ public class TracingDecoratorTest {
         assertNull(MDC.get("traceId"));
 
         assertThat(otel.getSpans())
-                .hasTracesSatisfyingExactly(trace -> trace.hasSpansSatisfyingExactly(
-                        span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()),
-                        span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
-                                .hasName(PROCESSOR_NAME)
-                                .hasStatusSatisfying(status -> status.hasCode(StatusCode.ERROR))
-                                .hasException(new TestException())));
+            .hasTracesSatisfyingExactly(trace -> trace.hasSpansSatisfyingExactly(
+                span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()),
+                span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
+                    .hasName(PROCESSOR_NAME)
+                    .hasStatusSatisfying(status -> status.hasCode(StatusCode.ERROR))
+                    .hasException(new TestException())));
     }
 
     @Test
@@ -257,7 +259,7 @@ public class TracingDecoratorTest {
         decorator.process(new Record<>("key", inputMessage, 0L));
 
         assertThat(getLogs(), hasItem(allOf(containsString("ERROR"),
-                containsString("Runtime error caught while processing the message"), containsString(exception.getMessage()))));
+            containsString("Runtime error caught while processing the message"), containsString(exception.getMessage()))));
         assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("marshalled"))));
     }
 
@@ -269,7 +271,7 @@ public class TracingDecoratorTest {
     void shouldLetBubbleUpKafkaExceptionAndLogMessage() {
         doThrow(new KafkaException()).when(kafkaProcessor).process(any());
         Assertions.assertThrows(KafkaException.class,
-                () -> decorator.process(new Record<>("key", inputMessage, 0L)));
+            () -> decorator.process(new Record<>("key", inputMessage, 0L)));
     }
 
     @Test
@@ -296,7 +298,7 @@ public class TracingDecoratorTest {
         decorator.process(new Record<>("key", inputMessage, 0L));
 
         assertThat(getLogs(),
-                hasItem(allOf(containsString("ERROR"), containsString(protocolBufferException.getMessage()))));
+            hasItem(allOf(containsString("ERROR"), containsString(protocolBufferException.getMessage()))));
         assertThat(getLogs(), hasItem(allOf(containsString("DEBUG"), containsString("value=null"))));
     }
 
@@ -305,7 +307,8 @@ public class TracingDecoratorTest {
         Processor<String, String, String, String> kafkaProcessor = mock(Processor.class);
         ProcessorContext<String, String> processorContext = mock(ProcessorContext.class);
         TracingDecorator decorator = new TracingDecorator(GlobalOpenTelemetry.get(), kafkaTextMapGetter,
-                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+            kafkaTextMapSetter, tracer, topologyConfiguration.getProcessorPayloadType().getName(),
+            jsonPrinter);
         decorator.setDelegate(kafkaProcessor);
         decorator.init(processorContext);
 
@@ -322,10 +325,10 @@ public class TracingDecoratorTest {
     void shouldPropagateOpentelemetryW3CBaggage() {
         // header value format here: https://www.w3.org/TR/baggage/#baggage-http-header-format
         Headers headers = new RecordHeaders().add(W3C_TRACE_ID, TRACE_PARENT.getBytes())
-                .add(W3C_BAGGAGE, "key1=value1,key2=value2".getBytes());
+            .add(W3C_BAGGAGE, "key1=value1,key2=value2".getBytes());
         Record<String, Ping> record = new Record<>(null, Ping.newBuilder().setMessage("blabla").build(), 0L, headers);
-        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter,
-                tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
+        decorator = new TracingDecorator(otel.getOpenTelemetry(), kafkaTextMapGetter, kafkaTextMapSetter,
+            tracer, topologyConfiguration.getProcessorPayloadType().getName(), jsonPrinter);
         decorator.setDelegate(new LogOpentelemetryBaggageProcessor());
         decorator.init(processorContext);
 
@@ -363,7 +366,7 @@ public class TracingDecoratorTest {
 
     public static String w3cHeader(String traceId, String spanId) {
         return String.format("00-%s-%s-01", StringUtils.leftPad(traceId, TraceId.getLength(), '0'),
-                StringUtils.leftPad(spanId, SpanId.getLength(), '0'));
+            StringUtils.leftPad(spanId, SpanId.getLength(), '0'));
     }
 
     public static class MockType {
