@@ -53,6 +53,12 @@ import io.quarkiverse.kafkastreamsprocessor.api.decorator.punctuator.DecoratedPu
  * </pre>
  */
 public final class ProcessorDecoratorPriorities {
+
+    /**
+     * Priority of the decorator in charge of attaching a vertX context to the running Kafka Streams thread.
+     */
+    public static final int VERTX_CONTEXT = 50;
+
     /**
      * Priority of the decorator in charge of tracing, creating a span around the
      * {@link ContextualProcessor#process(Record)} method.
