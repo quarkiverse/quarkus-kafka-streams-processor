@@ -101,9 +101,9 @@ tab). [See the full video walkthrough](https://youtu.be/egqbx-Q-Cbg) for more de
 
 ### How to release
 
-[here](https://hub.quarkiverse.io/release/) is the official documentation to release in a quakiverse repository.
-
 To perform a release, one must provide a Pull-request changing the current-version and next-version properties in the .github/project.yml file.
+
+As highlighted in the [official release documentation of quarkiverse repository](https://hub.quarkiverse.io/release/), the pull request needs to come from a branch in the origin repository, and not from a branch in a fork repository.
 
 Example:
 
