@@ -50,7 +50,7 @@ public class StateDirCleaningResource implements QuarkusTestResourceLifecycleMan
     @Override
     public void stop() {
         try {
-            FileUtils.forceDelete(tmpDir);
+            FileUtils.forceDeleteOnExit(tmpDir);
         } catch (Exception e) {
             throw new RuntimeException("error deleting " + tmpDir, e);
         }

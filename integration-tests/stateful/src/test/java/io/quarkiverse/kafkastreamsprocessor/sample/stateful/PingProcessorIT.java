@@ -20,7 +20,16 @@
 package io.quarkiverse.kafkastreamsprocessor.sample.stateful;
 
 import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 
 @QuarkusIntegrationTest
+@TestProfile(PingProcessorIT.TestProfile.class)
 public class PingProcessorIT extends PingProcessorQuarkusTest {
+    public static class TestProfile implements QuarkusTestProfile {
+        @Override
+        public String getConfigProfile() {
+            return "test";
+        }
+    }
 }
