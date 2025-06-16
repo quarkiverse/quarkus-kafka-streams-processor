@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Time;
-import org.apache.kafka.streams.processor.MockProcessorContext;
+import org.apache.kafka.streams.processor.api.MockProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,8 +49,8 @@ class DuplicateValuePunctuatorTest {
 
     @BeforeEach
     void setUp() {
-        store.init(context, store);
-        context.register(store, null);
+        store.init(context.getStateStoreContext(), store);
+        context.getStateStoreContext().register(store, null);
     }
 
     @Test

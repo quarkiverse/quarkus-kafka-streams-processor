@@ -52,16 +52,6 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
      */
     private final Instance<Processor<?, ?, ?, ?>> kafka3BeanInstances;
 
-    /**
-     * Accessors to any Kafka 2's {@link org.apache.kafka.streams.processor.Processor} implementations
-     */
-    private final Instance<org.apache.kafka.streams.processor.Processor<?, ?>> beanInstances;
-
-    /**
-     * Builders of {@link Kafka2ProcessorAdapter} instances
-     */
-    private final Instance<Kafka2ProcessorAdapter<?, ?>> adapterInstances;
-
     private final Instance<AbstractProcessorDecorator> processorDecorators;
 
     /**
@@ -69,22 +59,14 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
      *
      * @param kafka3BeanInstances
      *        accessors to any Kafka 3's {@link Processor} implementations
-     * @param beanInstances
-     *        accessors to any Kafka 2's {@link org.apache.kafka.streams.processor.Processor} implementations
-     * @param adapterInstances
-     *        builders of {@link Kafka2ProcessorAdapter} instances
      * @param beanManager
      *        the {@link BeanManager} instance to log the ordered list of {@link Processor} decorators declared in the
      *        framework and any extensions that might have been added
      */
     @Inject
-    public KStreamProcessorSupplier(Instance<Processor<?, ?, ?, ?>> kafka3BeanInstances,
-            Instance<org.apache.kafka.streams.processor.Processor<?, ?>> beanInstances,
-            Instance<Kafka2ProcessorAdapter<?, ?>> adapterInstances, BeanManager beanManager,
+    public KStreamProcessorSupplier(Instance<Processor<?, ?, ?, ?>> kafka3BeanInstances, BeanManager beanManager,
             Instance<AbstractProcessorDecorator> processorDecorators) {
         this.kafka3BeanInstances = kafka3BeanInstances;
-        this.beanInstances = beanInstances;
-        this.adapterInstances = adapterInstances;
         this.processorDecorators = processorDecorators;
 
         List<String> processorDecoratorNames = new ArrayList<>(processorDecorators.stream()
@@ -97,8 +79,8 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
     }
 
     /**
-     * Returns one instance of the {@link Processor} (or {@link org.apache.kafka.streams.processor.Processor }) annotated
-     * with {@link io.quarkiverse.kafkastreamsprocessor.api.Processor} annotation.
+     * Returns one instance of the {@link Processor} annotated with the
+     * {@link io.quarkiverse.kafkastreamsprocessor.api.Processor} annotation.
      * <p>
      * The instance is also decorated with the decorators logged by the constructor.
      * </p>
@@ -115,18 +97,8 @@ public class KStreamProcessorSupplier<KIn, VIn, KOut, VOut> implements Processor
                 .findFirst();
 
         if (kafka3Processor.isEmpty()) {
-            // Fallback to deprecated API, for backward compatibility.
-            Optional<org.apache.kafka.streams.processor.Processor<?, ?>> kafka2Processor = beanInstances.stream()
-                    .filter(bean -> KStreamProcessorSupplier.hasAnnotation(bean,
-                            io.quarkiverse.kafkastreamsprocessor.api.Processor.class))
-                    .findFirst();
-            if (kafka2Processor.isEmpty()) {
-                throw new IllegalArgumentException(
-                        "No bean found of type " + io.quarkiverse.kafkastreamsprocessor.api.Processor.class);
-            }
-            Kafka2ProcessorAdapter<?, ?> processorAdapter = adapterInstances.get();
-            processorAdapter.adapt((org.apache.kafka.streams.processor.Processor) kafka2Processor.get());
-            processor = processorAdapter;
+            throw new IllegalArgumentException(
+                    "No bean found of type " + io.quarkiverse.kafkastreamsprocessor.api.Processor.class);
         } else {
             processor = kafka3Processor.get();
         }

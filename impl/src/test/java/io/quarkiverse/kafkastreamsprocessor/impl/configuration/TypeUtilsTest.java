@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.kafka.streams.processor.AbstractProcessor;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.Record;
@@ -38,11 +37,6 @@ class TypeUtilsTest {
 
     @Mock
     TopologyConfigurationImpl config;
-
-    @Test
-    public void payloadTypeShouldBeExtractedFromKafka2Processor() {
-        assertSame(Payload.class, TypeUtils.extractPayloadType(TestKafka2Processor.class));
-    }
 
     @Test
     public void payloadTypeShouldBeExtractedFromKafka3Processor() {
@@ -83,13 +77,6 @@ class TypeUtilsTest {
     public void payloadTypeWithInnerClass() {
         assertSame(Payload.Inner.class,
                 TypeUtils.extractPayloadType(TestKafka3ProcessorWithInnerClass.class));
-    }
-
-    static class TestKafka2Processor extends AbstractProcessor<String, Payload> {
-
-        @Override
-        public void process(String key, Payload value) {
-        }
     }
 
     static class TestKafka3Processor extends ContextualProcessor<String, Payload, String, Payload> {

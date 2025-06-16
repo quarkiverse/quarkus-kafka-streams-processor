@@ -50,7 +50,7 @@ public class LogCallbackExceptionProducerTest {
 
     @BeforeEach
     void setUp() {
-        mockProducer = new MockProducer<>(false, new ByteArraySerializer(), new ByteArraySerializer());
+        mockProducer = new MockProducer<>(false, null, new ByteArraySerializer(), new ByteArraySerializer());
         producer = new LogCallbackExceptionProducerDecorator(mockProducer);
     }
 
