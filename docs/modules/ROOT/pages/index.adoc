@@ -135,7 +135,7 @@ In short (see https://kafka.apache.org/24/documentation/streams/core-concepts[co
 The extension will automatically build the following topology:
 
 * Scan for a CDI bean of type `org.apache.kafka.streams.processor.api.Processor<KIn, VIn, KOut, VOut>` (single processor).
-The deprecated type `org.apache.kafka.streams.processor.Processor<K, V>` is also supported for backward-compatibility.
+The Kafka 2 API `org.apache.kafka.streams.processor.Processor<K, V>` is no longer supported.
 * Register a source for a single topic in `kafkastreamsprocessor.input.topic`, String key serializer and Protobuf value deserializer based on the declared type `<V>` of the processor.
 If multiple topics are declared the configuration should be `kafkastreamsprocessor.input.topics`.
 Also, to manipulate topics coming from different sources the property should include the source name in the declaration as `kafkastreamsprocessor.input.sources.<sources>.topic`.

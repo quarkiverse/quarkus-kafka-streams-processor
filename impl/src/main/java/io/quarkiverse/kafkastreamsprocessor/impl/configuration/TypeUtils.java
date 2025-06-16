@@ -22,7 +22,6 @@ package io.quarkiverse.kafkastreamsprocessor.impl.configuration;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.stream.Stream;
 
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.util.TypeLiteral;
@@ -60,17 +59,13 @@ public final class TypeUtils {
      * Find the {@link Processor} provided (via the bean manager) and return its class
      */
     public static Class<?> reifiedProcessorType(BeanManager beanManager) {
-        TypeLiteral<org.apache.kafka.streams.processor.Processor<?, ?>> kafka2ProcessorType = new TypeLiteral<>() {
-        };
         TypeLiteral<Processor<?, ?, ?, ?>> kafka3ProcessorType = new TypeLiteral<>() {
         };
-        return Stream.concat(beanManager.getBeans(kafka2ProcessorType.getType()).stream(),
-                beanManager.getBeans(kafka3ProcessorType.getType()).stream())
+        return beanManager.getBeans(kafka3ProcessorType.getType()).stream()
                 .filter(b -> b.getStereotypes().contains(io.quarkiverse.kafkastreamsprocessor.api.Processor.class))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "No bean found of type either " + kafka2ProcessorType.getType() + " or "
-                                + kafka3ProcessorType.getType()))
+                        "No bean found of type " + kafka3ProcessorType.getType()))
                 .getBeanClass();
     }
 
@@ -80,7 +75,7 @@ public final class TypeUtils {
      * of the processor.
      * <p>
      * Recursion stops at the first superclass or superinterface which is a parametrized type, and we assume the payload
-     * type is the 2nd type argument, which works both for Kafka 2 and Kafka 3 APIs.
+     * type is the 2nd type argument, which works with Kafka 3 APIs. The Kafka 2 API is no longer supported.
      *
      * @return The payload type class, or null if the type hierarchy doesn't contain a parametrized type with at least 2
      *         arguments.
@@ -95,7 +90,7 @@ public final class TypeUtils {
      * of the processor.
      * <p>
      * Recursion stops at the first superclass or superinterface which is a parametrized type, and we assume the payload
-     * type is the 1st type argument, which works both for Kafka 2 and Kafka 3 APIs.
+     * type is the 1st type argument, which works for the Kafka 3 API. The Kafka 2 API is no longer supported.
      *
      * @return The key type class, or null if the type hierarchy doesn't contain a parametrized type with at least 2
      *         arguments.
