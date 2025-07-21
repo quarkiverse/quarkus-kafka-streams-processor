@@ -20,6 +20,8 @@
 
 package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
+import java.util.Map;
+
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
@@ -34,6 +36,13 @@ public interface KStreamsProcessorConfig {
      * The Kafka topics for outgoing messages
      */
     OutputConfig output();
+
+    /**
+     * Configuration related to the global state stores used by the Processor.
+     *
+     * @return
+     */
+    Map<String, GlobalStateStoreConfig> globalStores();
 
     /**
      * Dead letter Queue name
