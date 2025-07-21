@@ -15,7 +15,7 @@ programming style.
 
 ## Services showcase
 
-This module showcases the stateless processing of `Ping` events and
+This module showcases the stateful processing of `Ping` events and
 its transformation to `Pong` events.
 
 The `io.quarkiverse.kafkastreamsprocessor.sample.simple.PingProcessor` is associated to a

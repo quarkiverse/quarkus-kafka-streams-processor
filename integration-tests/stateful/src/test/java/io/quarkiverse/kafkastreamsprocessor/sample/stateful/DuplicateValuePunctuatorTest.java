@@ -41,7 +41,6 @@ class DuplicateValuePunctuatorTest {
 
     KeyValueStore<String, String> store = Stores
             .keyValueStoreBuilder(Stores.inMemoryKeyValueStore("test"), Serdes.String(), Serdes.String())
-            .withCachingDisabled()
             .withLoggingDisabled()
             .build();
 

@@ -16,6 +16,7 @@
     <module>multioutput</module>
     <module>simple</module>
     <module>stateful</module>
+    <module>stateful-global</module>
     <module>custom-serde</module>
   </modules>
   <build>

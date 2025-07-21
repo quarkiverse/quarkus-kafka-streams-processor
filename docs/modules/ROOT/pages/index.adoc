@@ -130,6 +130,7 @@ In short (see https://kafka.apache.org/24/documentation/streams/core-concepts[co
 * Sources: 1 or more input topics
 * Processors: a graph of 1 or more record handlers
 * Stores (optional): for stateful use cases, the processor must be assigned one or multiple stores to keep the state.
+* Global Stores (optional): for stateful use cases, when it's replicated across all instances of the application.
 * Sinks: 1 or more output topics
 
 The extension will automatically build the following topology:
@@ -580,113 +581,7 @@ Here's a recap of the guarantees offered by the different way of processing mess
 | Reactive Messaging with @Blocking(order=false)  | No                  | Yes                     | number of threads
 |=======================================================================================================================
 
-== Stateful EDA
-:sourcedir: ../../../../integration-tests/stateful/src/main/java
-
-=== Introduction
-
-To support stateful requirements, Kafka Streams' Processor need to implement a https://kafka.apache.org/25/documentation/streams/developer-guide/processor-api.html#state-stores[State-Store].
-By default, no State-Store are linked to the `io.quarkiverse.kafkastreamsprocessor.api.Processor` but the application can override this configuration.
-
-=== API
-
-The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to specify the State-Store you need.
-You need to declare a bean implementing that interface.
-
-It is available through the following dependency:
-
-.pom.xml
-[source,xml]
-----
-<dependency>
-  <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
-  <artifactId>quarkus-kafka-streams-processor-api</artifactId>
-</dependency>
-----
-
-NOTE: Multiple customizers can be defined, and their execution order controlled through `@Priority` annotations.
-
-=== Example
-
-In this example, we implement a processor which is using a State-Store.
-
-==== Processor
-
-.StateStoreProcessor.java
-[source,java]
-----
-@Slf4j
-@Processor // <1>
-public class PingProcessor extends ContextualProcessor<String, Ping, String, Ping> {
-    private KeyValueStore<String, String> pingData;
-
-    @Override
-    public void init(ProcessorContext<String, Ping> context) {
-        super.init(context);
-        pingData = context.getStateStore("ping-data"); // <2>
-        context.schedule(Duration.ofMillis(1L), PunctuationType.STREAM_TIME, new DuplicateValuePunctuator(pingData));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void process(Record<String, Ping> record) {
-        log.info("Process the message: {}", record.value().getMessage());
-
-        String previousValue = pingData.get(record.key());
-        pingData.put(record.key(), record.value().getMessage());
-
-        if (previousValue == null) {
-            context().forward(
-                    record.withValue(Ping.newBuilder().setMessage("Store initialization OK for " + record.key()).build()));
-        } else {
-            context().forward(record.withValue(
-                    Ping.newBuilder().setMessage("Previous value for " + record.key() + " is " + previousValue).build()));
-        }
-    }
-}
-----
-
-<1> Your Processor is declared with the annotation as for a regular processor.
-<2> The definition and initialization of your state store.
-
-==== StateStore Customization
-
-.SampleConfigurationCustomizer.java
-[source,java]
-----
-@Dependent
-public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
-    @Override
-    public void fillConfiguration(Configuration configuration) {
-        List<StoreConfiguration> storeConfigurations = new ArrayList<>();
-        // Add a key value store for indexes
-        StoreBuilder<KeyValueStore<String, String>> storeBuilder = Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore("ping-data"),
-                Serdes.String(),
-                Serdes.String());
-        storeConfigurations.add(new StoreConfiguration(storeBuilder));
-        configuration.setStoreConfigurations(storeConfigurations);
-    }
-}
-----
-
-The `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` implementation provided sets the required State-Store configurations into the method's
-`io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration` object.
-In this example a `ping-data` key/value store has been created.
-
-=== Punctuation
-
-Kafka Streams allows you to define Punctuator that are sort of scheduled tasks that Kafka Streams triggers (https://kafka.apache.org/10/documentation/streams/developer-guide/processor-api.html#id2[Kafka Streams documentation]).
-One key issue with Punctuators is that they do not support Exceptions:
-
-* a checked Exception cannot be thrown as the method signature does not allow it
-* a RuntimeException because Kafka Streams does not catch it.
-It basically crashes your whole microservice.
-
-To work around the latter point and increase stability, the `quarkus-kafka-streams-processor` extension wraps a `Punctuator` before it is added in Kafka Streams to catch the RuntimeException and log an error instead.
-Exceptions are also counted with a dedicated metric.
+include::includes/stateful_eda.adoc[leveloffset=2]
 
 [#_custom_decorators]
 == Custom decorators

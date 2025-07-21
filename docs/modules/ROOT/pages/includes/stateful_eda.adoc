@@ -1,0 +1,234 @@
+== Stateful EDA
+:sourcedir: ../../../../integration-tests/stateful/src/main/java
+
+=== Introduction
+
+To support stateful requirements, Kafka Streams' Processor needs to implement a https://kafka.apache.org/25/documentation/streams/developer-guide/processor-api.html#state-stores[State-Store].
+By default, no State-Store is linked to the `io.quarkiverse.kafkastreamsprocessor.api.Processor` but the application can override this configuration.
+
+The quarkus-kafka-streams-processor extension provides support for both local and global state stores in Kafka Streams applications.
+
+A local state store is scoped to a single application instance and is associated with a specific partition.
+It holds data that is only accessible to that instance and its assigned partition, ensuring the state is not shared with others.
+This is useful for storing state that is specific to the processing done by a particular instance and partition.
+
+A global state store is replicated across all instances of the application.
+It contains data that is shared and accessible from any instance, ensuring that every node has a complete and consistent view of the store's contents.
+Unlike local state stores, a global state store does not care about partition assignment: every instance receives all records, regardless of partition.
+
+In both cases, you need to add the following dependency to your pom.xml
+
+.pom.xml
+[source,xml]
+----
+<dependency>
+  <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+  <artifactId>quarkus-kafka-streams-processor-api</artifactId>
+</dependency>
+----
+
+=== Local State-Store
+
+The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to specify the State-Store you need.
+You need to declare a bean implementing that interface.
+
+NOTE: Multiple customizers can be defined, and their execution order controlled through `@Priority` annotations.
+
+In this example, a processor is implemented that interacts with a State-Store to persist and update data during stream processing.
+
+.StateStoreProcessor.java
+[source,java]
+----
+@Slf4j
+@Processor // <1>
+public class PingProcessor extends ContextualProcessor<String, Ping, String, Ping> {
+    private KeyValueStore<String, String> pingData;
+
+    @Override
+    public void init(ProcessorContext<String, Ping> context) {
+        super.init(context);
+        pingData = context.getStateStore("ping-data"); // <2>
+        context.schedule(Duration.ofMillis(1L), PunctuationType.STREAM_TIME, new DuplicateValuePunctuator(pingData));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(Record<String, Ping> record) {
+        log.info("Process the message: {}", record.value().getMessage());
+
+        String previousValue = pingData.get(record.key());
+        pingData.put(record.key(), record.value().getMessage());
+
+        if (previousValue == null) {
+            context().forward(
+                    record.withValue(Ping.newBuilder().setMessage("Store initialization OK for " + record.key()).build()));
+        } else {
+            context().forward(record.withValue(
+                    Ping.newBuilder().setMessage("Previous value for " + record.key() + " is " + previousValue).build()));
+        }
+    }
+}
+----
+
+<1> Your Processor is declared with the annotation as for a regular processor.
+<2> The definition and initialization of your state store.
+
+To configure a state store, implement the `ConfigurationCustomizer` interface and register it as a bean.
+In the `fillConfiguration` method, add your desired state store definitions to the provided `Configuration` object.
+This allows you to customize the state stores used by your processors according to your application's requirements.
+
+.SampleConfigurationCustomizer.java
+[source,java]
+----
+@Dependent // <1>
+public class SampleConfigurationCustomizer implements ConfigurationCustomizer {  // <2>
+    @Override
+    public void fillConfiguration(Configuration configuration) {
+        List<StoreConfiguration> storeConfigurations = new ArrayList<>(); // <3>
+        // Add a key value store for indexes
+        StoreBuilder<KeyValueStore<String, String>> storeBuilder = Stores.keyValueStoreBuilder( // <4>
+                Stores.persistentKeyValueStore("ping-data"),
+                Serdes.String(),
+                Serdes.String());
+        storeConfigurations.add(new StoreConfiguration(storeBuilder));
+        configuration.setStoreConfigurations(storeConfigurations);
+    }
+}
+----
+
+<1> Annotate your class with `@Dependent` to ensure it is managed by the CDI container.
+<2> Implement the `ConfigurationCustomizer` interface to customize the configuration of your Kafka Streams application.
+<3> Create a list of `StoreConfiguration` objects to define the state stores you want to use in your application.
+<4> Use the `Stores` utility class to create a `StoreBuilder` for your state store, specifying the store type and key/value serdes.
+
+=== Global State-Store
+
+The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to define your own configuration for global state stores.
+A key API for global state stores is the `io.quarkiverse.kafkastreamsprocessor.api.configuration.store..GlobalStoreConfiguration` that is used to add global state store to your topology.
+
+In this example, a processor is implemented that retrieves data from a global state store and processes it.
+
+.BusinessProcessor.java
+[source,java]
+----
+@Slf4j
+@Processor
+public class PingProcessor extends ContextualProcessor<String, Ping, String, Ping> {
+    private KeyValueStore<String, String> pingData;
+
+    @Override
+    public void init(ProcessorContext<String, Ping> context) {
+        super.init(context);
+        pingData = context.getStateStore("ping-data");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(Record<String, Ping> record) {
+        String storedValue = pingData.get(record.key()); // <1>
+
+        log.info("Retrieve the value for key from global data store: {}", record.key());
+
+        context().forward(record.withValue(
+                Ping.newBuilder().setMessage("Stored value for " + record.key() + " is " + storedValue)
+                        .build()));
+    }
+}
+----
+<1> Retrieve the value from the global state store using the key from the incoming record.
+
+.SampleConfigurationCustomizer.java
+[source,java]
+----
+@Dependent // <1>
+public class SampleConfigurationCustomizer implements ConfigurationCustomizer { // <2>
+    @Override
+    public void fillConfiguration(Configuration configuration) {
+        List<GlobalStoreConfiguration> globalStoreConfigurations = new ArrayList<>(); // <3>
+
+        StoreBuilder<KeyValueStore<String, String>> storeBuilder = Stores.keyValueStoreBuilder( // <4>
+                Stores.persistentKeyValueStore("ping-data"),
+                Serdes.String(),
+                Serdes.String())
+                .withLoggingDisabled();
+
+        globalStoreConfigurations.add(new GlobalStoreConfiguration<String, String>( // <5>
+                storeBuilder,
+                new StringDeserializer(),
+                new StringDeserializer(),
+                () -> new CustomStoreProcessor("ping-data"))); // <6>
+        configuration.setGlobalStoreConfigurations(globalStoreConfigurations);
+    }
+}
+----
+
+<1> Annotate your class with `@Dependent` to ensure it is managed by the CDI container.
+<2> Implement the `ConfigurationCustomizer` interface to customize the configuration of your Kafka Streams application.
+<3> Create a list of `GlobalStoreConfiguration` objects to define the global state stores you want to use in your application.
+<4> Use the `Stores` utility class to create a `StoreBuilder` for your global state store, specifying the store type and key/value serdes.
+Here, the store key and value are both of type `String`.
+<5> Add a new `GlobalStoreConfiguration` to the list, specifying the store builder, key and value deserializers, and a supplier for the global processor.
+<6> The supplier provides an instance of the `CustomStoreProcessor`, which is responsible for processing records and storing them in the global state store.
+In the next step you will find the declaration of `CustomStoreProcessor` that is used to process records and store them in capitalized form.
+If you don't specify a custom global processor it will use `io.quarkiverse.kafkastreamsprocessor.impl.configuration.store.DefaultGlobalStateStoreProcessor` by default, which simply store the records in the global state store without any forwarding.
+
+WARNING: Do not annotate the `CustomStoreProcessor` with `@Processor`.
+This class is intended solely as a global store processor, not as a standard functional processor.
+
+.GlobalStateStoreProcessor.java
+[source,java]
+----
+    public class CustomStoreProcessor extends ContextualProcessor<String, String, Void, Void> { // <1>
+
+        private final String storeName;
+
+        private KeyValueStore<String, String> store;
+
+        CustomStoreProcessor(String storeName) { // <2>
+            this.storeName = storeName;
+        }
+
+        @Override
+        public void init(ProcessorContext<Void, Void> context) {
+            super.init(context);
+            // Initialize the store
+            this.store = context.getStateStore(storeName);
+        }
+
+        @Override
+        public void process(Record<String, String> record) {
+            // Process the record and store it in capitalized form
+            store.put(record.key(), record.value().toUpperCase()); // <3>
+        }
+    }
+----
+
+<1> In this example, the processor is only meant to store records in a global state store, so it does not need to forward any records, therefore the output key and value types are `Void`.
+<2> The constructor takes the name of the store as a parameter, which is used to retrieve the store in the `init` method.
+<3> The `process` method retrieves the record's key and value, processes the value by converting it to uppercase, and stores it in the global state store using the key.
+
+The following property must be set in your application.properties to associate a global state store with its Kafka topic:
+
+.application.properties
+[source,properties]
+----
+kafkastreamsprocessor.global-stores.<store-name>.topic=<global-data-topic>
+----
+
+Replace `<store-name>` with the name of your global state store and `<global-data-topic>` with the Kafka topic containing the data to be loaded into the store.
+
+=== Punctuation
+
+Kafka Streams allows you to define Punctuator that are sort of scheduled tasks that Kafka Streams triggers (https://kafka.apache.org/10/documentation/streams/developer-guide/processor-api.html#id2[Kafka Streams documentation]).
+One key issue with Punctuators is that they do not support Exceptions:
+
+* a checked Exception cannot be thrown as the method signature does not allow it
+* a RuntimeException because Kafka Streams does not catch it.
+It basically crashes your whole microservice.
+
+To work around the latter point and increase stability, the `quarkus-kafka-streams-processor` extension wraps a `Punctuator` before it is added in Kafka Streams to catch the RuntimeException and log an error instead.
+Exceptions are also counted with a dedicated metric.
