@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.opentelemetry.api.baggage.Baggage;
+import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import jakarta.annotation.Priority;
 import jakarta.decorator.Decorator;
 import jakarta.enterprise.context.Dependent;
@@ -58,6 +60,7 @@ import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDec
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapGetter;
+import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -77,7 +80,10 @@ public class TracingDecorator extends AbstractProcessorDecorator {
      * The {@link OpenTelemetry} configured by Quarkus
      */
     private final OpenTelemetry openTelemetry;
-
+    /**
+     * Injects Context into the Kafka headers of a message
+     */
+    private final KafkaTextMapSetter textMapSetter;
     /**
      * Extracts Context from the Kafka headers of a message
      */
@@ -116,16 +122,20 @@ public class TracingDecorator extends AbstractProcessorDecorator {
      *        The TopologyConfiguration after customization.
      */
     @Inject
-    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter, Tracer tracer,
+    public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter,
+        KafkaTextMapSetter textMapSetter,
+        Tracer tracer,
             TopologyConfigurationImpl configuration) {
-        this(openTelemetry, textMapGetter, tracer, configuration.getProcessorPayloadType().getName(),
+        this(openTelemetry, textMapGetter, textMapSetter, tracer, configuration.getProcessorPayloadType().getName(),
                 JsonFormat.printer());
     }
 
     public TracingDecorator(OpenTelemetry openTelemetry, KafkaTextMapGetter textMapGetter,
-            Tracer tracer, String applicationName, JsonFormat.Printer jsonPrinter) {
+        KafkaTextMapSetter textMapSetter, Tracer tracer, String applicationName,
+        JsonFormat.Printer jsonPrinter) {
         this.openTelemetry = openTelemetry;
         this.textMapGetter = textMapGetter;
+        this.textMapSetter = textMapSetter;
         this.tracer = tracer;
         this.applicationName = applicationName;
         this.jsonPrinter = jsonPrinter;
@@ -157,7 +167,7 @@ public class TracingDecorator extends AbstractProcessorDecorator {
         SpanBuilder spanBuilder = tracer.spanBuilder(applicationName);
         final TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
         Scope parentScope = null;
-
+        Context extractedContext = null;
         try {
             // going through all propagation field names defined in the OTel configuration
             // we look if any of them has been set with a non-null value in the headers of the incoming message
@@ -167,7 +177,7 @@ public class TracingDecorator extends AbstractProcessorDecorator {
                     .anyMatch(Objects::nonNull)) {
                 // if that is the case, let's extract a Context initialized with the parent trace id, span id
                 // and baggage present as headers in the incoming message
-                Context extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
+                extractedContext = propagator.extract(Context.current(), record.headers(), textMapGetter);
                 // use the context as parent span for the built span
                 spanBuilder.setParent(extractedContext);
                 // we clean the headers to avoid their propagation in any outgoing message (knowing that by
@@ -179,8 +189,12 @@ public class TracingDecorator extends AbstractProcessorDecorator {
             Span span = spanBuilder.startSpan();
             // baggage need to be explicitly set as current otherwise it is not propagated (baggage is independent of span
             // in opentelemetry) and actually lost as kafka headers are cleaned
-            try (Scope ignored = span.makeCurrent()) {
+            try (Scope ignored = (extractedContext != null)
+                ? Baggage.fromContext(extractedContext).makeCurrent()
+                : Scope.noop();
+                Scope scope = span.makeCurrent()) {
                 try {
+                    propagator.inject(Context.current(), record.headers(), this.textMapSetter);
                     getDelegate().process(record);
                     span.setStatus(StatusCode.OK);
                 } catch (KafkaException e) {
