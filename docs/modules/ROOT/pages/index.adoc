@@ -155,9 +155,9 @@ They are consumed by the Quarkus kafka-streams extension itself (used at build t
 
 In Kafka Streams Processor the following configuration keys are required:
 
-* `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[kafkastreamsprocessor.input.topic]`, `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topics[kafkastreamsprocessor.input.topics]` or `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-input-sources-source-topic[kafkastreamsprocessor.input.sources.<source>.topic]`
+* `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[kafkastreamsprocessor.input.topic]`, `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics[kafkastreamsprocessor.input.topics]` or `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics[kafkastreamsprocessor.input.sources.<source>.topic]`
 
-* `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.output.topic[kafkastreamsprocessor.output.topic]` or `link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor-output-sinks-sink-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
+* `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[kafkastreamsprocessor.output.topic]` or `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic[kafkastreamsprocessor.output.sinks.<sink>.topic]`
 
 * `link:#kafka-streams-processor-configuration-keys_quarkus.kafka-streams.topics[quarkus.kafka-streams.topics]`
 
@@ -166,7 +166,7 @@ In Kafka Streams Processor the following configuration keys are required:
 Refer to {quarkus-guides}/kafka-streams#configuration-reference[Kafka Streams extension's configuration reference] for a full list.
 
 All the properties used in the extension are recapped
-`link:#kafka-streams-processor-configuration-keys_kafkastreamsprocessor.input.topic[here]`
+`link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[here]`
 
 === Pass-through properties
 
@@ -383,7 +383,7 @@ kafkastreamsprocessor.global-dlq.max-message-size=3000
 ----
 
 All the properties used in the extension are recapped
-`link:#kafka-streams-processor-configuration-keys_resiliency.kafka.globalDlq.enabled[here]`
+`link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[here]`
 
 ==== Error metadata
 
@@ -814,7 +814,7 @@ Is showcased here also the injection of another bean to be used in this decorato
 [[extension-configuration-reference]]
 == Extension configuration reference
 
-include::includes/kafka-streams-processor-configuration-keys.adoc[]
+include::includes/quarkus-kafka-streams-processor.adoc[leveloffset=+1, opts=optional]
 
 == Configuration from other extension
 
