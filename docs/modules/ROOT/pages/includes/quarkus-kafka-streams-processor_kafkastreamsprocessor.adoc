@@ -1,0 +1,299 @@
+:summaryTableId: quarkus-kafka-streams-processor_kafkastreamsprocessor
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[`kafkastreamsprocessor.input.topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics[`kafkastreamsprocessor.input.topics`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPICS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_TOPICS+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics[`kafkastreamsprocessor.input.sources."sources".topics`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_SOURCES__SOURCES__TOPICS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_SOURCES__SOURCES__TOPICS+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic[`kafkastreamsprocessor.output.sinks."sinks".topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__SINKS__TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__SINKS__TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`kafkastreamsprocessor.dlq.topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_DLQ_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_DLQ_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[`kafkastreamsprocessor.global-dlq.topic`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size[`kafkastreamsprocessor.global-dlq.max-message-size`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_MAX_MESSAGE_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_MAX_MESSAGE_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`2147483647`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy[`kafkastreamsprocessor.error-strategy`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`continue`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries[`kafkastreamsprocessor.retry.max-retries`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`-1`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay[`kafkastreamsprocessor.retry.delay`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++`
+endif::add-copy-button-to-env-var[]
+--
+|long
+|`0`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit[`kafkastreamsprocessor.retry.delay-unit`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
+|`millis`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration[`kafkastreamsprocessor.retry.max-duration`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++`
+endif::add-copy-button-to-env-var[]
+--
+|long
+|`180000`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit[`kafkastreamsprocessor.retry.duration-unit`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
+|`millis`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter[`kafkastreamsprocessor.retry.jitter`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++`
+endif::add-copy-button-to-env-var[]
+--
+|long
+|`200`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit[`kafkastreamsprocessor.retry.jitter-delay-unit`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
+|`millis`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on[`kafkastreamsprocessor.retry.retry-on`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|`io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on[`kafkastreamsprocessor.retry.abort-on`]##
+
+[.description]
+--
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_ABORT_ON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_ABORT_ON+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+|===
+
+
+:!summaryTableId:
