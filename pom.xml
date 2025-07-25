@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse</groupId>
     <artifactId>quarkiverse-parent</artifactId>
-    <version>18</version>
+    <version>20</version>
   </parent>
   <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
   <artifactId>quarkus-kafka-streams-processor-parent</artifactId>
@@ -33,7 +33,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.version>3.15.3</quarkus.version>
+    <quarkus.version>3.15.6</quarkus.version>
 
     <protobuf.version>3.25.5</protobuf.version>
   </properties>
@@ -96,6 +96,11 @@
           <configuration>
             <lineEnding>LF</lineEnding>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-config-doc-maven-plugin</artifactId>
+          <version>${quarkus.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
