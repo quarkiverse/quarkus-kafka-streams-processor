@@ -26,6 +26,7 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
+import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.GlobalStoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 import lombok.Data;
 
@@ -45,6 +46,7 @@ public class TopologyConfigurationImpl implements Configuration {
     private Serializer<?> sinkValueSerializer;
     private Serde<?> sourceValueSerde;
     private List<StoreConfiguration> storeConfigurations = Collections.emptyList();
+    private List<GlobalStoreConfiguration> globalStoreConfigurations = Collections.emptyList();
 
     /**
      * Configuration constructor
@@ -63,5 +65,12 @@ public class TopologyConfigurationImpl implements Configuration {
     @Override
     public void setStoreConfigurations(List<StoreConfiguration> storeConfigurations) {
         this.storeConfigurations = Collections.unmodifiableList(storeConfigurations);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setGlobalStoreConfigurations(List<GlobalStoreConfiguration> globalStoreConfigurations) {
+        this.globalStoreConfigurations = Collections.unmodifiableList(globalStoreConfigurations);
     }
 }

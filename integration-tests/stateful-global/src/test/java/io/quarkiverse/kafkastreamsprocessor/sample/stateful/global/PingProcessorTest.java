@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.quarkiverse.kafkastreamsprocessor.sample.stateful;
+package io.quarkiverse.kafkastreamsprocessor.sample.stateful.global;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,36 +39,42 @@ public class PingProcessorTest {
 
     MockProcessorContext<String, Ping> context = new MockProcessorContext<>();
 
-    KeyValueStore<String, String> store = Stores
-            .keyValueStoreBuilder(Stores.inMemoryKeyValueStore("ping-data"), Serdes.String(), Serdes.String())
+    KeyValueStore<String, String> storeData = Stores
+            .keyValueStoreBuilder(Stores.inMemoryKeyValueStore("store-data"), Serdes.String(), Serdes.String())
+            .withLoggingDisabled()
+            .build();
+
+    KeyValueStore<String, String> storeDataCapital = Stores
+            .keyValueStoreBuilder(Stores.inMemoryKeyValueStore("store-data-capital"), Serdes.String(), Serdes.String())
             .withLoggingDisabled()
             .build();
 
     @BeforeEach
     public void setup() {
-        store.init(context.getStateStoreContext(), store);
-        context.addStateStore(store);
+        storeData.init(context.getStateStoreContext(), storeData);
+        storeDataCapital.init(context.getStateStoreContext(), storeDataCapital);
+        context.addStateStore(storeDataCapital);
         processor.init(context);
     }
 
     @Test
-    public void testKeyNotInStore() {
-        sendAndTest("key", "value", "Store initialization OK for key");
-        assertThat(store.get("key"), equalTo("value"));
+    public void processKeyNotInStore() {
+        processor.process(new Record<>("key", Ping.newBuilder().setMessage("value").build(), 0L));
+        assertThat(context.forwarded(), hasSize(1));
+        CapturedForward<?, ?> capturedForward = context.forwarded().get(0);
+        assertThat(capturedForward.record().key(), equalTo("key"));
+        assertThat(((Ping) capturedForward.record().value()).getMessage(), equalTo("Stored value for key is null"));
     }
 
     @Test
-    public void testKeyWithPreviousValueInStore() {
-        store.put("key", "oldValue");
-        sendAndTest("key", "newValue", "Previous value for key is oldValue");
-        assertThat(store.get("key"), equalTo("newValue"));
-    }
-
-    private void sendAndTest(String key, String message, String expectedMessage) {
-        processor.process(new Record<>(key, Ping.newBuilder().setMessage(message).build(), 0L));
+    public void processKeyWithExistingValueInStore() {
+        storeData.put("key", "existingValue");
+        storeDataCapital.put("key", "EXISTINGVALUE");
+        processor.process(new Record<>("key", Ping.newBuilder().setMessage("newValue").build(), 0L));
         assertThat(context.forwarded(), hasSize(1));
         CapturedForward<?, ?> capturedForward = context.forwarded().get(0);
-        assertThat(capturedForward.record().key(), equalTo(key));
-        assertThat(((Ping) capturedForward.record().value()).getMessage(), equalTo(expectedMessage));
+        assertThat(capturedForward.record().key(), equalTo("key"));
+        assertThat(((Ping) capturedForward.record().value()).getMessage(),
+                equalTo("Stored value for key is existingValue and capitalized value is EXISTINGVALUE"));
     }
 }

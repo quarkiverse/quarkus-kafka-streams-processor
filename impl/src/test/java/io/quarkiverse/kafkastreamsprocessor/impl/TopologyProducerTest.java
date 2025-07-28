@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,11 @@ import jakarta.enterprise.inject.Instance;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.streams.TopologyDescription;
+import org.apache.kafka.streams.TopologyDescription.GlobalStore;
 import org.apache.kafka.streams.TopologyDescription.Processor;
+import org.apache.kafka.streams.TopologyDescription.Source;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -49,12 +53,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
+import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.GlobalStoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +70,9 @@ class TopologyProducerTest {
 
     @Mock
     DlqConfig dlqConfig;
+
+    @Mock
+    Map<String, GlobalStateStoreConfig> globalStoreConfig;
 
     @Mock
     SourceToTopicsMappingBuilder sourceToTopicsMappingBuilder;
@@ -84,11 +93,10 @@ class TopologyProducerTest {
     private static List<StoreConfiguration> buildStoreConfiguration() {
         List<StoreConfiguration> storeConfigurations = new ArrayList<>();
         // Add a key value store for indexes
-        StoreBuilder<KeyValueStore<String, String>> storeBuilderPingData = Stores
-                .keyValueStoreBuilder(
-                        Stores.persistentKeyValueStore("ping-data"),
-                        Serdes.String(),
-                        Serdes.String());
+        StoreBuilder<KeyValueStore<String, String>> storeBuilderPingData = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore("ping-data"),
+                Serdes.String(),
+                Serdes.String());
         StoreBuilder<KeyValueStore<String, String>> storeBuilderPingIndexes = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore("ping-indexes"),
                 Serdes.String(),
@@ -96,6 +104,31 @@ class TopologyProducerTest {
         storeConfigurations.add(new StoreConfiguration(storeBuilderPingData));
         storeConfigurations.add(new StoreConfiguration(storeBuilderPingIndexes));
         return storeConfigurations;
+    }
+
+    private static List<GlobalStoreConfiguration> buildGlobalStoreConfiguration() {
+        List<GlobalStoreConfiguration> globalStoreConfig = new ArrayList<>();
+        StoreBuilder<KeyValueStore<String, String>> globalStoreBuilder = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore("global-data"),
+                Serdes.String(),
+                Serdes.String())
+                .withLoggingDisabled();
+        globalStoreConfig.add(new GlobalStoreConfiguration<>(
+                globalStoreBuilder,
+                new StringDeserializer(),
+                new StringDeserializer(),
+                null));
+
+        globalStoreBuilder = Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore("global-data2"),
+                Serdes.String(),
+                Serdes.String()).withLoggingDisabled();
+        globalStoreConfig.add(new GlobalStoreConfiguration<>(
+                globalStoreBuilder,
+                new StringDeserializer(),
+                new StringDeserializer(),
+                null));
+        return globalStoreConfig;
     }
 
     @BeforeEach
@@ -125,7 +158,9 @@ class TopologyProducerTest {
             Map<String, String[]> sourceToTopicMapping,
             Map<String, String> sinkToTopicMapping,
             String dlq,
-            TopologyDescription topology, Map<String, List<String>> processorsStoreMapping) {
+            TopologyDescription topology,
+            Map<String, List<String>> processorsStoreMapping,
+            Collection<GlobalStoreExpectation> globalStoreExpectations) {
 
         assertEquals(1, topology.subtopologies().size());
         TopologyDescription.Subtopology subtopology = topology.subtopologies().iterator().next();
@@ -141,6 +176,7 @@ class TopologyProducerTest {
                 .filter(node -> (node instanceof TopologyDescription.Processor))
                 .map(node -> (TopologyDescription.Processor) node)
                 .collect(Collectors.toList());
+
         List<TopologyDescription.Sink> sinks = subtopology.nodes()
                 .stream()
                 .filter(node -> (node instanceof TopologyDescription.Sink))
@@ -182,6 +218,30 @@ class TopologyProducerTest {
             });
         }
 
+        Set<GlobalStore> globalStores = topology.globalStores();
+        if (globalStoreExpectations != null) {
+            globalStoreExpectations.forEach(expected -> {
+                Optional<GlobalStore> found = globalStores
+                        .stream()
+                        .filter(globalStore -> {
+                            Processor processor = globalStore.processor();
+                            boolean stateStoreMatches = processor.name().equals(expected.name)
+                                    && processor.stores().size() == 1
+                                    && processor.stores().contains(expected.name);
+
+                            Source source = globalStore.source();
+                            boolean sourceMatches = source.name().equals(expected.topic)
+                                    && source.topicSet().size() == 1
+                                    && source.topicSet().contains(expected.topic);
+
+                            return stateStoreMatches && sourceMatches;
+                        })
+                        .findAny();
+                assertTrue(found.isPresent(),
+                        "Expected global store with name: " + expected.name() + " and topic: " + expected.topic()
+                                + " not found");
+            });
+        }
     }
 
     @Test
@@ -196,7 +256,7 @@ class TopologyProducerTest {
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 null,
-                topology, null);
+                topology, null, null);
     }
 
     @Test
@@ -212,7 +272,7 @@ class TopologyProducerTest {
                 Map.of("ping", new String[] { "ping-topic", "ping-topic2" }, "pang", new String[] { "pang-topic" }),
                 Map.of("pong", "pong-topic"),
                 null,
-                topology, null);
+                topology, null, null);
     }
 
     @Test
@@ -227,7 +287,7 @@ class TopologyProducerTest {
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 "local-dlq",
-                topology, null);
+                topology, null, null);
     }
 
     @Test
@@ -246,6 +306,42 @@ class TopologyProducerTest {
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 null,
-                topology, Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")));
+                topology, Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")), null);
+    }
+
+    @Test
+    void topology_whenLocalAndGlobalStores_shouldGenerateTopology() {
+
+        GlobalStateStoreConfig globalStoreConfig = mock(GlobalStateStoreConfig.class);
+        when(globalStoreConfig.topic()).thenReturn("global-data-topic");
+
+        GlobalStateStoreConfig globalStoreConfig2 = mock(GlobalStateStoreConfig.class);
+        when(globalStoreConfig2.topic()).thenReturn("global-data-topic2");
+        when(kStreamsProcessorConfig.globalStores()).thenReturn(Map.of("global-data", globalStoreConfig,
+                "global-data2", globalStoreConfig2));
+
+        TopologyProducer topologyProducer = newTopologyProducer(
+                Map.of("source", new String[] { "ping-topic" }),
+                Map.of("sink", "pong-topic"),
+                null);
+
+        List<StoreConfiguration> storeConfigurations = buildStoreConfiguration();
+        List<GlobalStoreConfiguration> globalStoreConfigurations = buildGlobalStoreConfiguration();
+
+        when(configuration.getStoreConfigurations()).thenReturn(storeConfigurations);
+        when(configuration.getGlobalStoreConfigurations()).thenReturn(globalStoreConfigurations);
+
+        TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
+
+        verifyTopology(Map.of("source", new String[] { "ping-topic" }),
+                Map.of("sink", "pong-topic"),
+                null,
+                topology,
+                Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")),
+                List.of(new GlobalStoreExpectation("global-data", "global-data-topic"),
+                        new GlobalStoreExpectation("global-data2", "global-data-topic2")));
+    }
+
+    record GlobalStoreExpectation(String name, String topic) {
     }
 }

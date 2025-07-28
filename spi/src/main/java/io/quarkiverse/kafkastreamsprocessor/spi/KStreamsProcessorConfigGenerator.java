@@ -11,6 +11,7 @@ import org.eclipse.microprofile.config.Config;
 
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalDlqConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.InputConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.OutputConfig;
@@ -75,6 +76,7 @@ class KStreamsProcessorConfigGenerator {
         private final OutputConfig output;
         private final DlqConfig dlq = null;
         private final GlobalDlqConfig globalDlq = null;
+        private final Map<String, GlobalStateStoreConfig> globalStores = null;
         private final String errorStrategy = "";
         private final RetryConfig retry = null;
     }
