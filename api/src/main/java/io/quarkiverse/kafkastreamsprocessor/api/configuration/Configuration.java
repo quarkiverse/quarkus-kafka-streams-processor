@@ -25,6 +25,7 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
+import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.GlobalStoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 
 /**
@@ -106,4 +107,14 @@ public interface Configuration {
      * @return The state store configuration to be used by the {@link Processor}
      */
     List<StoreConfiguration> getStoreConfigurations();
+
+    /**
+     * Store configuration to be used by the {@link Processor}. Use setter if you want to override it.
+     */
+    void setGlobalStoreConfigurations(List<GlobalStoreConfiguration> storeConfiguration);
+
+    /**
+     * @return the global state store configuration to be used by the {@link Processor}
+     */
+    List<GlobalStoreConfiguration> getGlobalStoreConfigurations();
 }

@@ -11,6 +11,7 @@ import org.eclipse.microprofile.config.Config;
 
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalDlqConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.InputConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.OutputConfig;
@@ -114,6 +115,11 @@ class KStreamsProcessorConfigGenerator {
         @Override
         public RetryConfig retry() {
             return null;
+        }
+
+        @Override
+        public Map<String, GlobalStateStoreConfig> globalStores() {
+            return Map.of();
         }
     }
 

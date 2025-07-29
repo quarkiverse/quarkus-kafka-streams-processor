@@ -116,6 +116,27 @@ endif::add-copy-button-to-env-var[]
 |string
 |required icon:exclamation-circle[title=Configuration property is required]
 
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The name of the global state store topic
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`kafkastreamsprocessor.dlq.topic`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.dlq.topic+++[]
