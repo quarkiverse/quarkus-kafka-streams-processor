@@ -18,6 +18,7 @@
     <module>stateful</module>
     <module>stateful-global</module>
     <module>custom-serde</module>
+    <module>consumer</module>
   </modules>
   <build>
     <plugins>
