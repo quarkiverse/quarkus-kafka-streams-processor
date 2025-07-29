@@ -59,6 +59,8 @@ public final class GlobalStoreConfiguration<K, V> {
     /**
      * The supplier for the processor associated with the global state store.
      * This processor is responsible for processing records for the store.
+     * This processor supplier must return new instances every time it is called
+     * supplier.get() is called twice by Kafka Streams to verify this constraint
      */
     private final GlobalStoreProcessorSupplier<K, V> globalStoreProcessorSupplier;
 }

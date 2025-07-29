@@ -105,6 +105,9 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer { 
 
 === Global State-Store
 
+Global state stores follow a key principle: they use two distinct processor types - global processors and business processors.
+Global processors are responsible for *writing* data to the global state store, while business processors should *only read* from it.
+
 The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to define your own configuration for global state stores.
 A key API for global state stores is the `io.quarkiverse.kafkastreamsprocessor.api.configuration.store..GlobalStoreConfiguration` that is used to add global state store to your topology.
 
@@ -154,13 +157,13 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer { 
                 Stores.persistentKeyValueStore("ping-data"),
                 Serdes.String(),
                 Serdes.String())
-                .withLoggingDisabled();
+                .withLoggingDisabled(); // <5>
 
-        globalStoreConfigurations.add(new GlobalStoreConfiguration<String, String>( // <5>
+        globalStoreConfigurations.add(new GlobalStoreConfiguration<String, String>( // <6>
                 storeBuilder,
                 new StringDeserializer(),
                 new StringDeserializer(),
-                () -> new CustomStoreProcessor("ping-data"))); // <6>
+                () -> new CustomStoreProcessor("ping-data"))); // <7>
         configuration.setGlobalStoreConfigurations(globalStoreConfigurations);
     }
 }
@@ -171,8 +174,9 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer { 
 <3> Create a list of `GlobalStoreConfiguration` objects to define the global state stores you want to use in your application.
 <4> Use the `Stores` utility class to create a `StoreBuilder` for your global state store, specifying the store type and key/value serdes.
 Here, the store key and value are both of type `String`.
-<5> Add a new `GlobalStoreConfiguration` to the list, specifying the store builder, key and value deserializers, and a supplier for the global processor.
-<6> The supplier provides an instance of the `CustomStoreProcessor`, which is responsible for processing records and storing them in the global state store.
+<5> Having logging disabled is mandatory, otherwise you will get an exception at runtime.
+<6> Add a new `GlobalStoreConfiguration` to the list, specifying the store builder, key and value deserializers, and a supplier for the global processor.
+<7> The supplier provides an instance of the `CustomStoreProcessor`, which is responsible for processing records and storing them in the global state store.
 In the next step you will find the declaration of `CustomStoreProcessor` that is used to process records and store them in capitalized form.
 If you don't specify a custom global processor it will use `io.quarkiverse.kafkastreamsprocessor.impl.configuration.store.DefaultGlobalStateStoreProcessor` by default, which simply store the records in the global state store without any forwarding.
 
@@ -220,6 +224,7 @@ kafkastreamsprocessor.global-stores.<store-name>.topic=<global-data-topic>
 ----
 
 Replace `<store-name>` with the name of your global state store and `<global-data-topic>` with the Kafka topic containing the data to be loaded into the store.
+Make sure that the store name matches the one defined in the `GlobalStoreConfiguration` and that you include the topic to the list of topics, i.e. `quarkus.kafka-streams.topics=topicA,topicB,<global-data-topic>`.
 
 === Punctuation
 

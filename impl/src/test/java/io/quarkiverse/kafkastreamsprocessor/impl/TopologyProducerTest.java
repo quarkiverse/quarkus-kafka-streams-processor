@@ -21,7 +21,9 @@ package io.quarkiverse.kafkastreamsprocessor.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Provider;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -57,6 +60,8 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.GlobalStoreC
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.StoreConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
+import io.quarkiverse.kafkastreamsprocessor.impl.configuration.store.DefaultGlobalStateStoreProcessor;
+import io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor.TracingDecorator;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
@@ -85,6 +90,9 @@ class TopologyProducerTest {
 
     @Mock
     Instance<ProducerOnSendInterceptor> interceptors;
+
+    @Mock
+    Provider<TracingDecorator> tracingDecoratorProvider;
 
     KStreamProcessorSupplier processorSupplier = null;
 
@@ -150,7 +158,7 @@ class TopologyProducerTest {
         when(sourceToTopicsMappingBuilder.sourceToTopicsMapping()).thenReturn(sourceToTopicMapping);
         when(sinkToTopicMappingBuilder.sinkToTopicMapping()).thenReturn(sinkToTopicMapping);
         TopologyProducer topologyProducer = new TopologyProducer(kStreamsProcessorConfig, configCustomizer,
-                sourceToTopicsMappingBuilder, sinkToTopicMappingBuilder, interceptors);
+                sourceToTopicsMappingBuilder, sinkToTopicMappingBuilder, interceptors, tracingDecoratorProvider);
         return topologyProducer;
     }
 
@@ -310,7 +318,18 @@ class TopologyProducerTest {
     }
 
     @Test
-    void topology_whenLocalAndGlobalStores_shouldGenerateTopology() {
+    void topology_whenGlobalStores_shouldGenerateTopology() {
+        // Inside ApiUtils#checkSupplier, supplier#get() is called twice
+        // to check if the supplier is returning different instances.
+        // Since this test is adding two global stores,
+        // We had to mock it four times
+        TracingDecorator tracingDecorator1 = mock(TracingDecorator.class);
+        TracingDecorator tracingDecorator2 = mock(TracingDecorator.class);
+        TracingDecorator tracingDecorator3 = mock(TracingDecorator.class);
+        TracingDecorator tracingDecorator4 = mock(TracingDecorator.class);
+        when(tracingDecoratorProvider.get())
+                .thenReturn(tracingDecorator1).thenReturn(tracingDecorator2)
+                .thenReturn(tracingDecorator3).thenReturn(tracingDecorator4);
 
         GlobalStateStoreConfig globalStoreConfig = mock(GlobalStateStoreConfig.class);
         when(globalStoreConfig.topic()).thenReturn("global-data-topic");
@@ -340,6 +359,18 @@ class TopologyProducerTest {
                 Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")),
                 List.of(new GlobalStoreExpectation("global-data", "global-data-topic"),
                         new GlobalStoreExpectation("global-data2", "global-data-topic2")));
+
+        verify(tracingDecorator1).setDelegate(isA(DefaultGlobalStateStoreProcessor.class));
+        verify(tracingDecorator1).setApplicationName("global-store-global-data");
+
+        verify(tracingDecorator2).setDelegate(isA(DefaultGlobalStateStoreProcessor.class));
+        verify(tracingDecorator2).setApplicationName("global-store-global-data");
+
+        verify(tracingDecorator3).setDelegate(isA(DefaultGlobalStateStoreProcessor.class));
+        verify(tracingDecorator3).setApplicationName("global-store-global-data2");
+
+        verify(tracingDecorator4).setDelegate(isA(DefaultGlobalStateStoreProcessor.class));
+        verify(tracingDecorator4).setApplicationName("global-store-global-data2");
     }
 
     record GlobalStoreExpectation(String name, String topic) {
