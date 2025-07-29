@@ -27,6 +27,9 @@ import org.eclipse.microprofile.faulttolerance.Retry;
 
 import io.smallrye.config.WithDefault;
 
+/**
+ * Retry fault-tolerance capability
+ */
 public interface RetryConfig {
 
     /**
