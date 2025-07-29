@@ -33,7 +33,8 @@ public interface GlobalDlqConfig {
     Optional<String> topic();
 
     /**
-     * Global Dead letter Queue maximum message size
+     * Global Dead letter Queue maximum message size in bytes.
+     * Default is 2147483647 bytes, i.e. about 2GB.
      */
     @WithDefault("2147483647")
     int maxMessageSize();
