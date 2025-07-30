@@ -18,9 +18,6 @@ import io.quarkiverse.kafkastreamsprocessor.spi.properties.OutputConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.RetryConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.SinkConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.SourceConfig;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 
 class KStreamsProcessorConfigGenerator {
 
@@ -29,90 +26,187 @@ class KStreamsProcessorConfigGenerator {
     private static final Pattern P_SINK = Pattern.compile("kafkastreamsprocessor\\.output\\.sinks\\.(.*)\\.topic");
 
     static KStreamsProcessorConfig buildConfig(Config config) {
-        InputConfigImpl input = new InputConfigImpl(config.getOptionalValue("kafkastreamsprocessor.input.topic", String.class),
-                config.getOptionalValues("kafkastreamsprocessor.input.topics", String.class));
+        InputConfigImpl input = new InputConfigImpl();
+        input.setTopic(config.getOptionalValue("kafkastreamsprocessor.input.topic", String.class));
+        input.setTopics(config.getOptionalValues("kafkastreamsprocessor.input.topics", String.class));
         fillSources(config, input);
-        OutputConfigImpl output = new OutputConfigImpl(
-                config.getOptionalValue("kafkastreamsprocessor.output.topic", String.class));
+        OutputConfigImpl output = new OutputConfigImpl();
+        output.setTopic(config.getOptionalValue("kafkastreamsprocessor.output.topic", String.class));
         fillSinks(config, output);
-        return new KStreamsProcessorConfigImpl(input, output);
+        KStreamsProcessorConfigImpl kStreamsProcessorConfig = new KStreamsProcessorConfigImpl();
+        kStreamsProcessorConfig.setInput(input);
+        kStreamsProcessorConfig.setOutput(output);
+        return kStreamsProcessorConfig;
     }
 
     private static void fillSources(Config config, InputConfigImpl input) {
+        Map<String, SourceConfig> sources = new HashMap<>();
         for (String property : config.getPropertyNames()) {
             Matcher matcher = P_SOURCE.matcher(property);
             if (matcher.matches()) {
                 String sourceName = matcher.group(1);
                 String topics = config.getValue(property, String.class);
-                SourceConfig sourceConfig = new SourceConfigImpl(List.of(topics.split(",")));
+                SourceConfigImpl sourceConfig = new SourceConfigImpl();
+                sourceConfig.setTopics(List.of(topics.split(",")));
                 if (sourceName.contains(".")) {
                     throw new IllegalStateException("Parsed source name has a dot: " + sourceName);
                 }
-                input.sources().put(sourceName, sourceConfig);
+                sources.put(sourceName, sourceConfig);
             }
         }
+        input.setSources(sources);
     }
 
     private static void fillSinks(Config config, OutputConfigImpl output) {
+        Map<String, SinkConfig> sinks = new HashMap<>();
         for (String property : config.getPropertyNames()) {
             Matcher matcher = P_SINK.matcher(property);
             if (matcher.matches()) {
                 String sinkName = matcher.group(1);
                 String topic = config.getValue(property, String.class);
-                SinkConfig sinkConfig = new SinkConfigImpl(topic);
+                SinkConfigImpl sinkConfig = new SinkConfigImpl();
+                sinkConfig.setTopic(topic);
                 if (sinkName.contains(".")) {
                     throw new IllegalStateException("Parsed sink name has a dot: " + sinkName);
                 }
-                output.sinks().put(sinkName, sinkConfig);
+                sinks.put(sinkName, sinkConfig);
             }
+        }
+        output.setSinks(sinks);
+    }
+
+    private static class KStreamsProcessorConfigImpl implements KStreamsProcessorConfig {
+        private InputConfig input;
+        private OutputConfig output;
+
+        @Override
+        public InputConfig input() {
+            return input;
+        }
+
+        public void setInput(InputConfig input) {
+            this.input = input;
+        }
+
+        @Override
+        public OutputConfig output() {
+            return output;
+        }
+
+        public void setOutput(OutputConfig output) {
+            this.output = output;
+        }
+
+        @Override
+        public DlqConfig dlq() {
+            return null;
+        }
+
+        @Override
+        public GlobalDlqConfig globalDlq() {
+            return null;
+        }
+
+        @Override
+        public String errorStrategy() {
+            return null;
+        }
+
+        @Override
+        public RetryConfig retry() {
+            return null;
+        }
+
+        @Override
+        public Map<String, GlobalStateStoreConfig> globalStores() {
+            return Map.of();
         }
     }
 
-    @RequiredArgsConstructor
-    @Getter
-    @Accessors(fluent = true)
-    private static class KStreamsProcessorConfigImpl implements KStreamsProcessorConfig {
-        private final InputConfig input;
-        private final OutputConfig output;
-        private final DlqConfig dlq = null;
-        private final GlobalDlqConfig globalDlq = null;
-        private final Map<String, GlobalStateStoreConfig> globalStores = null;
-        private final String errorStrategy = "";
-        private final RetryConfig retry = null;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    @Accessors(fluent = true)
     private static class InputConfigImpl implements InputConfig {
-        private final Optional<String> topic;
+        private Optional<String> topic;
 
-        private final Optional<List<String>> topics;
+        private Optional<List<String>> topics;
 
-        private final Map<String, SourceConfig> sources = new HashMap<>();
+        private Map<String, SourceConfig> sources;
+
+        @Override
+        public Optional<String> topic() {
+            return topic;
+        }
+
+        public void setTopic(Optional<String> topic) {
+            this.topic = topic;
+        }
+
+        @Override
+        public Optional<List<String>> topics() {
+            return topics;
+        }
+
+        public void setTopics(Optional<List<String>> topics) {
+            this.topics = topics;
+        }
+
+        @Override
+        public Map<String, SourceConfig> sources() {
+            return sources;
+        }
+
+        public void setSources(
+                Map<String, SourceConfig> sources) {
+            this.sources = sources;
+        }
     }
 
-    @RequiredArgsConstructor
-    @Getter
-    @Accessors(fluent = true)
     private static class SourceConfigImpl implements SourceConfig {
-        private final List<String> topics;
+        private List<String> topics;
+
+        @Override
+        public List<String> topics() {
+            return topics;
+        }
+
+        public void setTopics(List<String> topics) {
+            this.topics = topics;
+        }
     }
 
-    @RequiredArgsConstructor
-    @Getter
-    @Accessors(fluent = true)
     private static class OutputConfigImpl implements OutputConfig {
-        private final Optional<String> topic;
+        private Optional<String> topic;
 
-        private final Map<String, SinkConfig> sinks = new HashMap<>();
+        private Map<String, SinkConfig> sinks;
+
+        @Override
+        public Optional<String> topic() {
+            return topic;
+        }
+
+        public void setTopic(Optional<String> topic) {
+            this.topic = topic;
+        }
+
+        @Override
+        public Map<String, SinkConfig> sinks() {
+            return sinks;
+        }
+
+        public void setSinks(Map<String, SinkConfig> sinks) {
+            this.sinks = sinks;
+        }
     }
 
-    @RequiredArgsConstructor
-    @Getter
-    @Accessors(fluent = true)
     private static class SinkConfigImpl implements SinkConfig {
-        private final String topic;
+        private String topic;
+
+        @Override
+        public String topic() {
+            return topic;
+        }
+
+        public void setTopic(String topic) {
+            this.topic = topic;
+        }
     }
 
 }

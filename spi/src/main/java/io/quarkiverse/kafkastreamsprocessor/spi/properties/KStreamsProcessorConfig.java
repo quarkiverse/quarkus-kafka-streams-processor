@@ -25,6 +25,9 @@ import java.util.Map;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
+/**
+ * Root of the configuration of the <code>quarkus-kafka-streams-processor</code> Quarkiverse extension.
+ */
 @ConfigMapping(prefix = "kafkastreamsprocessor")
 public interface KStreamsProcessorConfig {
     /**
@@ -55,7 +58,15 @@ public interface KStreamsProcessorConfig {
     GlobalDlqConfig globalDlq();
 
     /**
-     * Kafka error handling strategy
+     * Kafka error handling strategy.
+     * <p>
+     * Possible values are:
+     * </p>
+     * <ul>
+     * <li><code>continue</code>: (default) drop the message and continue processing</li>
+     * <li><code>dead-letter-queue</code>: send the message to the DLQ and continue processing</li>
+     * <li><code>fail</code>: (not implemented yet) fail and stop processing more message</li>
+     * </ul>
      */
     @WithDefault("continue")
     String errorStrategy();

@@ -1,4 +1,3 @@
-:summaryTableId: quarkus-kafka-streams-processor_kafkastreamsprocessor
 [.configuration-legend]
 icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
 [.configuration-reference.searchable, cols="80,.^10,.^10"]
@@ -9,9 +8,17 @@ h|Type
 h|Default
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[`kafkastreamsprocessor.input.topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.input.topic+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Single topic to listen to.
+
+If you need more than one, use `topics()` or `sources()`.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPIC+++[]
@@ -24,9 +31,17 @@ endif::add-copy-button-to-env-var[]
 |
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics[`kafkastreamsprocessor.input.topics`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.input.topics+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+List of topics to listen to.
+
+If you need only one, use `topic()`
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_TOPICS+++[]
@@ -39,9 +54,15 @@ endif::add-copy-button-to-env-var[]
 |
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics[`kafkastreamsprocessor.input.sources."sources".topics`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.input.sources."sources".topics+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+To which topics will KafkaStreams connect to for this source.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_SOURCES__SOURCES__TOPICS+++[]
@@ -54,9 +75,15 @@ endif::add-copy-button-to-env-var[]
 |required icon:exclamation-circle[title=Configuration property is required]
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.topic+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The processor is mono-output, we designate one topic
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_TOPIC+++[]
@@ -69,9 +96,15 @@ endif::add-copy-button-to-env-var[]
 |
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic[`kafkastreamsprocessor.output.sinks."sinks".topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.sinks."sinks".topic+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The topic associated to this sink
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_SINKS__SINKS__TOPIC+++[]
@@ -83,10 +116,37 @@ endif::add-copy-button-to-env-var[]
 |string
 |required icon:exclamation-circle[title=Configuration property is required]
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`kafkastreamsprocessor.dlq.topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The name of the global state store topic
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_STORES__GLOBAL_STORES__TOPIC+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`kafkastreamsprocessor.dlq.topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.dlq.topic+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Topic to use as dead-letter-queue
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_DLQ_TOPIC+++[]
@@ -99,9 +159,15 @@ endif::add-copy-button-to-env-var[]
 |
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[`kafkastreamsprocessor.global-dlq.topic`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.global-dlq.topic+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Global Dead letter Queue to produce error messages not managed by the application
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_TOPIC+++[]
@@ -114,9 +180,15 @@ endif::add-copy-button-to-env-var[]
 |
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size[`kafkastreamsprocessor.global-dlq.max-message-size`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.global-dlq.max-message-size+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Global Dead letter Queue maximum message size in bytes. Default is 2147483647 bytes, i.e. about 2GB.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_MAX_MESSAGE_SIZE+++[]
@@ -129,9 +201,21 @@ endif::add-copy-button-to-env-var[]
 |`2147483647`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy[`kafkastreamsprocessor.error-strategy`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.error-strategy+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Kafka error handling strategy.
+
+Possible values are:
+
+ - `continue`: (default) drop the message and continue processing
+ - `dead-letter-queue`: send the message to the DLQ and continue processing
+ - `fail`: (not implemented yet) fail and stop processing more message
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++[]
@@ -144,9 +228,15 @@ endif::add-copy-button-to-env-var[]
 |`continue`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries[`kafkastreamsprocessor.retry.max-retries`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.max-retries+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Max number of retries.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++[]
@@ -159,9 +249,15 @@ endif::add-copy-button-to-env-var[]
 |`-1`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay[`kafkastreamsprocessor.retry.delay`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.delay+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The delay between retries.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++[]
@@ -174,9 +270,15 @@ endif::add-copy-button-to-env-var[]
 |`0`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit[`kafkastreamsprocessor.retry.delay-unit`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.delay-unit+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The unit for `delay()`. Default milliseconds.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++[]
@@ -189,9 +291,15 @@ a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days
 |`millis`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration[`kafkastreamsprocessor.retry.max-duration`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.max-duration+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The max duration.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++[]
@@ -204,9 +312,17 @@ endif::add-copy-button-to-env-var[]
 |`180000`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit[`kafkastreamsprocessor.retry.duration-unit`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.duration-unit+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The duration unit for `max-duration()`.
+
+Milliseconds by default.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++[]
@@ -219,9 +335,15 @@ a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days
 |`millis`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter[`kafkastreamsprocessor.retry.jitter`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.jitter+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+Jitter value to randomly vary retry delays for.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++[]
@@ -234,9 +356,15 @@ endif::add-copy-button-to-env-var[]
 |`200`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit[`kafkastreamsprocessor.retry.jitter-delay-unit`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.jitter-delay-unit+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The delay unit for `jitter()`. Default is milliseconds.
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++[]
@@ -249,9 +377,17 @@ a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days
 |`millis`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on[`kafkastreamsprocessor.retry.retry-on`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.retry-on+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The list of exception types that should trigger a retry.
+
+Default is the extension's RetryableException
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++[]
@@ -264,9 +400,17 @@ endif::add-copy-button-to-env-var[]
 |`io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on[`kafkastreamsprocessor.retry.abort-on`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.retry.abort-on+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
+The list of exception types that should _not_ trigger a retry.
+
+Default is empty list
+
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_RETRY_ABORT_ON+++[]
@@ -280,5 +424,3 @@ endif::add-copy-button-to-env-var[]
 
 |===
 
-
-:!summaryTableId:
