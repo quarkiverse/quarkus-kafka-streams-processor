@@ -67,7 +67,7 @@ class PingProcessorQuarkusTest {
 
     String consumerTopic = "pong-events";
 
-    String storeTopic = "pingapp-ping-data-changelog";
+    String storeTopic = "stateful-sample-ping-data-changelog";
 
     KafkaProducer<String, Ping> producer;
 
@@ -125,7 +125,7 @@ class PingProcessorQuarkusTest {
                         "Store initialization OK for ID2")); // reinserting key ID2 with value value2
 
         given().when()
-                .get("/metrics")
+                .get("/q/metrics")
                 .then()
                 .log()
                 .ifValidationFails()
