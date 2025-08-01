@@ -48,7 +48,7 @@ import io.restassured.response.ValidatableResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
-@QuarkusTestResource(StateDirCleaningResource.class)
+@QuarkusTestResource(value = StateDirCleaningResource.class, restrictToAnnotatedClass = true)
 @TestProfile(ProcessorHealthCheckQuarkusTest.ProcessorHealthCheckQuarkusTestProfile.class)
 @Slf4j
 public class ProcessorHealthCheckQuarkusTest {

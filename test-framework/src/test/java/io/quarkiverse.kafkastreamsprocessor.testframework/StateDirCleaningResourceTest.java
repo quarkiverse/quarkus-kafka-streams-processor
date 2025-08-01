@@ -23,7 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Map;
@@ -41,7 +41,8 @@ class StateDirCleaningResourceTest {
 
         resource.stop();
 
-        assertFalse(new File(props.get("kafka-streams.state.dir")).exists());
+        // after we forced the deletion on JVM exit, the file won't be deleted immediately
+        assertTrue(new File(props.get("kafka-streams.state.dir")).exists());
     }
 
 }

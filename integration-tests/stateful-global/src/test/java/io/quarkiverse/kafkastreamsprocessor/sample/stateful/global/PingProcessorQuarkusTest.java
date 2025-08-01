@@ -50,7 +50,7 @@ import io.quarkus.test.junit.QuarkusTest;
  * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
  */
 @QuarkusTest
-@QuarkusTestResource(StateDirCleaningResource.class)
+@QuarkusTestResource(value = StateDirCleaningResource.class, restrictToAnnotatedClass = true)
 @QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
 class PingProcessorQuarkusTest {
     String senderTopic = "ping-events";
@@ -115,7 +115,7 @@ class PingProcessorQuarkusTest {
         assertThat(receivedRecord.value().getMessage(),
                 containsString("Stored value for ID1 is dont-capitalize-me and capitalized value is CAPITALIZE-ME"));
 
-        // Check that the value stil exists in the global store
+        // Check that the value still exists in the global store
         producerPing.send(new ProducerRecord<>(senderTopic, "ID1", Ping.newBuilder().setMessage("whatever").build()));
         receivedRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic);
         assertThat(receivedRecord.value().getMessage(),

@@ -173,11 +173,11 @@ public class TracingDecorator extends AbstractProcessorDecorator {
                 // we clean the headers to avoid their propagation in any outgoing message (knowing that by
                 // default Kafka Streams copies all headers of the incoming message into any outgoing message)
                 propagator.fields().forEach(record.headers()::remove);
-                // we make the parent context current to not loose the baggage
+                // we make the parent context current to not lose the baggage
                 parentScope = extractedContext.makeCurrent();
             }
             Span span = spanBuilder.startSpan();
-            // baggage need to be explicitly set as current otherwise it is not propagated (baggage is independent of span
+            // baggage needs to be explicitly set as current otherwise it is not propagated (baggage is independent of span
             // in opentelemetry) and actually lost as kafka headers are cleaned
             try (Scope ignored = span.makeCurrent()) {
                 try {
