@@ -108,7 +108,7 @@ class PingProcessorQuarkusTest {
         // Store two values using the two global topics
         producerGlobalTopic.send(new ProducerRecord<>(globalTopic, "ID1", "dont-capitalize-me"));
         producerGlobalTopicCapital.send(new ProducerRecord<>(globalTopicCapital, "ID1", "capitalize-me"));
-        Thread.sleep(500L);
+        Thread.sleep(1000L);
         producerPing.send(new ProducerRecord<>(senderTopic, "ID1", Ping.newBuilder().setMessage("whatever").build()));
         receivedRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic);
         // Check that the value has been stored in the global store
@@ -124,7 +124,7 @@ class PingProcessorQuarkusTest {
         // Store two new values using the two global topics
         producerGlobalTopic.send(new ProducerRecord<>(globalTopic, "ID1", "dont-capitalize-me-2"));
         producerGlobalTopicCapital.send(new ProducerRecord<>(globalTopicCapital, "ID1", "capitalize-me-2"));
-        Thread.sleep(500L);
+        Thread.sleep(1000L);
         producerPing.send(new ProducerRecord<>(senderTopic, "ID1", Ping.newBuilder().setMessage("whatever").build()));
         receivedRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic);
         // Check that the value has been stored in the global store
