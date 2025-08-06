@@ -20,24 +20,40 @@
 package io.quarkiverse.kafkastreamsprocessor.testframework;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 class StateDirCleaningResourceTest {
 
     @Test
-    void createsTempDirAndDeletesIt() {
+    void createsTempDirAndDeletesIt() throws Exception {
+        // If you are running this test with your IDE, make sure to add the
+        // `--add-opens java.base/java.io=ALL-UNNAMED` JVM by editing the run configuration.
+
         StateDirCleaningResource resource = new StateDirCleaningResource();
         Map<String, String> props = resource.start();
 
         assertThat(props, hasEntry(equalTo("kafka-streams.state.dir"), containsString("kstreamstateful")));
 
         resource.stop();
+
+        // Use reflection to access DeleteOnExitHook's private files field
+        Class<?> deleteOnExitHookClass = Class.forName("java.io.DeleteOnExitHook");
+        Field filesField = deleteOnExitHookClass.getDeclaredField("files");
+        filesField.setAccessible(true);
+
+        @SuppressWarnings("unchecked")
+        Set<String> filesToDelete = (Set<String>) filesField.get(null);
+        assertTrue(filesToDelete.stream().anyMatch(path -> path.contains("kstreamstateful")));
     }
 
 }

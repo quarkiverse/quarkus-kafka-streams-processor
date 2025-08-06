@@ -26,6 +26,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.Topology;
@@ -33,13 +34,13 @@ import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
-import io.quarkiverse.kafkastreamsprocessor.api.configuration.store.GlobalStoreProcessorSupplier;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultTopologySerdesConfiguration;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TopologyConfigurationImpl;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.TypeUtils;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.store.DefaultGlobalStateStoreProcessor;
+import io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor.TracingDecorator;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
@@ -87,6 +88,8 @@ public class TopologyProducer {
      */
     private final Instance<ProducerOnSendInterceptor> interceptors;
 
+    private final Provider<TracingDecorator> tracingDecoratorProvider;
+
     /**
      * Injection constructor
      *
@@ -104,12 +107,14 @@ public class TopologyProducer {
     @Inject
     public TopologyProducer(KStreamsProcessorConfig kStreamsProcessorConfig,
             Instance<ConfigurationCustomizer> configCustomizer, SourceToTopicsMappingBuilder sourceToTopicsMappingBuilder,
-            SinkToTopicMappingBuilder sinkToTopicMappingBuilder, Instance<ProducerOnSendInterceptor> interceptors) {
+            SinkToTopicMappingBuilder sinkToTopicMappingBuilder, Instance<ProducerOnSendInterceptor> interceptors,
+            Provider<TracingDecorator> tracingDecoratorProvider) {
         this.kStreamsProcessorConfig = kStreamsProcessorConfig;
         this.configCustomizers = configCustomizer;
         this.sourceToTopicsMappingBuilder = sourceToTopicsMappingBuilder;
         this.sinkToTopicMappingBuilder = sinkToTopicMappingBuilder;
         this.interceptors = interceptors;
+        this.tracingDecoratorProvider = tracingDecoratorProvider;
     }
 
     /**
@@ -204,11 +209,20 @@ public class TopologyProducer {
                     String storeName = config.getStoreBuilder().name();
                     String topicName = kStreamsProcessorConfig.globalStores().get(storeName).topic();
 
-                    GlobalStoreProcessorSupplier processorSupplier = config.getGlobalStoreProcessorSupplier();
+                    ProcessorSupplier processorSupplier = config.getGlobalStoreProcessorSupplier();
                     if (processorSupplier == null) {
                         // If the processor supplier is not defined, we use the default one
                         processorSupplier = () -> new DefaultGlobalStateStoreProcessor(storeName);
                     }
+
+                    ProcessorSupplier finalProcessorSupplier = processorSupplier;
+                    processorSupplier = () -> {
+                        Processor globalStoreProcessor = finalProcessorSupplier.get();
+                        TracingDecorator tracingDecorator = tracingDecoratorProvider.get();
+                        tracingDecorator.setApplicationName("global-store-" + storeName);
+                        tracingDecorator.setDelegate(globalStoreProcessor);
+                        return tracingDecorator;
+                    };
 
                     topology.addGlobalStore(
                             config.getStoreBuilder(),
