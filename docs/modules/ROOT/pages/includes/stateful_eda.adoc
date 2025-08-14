@@ -1,7 +1,6 @@
-== Stateful EDA
 :sourcedir: ../../../../integration-tests/stateful/src/main/java
 
-=== Introduction
+== Introduction
 
 To support stateful requirements, Kafka Streams' Processor needs to implement a https://kafka.apache.org/25/documentation/streams/developer-guide/processor-api.html#state-stores[State-Store].
 By default, no State-Store is linked to the `io.quarkiverse.kafkastreamsprocessor.api.Processor` but the application can override this configuration.
@@ -27,7 +26,7 @@ In both cases, you need to add the following dependency to your pom.xml
 </dependency>
 ----
 
-=== Local State-Store
+== Local State-Store
 
 The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to specify the State-Store you need.
 You need to declare a bean implementing that interface.
@@ -103,7 +102,7 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer { 
 <3> Create a list of `StoreConfiguration` objects to define the state stores you want to use in your application.
 <4> Use the `Stores` utility class to create a `StoreBuilder` for your state store, specifying the store type and key/value serdes.
 
-=== Global State-Store
+== Global State-Store
 
 Global state stores follow a key principle: they use two distinct processor types - global processors and business processors.
 Global processors are responsible for *writing* data to the global state store, while business processors should *only read* from it.
@@ -226,7 +225,7 @@ kafkastreamsprocessor.global-stores.<store-name>.topic=<global-data-topic>
 Replace `<store-name>` with the name of your global state store and `<global-data-topic>` with the Kafka topic containing the data to be loaded into the store.
 Make sure that the store name matches the one defined in the `GlobalStoreConfiguration` and that you include the topic to the list of topics, i.e. `quarkus.kafka-streams.topics=topicA,topicB,<global-data-topic>`.
 
-=== Punctuation
+== Punctuation
 
 Kafka Streams allows you to define Punctuator that are sort of scheduled tasks that Kafka Streams triggers (https://kafka.apache.org/10/documentation/streams/developer-guide/processor-api.html#id2[Kafka Streams documentation]).
 One key issue with Punctuators is that they do not support Exceptions:
