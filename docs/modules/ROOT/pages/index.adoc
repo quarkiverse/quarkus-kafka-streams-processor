@@ -581,7 +581,9 @@ Here's a recap of the guarantees offered by the different way of processing mess
 | Reactive Messaging with @Blocking(order=false)  | No                  | Yes                     | number of threads
 |=======================================================================================================================
 
-include::includes/stateful_eda.adoc[leveloffset=2]
+== Stateful EDA
+
+include::includes/stateful_eda.adoc[leveloffset=1]
 
 [#_custom_decorators]
 == Custom decorators
