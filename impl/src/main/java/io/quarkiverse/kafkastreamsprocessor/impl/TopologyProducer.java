@@ -28,11 +28,15 @@ import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
+import io.cloudevents.kafka.CloudEventDeserializer;
+import io.cloudevents.kafka.CloudEventSerializer;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurationCustomizer;
@@ -183,7 +187,7 @@ public class TopologyProducer {
         Topology topology = new Topology();
         sourceToTopicMapping.forEach(
                 (String source, String[] topics) -> topology.addSource(source, configuration.getSourceKeySerde().deserializer(),
-                        configuration.getSourceValueSerde().deserializer(), topics));
+                        getSourceValueDeserializer(configuration, kStreamsProcessorConfig), topics));
         topology.addProcessor(PROCESSOR_NAME,
                 kStreamProcessorSupplier,
                 sourceToTopicMapping.keySet().toArray(new String[] {}));
@@ -193,7 +197,7 @@ public class TopologyProducer {
         if (kStreamsProcessorConfig.dlq().topic().isPresent()) {
             topology.addSink(DLQ_SINK_NAME, kStreamsProcessorConfig.dlq().topic().get(),
                     configuration.getSourceKeySerde().serializer(),
-                    configuration.getSourceValueSerde().serializer(), PROCESSOR_NAME);
+                    getSourceValueSerializer(configuration, kStreamsProcessorConfig), PROCESSOR_NAME);
         }
 
         configuration.getStoreConfigurations()
@@ -201,6 +205,28 @@ public class TopologyProducer {
 
         addGlobalStores(configuration, topology);
         return topology;
+    }
+
+    private Deserializer<?> getSourceValueDeserializer(TopologyConfigurationImpl configuration,
+            KStreamsProcessorConfig kStreamsProcessorConfig) {
+        // defaulting to CloudEventDeserializer if kafkastreamsprocessor.input.is-cloud-event is true
+        if (kStreamsProcessorConfig.input().isCloudEvent()) {
+            CloudEventDeserializer deserializer = new CloudEventDeserializer();
+            deserializer.configure(kStreamsProcessorConfig.input().cloudEventDeserializerConfig(), false);
+            return deserializer;
+        }
+        return configuration.getSourceValueSerde().deserializer();
+    }
+
+    private Serializer<?> getSourceValueSerializer(TopologyConfigurationImpl configuration,
+            KStreamsProcessorConfig kStreamsProcessorConfig) {
+        // defaulting to CloudEventSerializer if kafkastreamsprocessor.input.is-cloud-event is true
+        if (kStreamsProcessorConfig.input().isCloudEvent()) {
+            CloudEventSerializer serializer = new CloudEventSerializer();
+            serializer.configure(kStreamsProcessorConfig.dlq().cloudEventSerializerConfig(), false);
+            return serializer;
+        }
+        return configuration.getSourceValueSerde().serializer();
     }
 
     private void addGlobalStores(TopologyConfigurationImpl configuration, Topology topology) {

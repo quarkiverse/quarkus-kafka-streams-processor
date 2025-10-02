@@ -74,6 +74,52 @@ endif::add-copy-button-to-env-var[]
 |list of string
 |required icon:exclamation-circle[title=Configuration property is required]
 
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`kafkastreamsprocessor.input.is-cloud-event`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.input.is-cloud-event+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether cloud events are used on the input
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`false`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config[`kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to inject custom configuration for the CloudEventDeserializer.
+
+As of now, only one configuration property is supported: `cloudevents.datamapper` and its value must be a reference to a CloudEventDataMapper, which with the String value type here, cannot be passed.
+
+But the Cloud Events Java SDK could add other configuration properties later on, and this map makes `quarkus-kafka-streams-processor` more future-proof.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_DESERIALIZER_CONFIG__CLOUD_EVENT_DESERIALIZER_CONFIG_+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_DESERIALIZER_CONFIG__CLOUD_EVENT_DESERIALIZER_CONFIG_+++`
+endif::add-copy-button-to-env-var[]
+--
+|Map<String,String>
+|
+
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.topic+++[]
@@ -115,6 +161,117 @@ endif::add-copy-button-to-env-var[]
 --
 |string
 |required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`kafkastreamsprocessor.output.is-cloud-event`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.is-cloud-event+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether cloud events are used on the output
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`false`
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to inject custom configuration for the CloudEventSerializer.
+
+The potential values are documented in the cloudevents Java SDK (linked thereafter) and in the link:https://docs.quarkiverse.io/quarkus-kafka-streams-processor/dev/index.html#_cloudevent_support[quarkus-kafka-streams-processor userguide]
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_SERIALIZER_CONFIG__CLOUD_EVENT_SERIALIZER_CONFIG_+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_SERIALIZER_CONFIG__CLOUD_EVENT_SERIALIZER_CONFIG_+++`
+endif::add-copy-button-to-env-var[]
+--
+|Map<String,String>
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type[`kafkastreamsprocessor.output.cloud-events-type`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-type+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to define the type field of the CloudEvent for all the configured sinks.
+
+It is used only if `OutputConfig++#++isCloudEvent()` is `true`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_TYPE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_TYPE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source[`kafkastreamsprocessor.output.cloud-events-source`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-source+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to define the source field of the CloudEvent for all the configured sinks.
+
+It is used only if `OutputConfig++#++isCloudEvent()` is `true`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_SOURCE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_SOURCE+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/URI.html[URI]
+|
+
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version[`kafkastreamsprocessor.output.cloud-events-spec-version`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-spec-version+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Version of the CloudEvents spec to use
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_SPEC_VERSION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_SPEC_VERSION+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`v03`, `v1`
+|`v1`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
 ifdef::add-copy-button-to-config-props[]
@@ -158,6 +315,29 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.dlq.cloud-event-serializer-config."cloud-event-serializer-config"`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.dlq.cloud-event-serializer-config."cloud-event-serializer-config"+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to inject custom configuration for the CloudEventSerializer that will be used to serialize the input cloud event to the DLQ.
+
+The possible keys that can be used are documented in `CloudEventOutputConfig++#++cloudEventSerializerConfig()`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_DLQ_CLOUD_EVENT_SERIALIZER_CONFIG__CLOUD_EVENT_SERIALIZER_CONFIG_+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_DLQ_CLOUD_EVENT_SERIALIZER_CONFIG__CLOUD_EVENT_SERIALIZER_CONFIG_+++`
+endif::add-copy-button-to-env-var[]
+--
+|Map<String,String>
+|
+
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[`kafkastreamsprocessor.global-dlq.topic`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.global-dlq.topic+++[]
@@ -187,7 +367,9 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-Global Dead letter Queue maximum message size in bytes. Default is 2147483647 bytes, i.e. about 2GB.
+Global Dead letter Queue maximum message size in bytes.
+
+Default is 2147483647 bytes (which means about 2GB).
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -277,7 +459,9 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-The unit for `delay()`. Default milliseconds.
+The unit for `delay()`.
+
+Default is milliseconds.
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -363,7 +547,9 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-The delay unit for `jitter()`. Default is milliseconds.
+The delay unit for `jitter()`.
+
+Default is milliseconds.
 
 
 ifdef::add-copy-button-to-env-var[]

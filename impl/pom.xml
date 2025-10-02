@@ -128,6 +128,10 @@
       <groupId>io.smallrye.common</groupId>
       <artifactId>smallrye-common-vertx-context</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-kafka</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -290,6 +294,11 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-opentelemetry</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-json-jackson</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

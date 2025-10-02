@@ -1,5 +1,6 @@
 package io.quarkiverse.kafkastreamsprocessor.spi;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.microprofile.config.Config;
 
+import io.cloudevents.SpecVersion;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalDlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
@@ -130,6 +132,10 @@ class KStreamsProcessorConfigGenerator {
 
         private Map<String, SourceConfig> sources;
 
+        private boolean isCloudEvent;
+
+        private Map<String, String> cloudEventConfig;
+
         @Override
         public Optional<String> topic() {
             return topic;
@@ -157,6 +163,24 @@ class KStreamsProcessorConfigGenerator {
                 Map<String, SourceConfig> sources) {
             this.sources = sources;
         }
+
+        @Override
+        public boolean isCloudEvent() {
+            return isCloudEvent;
+        }
+
+        public void setIsCloudEvent(boolean isCloudEvent) {
+            this.isCloudEvent = isCloudEvent;
+        }
+
+        @Override
+        public Map<String, String> cloudEventDeserializerConfig() {
+            return cloudEventConfig;
+        }
+
+        public void setCloudEventConfig(Map<String, String> cloudEventConfig) {
+            this.cloudEventConfig = cloudEventConfig;
+        }
     }
 
     private static class SourceConfigImpl implements SourceConfig {
@@ -176,6 +200,15 @@ class KStreamsProcessorConfigGenerator {
         private Optional<String> topic;
 
         private Map<String, SinkConfig> sinks;
+        private boolean isCloudEvent;
+
+        private Map<String, String> cloudEventConfig;
+
+        private Optional<String> cloudEventsType;
+
+        private Optional<URI> cloudEventsSource;
+
+        private SpecVersion cloudEventsSpecVersion;
 
         @Override
         public Optional<String> topic() {
@@ -193,6 +226,51 @@ class KStreamsProcessorConfigGenerator {
 
         public void setSinks(Map<String, SinkConfig> sinks) {
             this.sinks = sinks;
+        }
+
+        @Override
+        public boolean isCloudEvent() {
+            return isCloudEvent;
+        }
+
+        public void setIsCloudEvent(boolean isCloudEvent) {
+            this.isCloudEvent = this.isCloudEvent;
+        }
+
+        @Override
+        public Map<String, String> cloudEventSerializerConfig() {
+            return cloudEventConfig;
+        }
+
+        public void setCloudEventSerializerConfig(Map<String, String> cloudEventConfig) {
+            this.cloudEventConfig = cloudEventConfig;
+        }
+
+        @Override
+        public Optional<String> cloudEventsType() {
+            return cloudEventsType;
+        }
+
+        public void setCloudEventsType(Optional<String> cloudEventsType) {
+            this.cloudEventsType = cloudEventsType;
+        }
+
+        @Override
+        public Optional<URI> cloudEventsSource() {
+            return cloudEventsSource;
+        }
+
+        public void setCloudEventsSource(Optional<URI> cloudEventsSource) {
+            this.cloudEventsSource = cloudEventsSource;
+        }
+
+        @Override
+        public SpecVersion cloudEventsSpecVersion() {
+            return cloudEventsSpecVersion;
+        }
+
+        public void setCloudEventsSpecVersion(SpecVersion cloudEventsSpecVersion) {
+            this.cloudEventsSpecVersion = cloudEventsSpecVersion;
         }
     }
 

@@ -84,6 +84,12 @@ public final class ProcessorDecoratorPriorities {
     public static final int DLQ = 300;
 
     /**
+     * Priority of the decorator in charge or initializing a "request context" for the duration of the processing of the
+     * ContextualProcessor#process(Record)} method. It is closed afterward.
+     */
+    public static final int CLOUD_EVENT_DESERIALIZING = 350;
+
+    /**
      * Priority of the decorator in charge of measuring the processing time and the number of exceptions thrown.
      */
     public static final int METRICS = 400;
