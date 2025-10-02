@@ -36,6 +36,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/tryasta"><img src="https://avatars.githubusercontent.com/u/15208442?v=4" width="100px;" alt=""/><br /><sub><b>tryasta</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=tryasta" title="Code">💻</a> </td>
     <td align="center"><a href="https://github.com/lmartella1"><img src="https://avatars.githubusercontent.com/u/147706653?v=4" width="100px;" alt=""/><br /><sub><b>lmartella1</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=lmartella1" title="Code">💻</a> </td>
   </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/csemaan1A"><img src="https://avatars.githubusercontent.com/u/155438536?v=4" width="100px;" alt=""/><br /><sub><b>csemaan1A</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=csemaan1A" title="Code">💻</a> </td>
+    <td align="center"><a href="https://github.com/bsoaressimoes"><img src="https://avatars.githubusercontent.com/u/152854271?v=4" width="100px;" alt=""/><br /><sub><b>bsoaressimoes</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=bsoaressimoes" title="Code">💻</a> </td>
+    <td align="center"><a href="https://github.com/gastaldi"><img src="https://avatars.githubusercontent.com/u/54133?v=4" width="100px;" alt=""/><br /><sub><b>gastaldi</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=gastaldi" title="Code">💻</a> </td>
+    <td align="center"><a href="https://github.com/Annlazar"><img src="https://avatars.githubusercontent.com/u/26568868?v=4" width="100px;" alt=""/><br /><sub><b>Annlazar</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=Annlazar" title="Code">💻</a> </td>
+    <td align="center"><a href="https://github.com/nreant1A"><img src="https://avatars.githubusercontent.com/u/173859415?v=4" width="100px;" alt=""/><br /><sub><b>nreant1A</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=nreant1A" title="Code">💻</a> </td>
+  </tr>
 </table>
 
 
