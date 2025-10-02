@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,12 +67,16 @@ import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
+import io.quarkiverse.kafkastreamsprocessor.spi.properties.InputConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
 @ExtendWith(MockitoExtension.class)
 class TopologyProducerTest {
     @Mock
     KStreamsProcessorConfig kStreamsProcessorConfig;
+
+    @Mock
+    InputConfig inputConfig;
 
     @Mock
     DlqConfig dlqConfig;
@@ -146,6 +151,9 @@ class TopologyProducerTest {
                 mock(org.apache.kafka.streams.processor.api.Processor.class));
         configuration = mock(TopologyConfigurationImpl.class);
         when(configuration.getSourceKeySerde()).thenReturn(mock(Serde.class));
+    }
+
+    private void mockSourceValueSerde() {
         when(configuration.getSourceValueSerde()).thenReturn(mock(Serde.class));
     }
 
@@ -155,6 +163,7 @@ class TopologyProducerTest {
             String dlq) {
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
         when(dlqConfig.topic()).thenReturn(Optional.ofNullable(dlq));
+        when(kStreamsProcessorConfig.input()).thenReturn(inputConfig);
         when(sourceToTopicsMappingBuilder.sourceToTopicsMapping()).thenReturn(sourceToTopicMapping);
         when(sinkToTopicMappingBuilder.sinkToTopicMapping()).thenReturn(sinkToTopicMapping);
         TopologyProducer topologyProducer = new TopologyProducer(kStreamsProcessorConfig, configCustomizer,
@@ -258,6 +267,7 @@ class TopologyProducerTest {
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 null);
+        mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -273,6 +283,7 @@ class TopologyProducerTest {
                 Map.of("ping", new String[] { "ping-topic", "ping-topic2" }, "pang", new String[] { "pang-topic" }),
                 Map.of("pong", "pong-topic"),
                 null);
+        mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -289,6 +300,7 @@ class TopologyProducerTest {
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 "local-dlq");
+        mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -304,6 +316,7 @@ class TopologyProducerTest {
                 Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
                 null);
+        mockSourceValueSerde();
 
         List<StoreConfiguration> storeConfigurations = buildStoreConfiguration();
 
@@ -349,6 +362,7 @@ class TopologyProducerTest {
 
         when(configuration.getStoreConfigurations()).thenReturn(storeConfigurations);
         when(configuration.getGlobalStoreConfigurations()).thenReturn(globalStoreConfigurations);
+        mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
@@ -374,5 +388,19 @@ class TopologyProducerTest {
     }
 
     record GlobalStoreExpectation(String name, String topic) {
+    }
+
+    @Test
+    void shouldPutCloudEventDeserializerIfCloudEventActivatedForInput() {
+        TopologyProducer topologyProducer = newTopologyProducer(
+                Map.of("source", new String[] { "ping-topic" }),
+                Map.of("pong", "pong-topic", "pang", "pang-topic"),
+                null);
+
+        when(inputConfig.isCloudEvent()).thenReturn(true);
+
+        topologyProducer.topology(configuration, processorSupplier);
+
+        verify(configuration, never()).getSourceValueSerde();
     }
 }

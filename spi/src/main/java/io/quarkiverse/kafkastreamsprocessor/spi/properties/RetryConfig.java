@@ -49,7 +49,9 @@ public interface RetryConfig {
     long delay();
 
     /**
-     * The unit for {@link #delay()}. Default milliseconds.
+     * The unit for {@link #delay()}.
+     * <p>
+     * Default is milliseconds.
      *
      * @see Retry#delayUnit()
      */
@@ -84,7 +86,9 @@ public interface RetryConfig {
     long jitter();
 
     /**
-     * The delay unit for {@link #jitter()}. Default is milliseconds.
+     * The delay unit for {@link #jitter()}.
+     * <p>
+     * Default is milliseconds.
      *
      * @see Retry#jitterDelayUnit()
      */

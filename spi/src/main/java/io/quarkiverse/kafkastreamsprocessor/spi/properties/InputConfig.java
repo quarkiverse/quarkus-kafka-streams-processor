@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.smallrye.config.WithDefault;
+
 /**
  * Configuration related to the messages consumed by the Processor
  */
@@ -47,4 +49,24 @@ public interface InputConfig {
      * Allows to regroup topics by sources in multi-input use cases.
      */
     Map<String, SourceConfig> sources();
+
+    /**
+     * Whether cloud events are used on the input
+     */
+    @WithDefault("false")
+    boolean isCloudEvent();
+
+    /**
+     * Allows to inject custom configuration for the CloudEventDeserializer.
+     * <p>
+     * As of now, only one configuration property is supported: <code>cloudevents.datamapper</code> and its value must be
+     * a reference to a CloudEventDataMapper, which with the String value type here, cannot be passed.
+     * <p>
+     * But the Cloud Events Java SDK could add other configuration properties later on, and this map makes
+     * <code>quarkus-kafka-streams-processor</code> more future-proof.
+     *
+     * @see <a href="https://www.javadoc.io/doc/io.cloudevents/cloudevents-kafka/latest/index.html">CloudEventDeserializer
+     *      Javadoc</a>
+     */
+    Map<String, String> cloudEventDeserializerConfig();
 }

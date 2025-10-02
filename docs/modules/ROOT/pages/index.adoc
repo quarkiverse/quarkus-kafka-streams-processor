@@ -6,7 +6,7 @@
 include::./includes/attributes.adoc[]
 
 This extension eases the implementation of event-driven architecture streaming microservices based on https://kafka.apache.org/documentation/streams/[Kafka Streams]’ Processor API.
-It avoids Kafka Streams' users a lot of boilerplate code to have a dedicated topology and a proper production readiness (health, observability, error handling).
+It avoids Kafka Streams' users some boilerplate code to have a dedicated topology and a proper production readiness (health, observability, error handling).
 All that is left to develop is a simple Processor class.
 The extension takes care of the rest.
 
@@ -218,11 +218,8 @@ Depending on the Global DLQ <<_error_management>> the message will be produced i
 === JSON
 
 JSON is a first class citizen serialization format, the SDK will use JSON as default serialization format.
-
-==== Example
-
-In this example, we implement a processor working with a POJO as value type.
-The POJO is read from kafka, or written to kafka, with the POJO's JSON textual representation.
+To used JSON, a processor needs the generated data model as value type.
+The data model is read from kafka, or written to kafka, with the data model's JSON textual representation.
 
 .PojoProcessor.java
 [source,java]
@@ -243,15 +240,14 @@ public class PojoProcessor extends ContextualProcessor<String, SamplePojo, Strin
 
 <1> Your Processor is declared with the annotation as for a regular processor.
 <2> The handled value type, is a class that can be serialized in JSON.
-<3> Same POJO value in the _process()_ method.
-<4> Similarly, a POJO value can be sent down to the output topic.
-
-==== Configuring JSON serialization
+<3> Same data model value in the _process()_ method.
+<4> Similarly, a data model value can be sent down to the output topic.
 
 In order to customize the JSON serialization, the SDK relies on the `ObjectMapper` customization from {quarkus-guides}/rest-json#json[Quarkus]
 
 [#_serialization_to_protobuf_and_its_caveats]
 === Serialization to Protobuf and its caveats
+:sourcedir: ../../../../integration-tests/json-pojo/src/main/java
 
 Protobuf values and String are the first class citizen data types in Kafka Streams Processor messaging.
 
@@ -259,8 +255,6 @@ To ease development with Protobuf, various libraries support code generation fro
 https://www.openapis.org[OpenAPI] descriptors, for instance https://openapi-generator.tech[openapi-generator].
 
 The main problem with this approach is that certain details of the serialization logic are implementation-dependent and may have impacts on the usability of the generated APIs.
-
-==== Null values
 
 One such case in the handling of optional elements, i.e. how to detect in business code if an element was absent, or present but with an empty value.
 
@@ -271,11 +265,7 @@ There are multiple solutions to this problem, e.g.:
 * Use built-in wrapper types instead of primitives
 * Use optional in proto3
 
-==== Serializer & Deserializer Customization
-:sourcedir: ../../../../integration-tests/json-pojo/src/main/java
-
-
-===== API
+=== Serde customization
 
 The SDK provides the interface `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` which allows you to specify the serializer and deserializer you need.
 You need to declare a bean implementing that interface.
@@ -293,10 +283,8 @@ It is available through the following dependency:
 
 NOTE: Multiple customizers can be defined, and their execution order controlled through `@Priority` annotations.
 
-===== Example
-
-In this example, we implement a processor working with a POJO as value type.
-The POJO is read from kafka, or written to kafka, with a custom serialization format provided by sink and source serializer/deserializer that need to be known at build time.
+Then the processor should be declared with the custom data model as value type.
+The data model is read from kafka, or written to kafka, with a custom serialization format provided by sink and source serializer/deserializer that need to be known at build time.
 
 .PojoProcessor.java
 [source,java]
@@ -316,11 +304,11 @@ public class PojoProcessor extends ContextualProcessor<String, SamplePojo, Strin
 ----
 
 <1> Your Processor is declared with the annotation as for a regular processor.
-<2> The handled value type, in this example, is a simple POJO, nothing fancy.
-<3> Same POJO value in the _process()_ method.
-<4> Similarly, a POJO value can be sent down to the output topic.
+<2> The handled value type, in this example, is a simple data model, nothing fancy.
+<3> Same data model value in the _process()_ method.
+<4> Similarly, a data model value can be sent down to the output topic.
 
-=== Ser/Des Customization
+And then you inject your custom serde with:
 
 .SampleConfigurationCustomizer.java
 [source,java]
@@ -337,6 +325,8 @@ public class SampleConfigurationCustomizer implements ConfigurationCustomizer {
 
 The `io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer` implementation provided sets the required Serializer and Deserializer into the method's `io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration` object.
 In this example, we set a custom serialization through the usage of Kafka Serdes.
+
+include::includes/cloud_events.adoc[leveloffset=+1]
 
 [#_error_management]
 == Error management
@@ -361,8 +351,6 @@ In the case of a `dead-letter-queue` strategy, the DLQ topic is added to the rea
 NOTE: This local DLQ is meant only to store the poisonous message that the application could not consume successfully.
 For error happening at production time, one can use a global DLQ defined for this purpose.
 
-==== Global Dead Letter Queue
-
 When a microservice cannot produce to a downstream Kafka broker and that `the error cannot be managed by the application`, the message will be produced in a `global DLQ`.
 
 The following value must be set in the application.properties file
@@ -385,8 +373,6 @@ kafkastreamsprocessor.global-dlq.max-message-size=3000
 All the properties used in the extension are recapped
 `link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[here]`
 
-==== Error metadata
-
 For tracking purpose following headers are added to the record:
 
 * `dead-letter-reason`: The reason of the failure if any (Exception message)
@@ -403,8 +389,6 @@ NOTE: The retry relies on the at-least-once guarantees of messaging: the process
 A `RetryDecorator` has been introduced inside the topology definition.
 Its responsibility is to retry indefinitely the `@io.quarkiverse.kafkastreamsprocessor.api.Processor` `retryableProcess` method when a `io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException` is raised.
 
-==== Configuration
-
 The default behavior can be overridden via the following configuration:
 
 .application.properties
@@ -415,8 +399,6 @@ kafkastreamsprocessor.retry.retry-on=io.quarkiverse.kafkastreamsprocessor.api.ex
 ----
 
 As this implementation is based on https://download.eclipse.org/microprofile/microprofile-fault-tolerance-3.0/microprofile-fault-tolerance-spec-3.0.html#_retry_usage[Eclipse Microprofile Fault Tolerance] it's also possible to override some default policy (i.e.: maxDuration, jitter...) under the prefix `kafkastreamsprocessor.retry.`.
-
-==== Ad hoc usage
 
 You can also use the Fault Tolerance `@org.eclipse.microprofile.faulttolerance.Retry` annotation for some other logic in your code.
 
@@ -475,7 +457,7 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 |Type
 |Description
 
-|kafkastreamsprocessor.processor.errors
+|`kafkastreamsprocessor.processor.errors`
 |Counter
 |Total number of errors encountered during Kafka Streams message processing
 
@@ -488,7 +470,7 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 |Type
 |Description
 
-| kafkastreamsprocessor.punctuation.errors
+| `kafkastreamsprocessor.punctuation.errors`
 | Counter
 | The number of times the execution of a `Punctuator` failed with an exception since the start of the microservice.
 |===
@@ -500,11 +482,14 @@ This list includes the additional metrics, on top of the Kafka Streams and the g
 |Type
 |Description
 
-| kafkastreamsprocessor.dlq.sent
+| `kafkastreamsprocessor.dlq.sent`
 | Counter
-| The number of messages sent to DLQ. This metrics differs from the kafkastreamsprocessor.processor.errors in that the deserialization errors are taken into account. If no DLQ strategy is chosen, then this metric will be 0. Messages too large for the DLQ will be counted both in this metrics and in kafkastreamsprocessor.global.dlq.sent.
+| The number of messages sent to DLQ.
+This metrics differs from the `kafkastreamsprocessor.processor.errors` in that the deserialization errors are taken into account.
+If no DLQ strategy is chosen, then this metric will be 0.
+Messages too large for the DLQ will be counted both in this metrics and in `kafkastreamsprocessor.global.dlq.sent`.
 
-| kafkastreamsprocessor.global.dlq.sent
+| `kafkastreamsprocessor.global.dlq.sent`
 | Counter
 | The number of messages sent to global DLQ.
 |===
@@ -524,7 +509,7 @@ As explained in the <<_kafka_streams>>, the number of partitions of the source t
 
 In other terms, for an input topic, it's not possible to process more that `x` messages in parallel where `x` is the number of partitions of the source topic.
 
-WARNING: Starting asynchronous processing in a Kafka Streams microservice would lead to loss of messages: acknowledgement of the incoming messages will be de-synchronized from the production of messages once outgoing messages have been processed.
+WARNING: Starting asynchronous processing in a Kafka Streams microservice would lead to loss of messages: acknowledgment of the incoming messages will be de-synchronized from the production of messages once outgoing messages have been processed.
 
 Reactive messaging has a different architecture and threading model compared to Kafka Streams.
 But by default, when processing messages it comes with the same guarantees seen above.
@@ -554,7 +539,7 @@ Note that once the execution is finished the result is handled back to the proce
 In Kafka Streams, performing asynchronous calls would lead to the possibility of messages not being redelivered.
 What about the guarantee of delivery when processing concurrent messages in Reactive Messaging?
 
-It's up to the https://smallrye.io/smallrye-reactive-messaging/3.21.0/kafka/receiving-kafka-records/#acknowledgement[acknowledgement policy] to commit incoming messages when it has been processed concurrently.
+It's up to the https://smallrye.io/smallrye-reactive-messaging/3.21.0/kafka/receiving-kafka-records/#acknowledgement[acknowledgment policy] to commit incoming messages when it has been processed concurrently.
 The default strategy is throttled and guarantees at-least-once delivery
 
 NOTE: `throttled` keeps track of received messages and commits to the next offset after the latest acked message in sequence.
@@ -700,11 +685,11 @@ References for priorities of existing interceptors this library provides:
 +
 Lower priority are executed first.
 
-=== Producer interceptor [deprecated]
-
-WARNING: Producer interceptors are from 4.1 deprecated. They should be reimplemented as xref:_output_record_interceptor[OutputRecordInterceptor].
+=== Producer interceptor
 
 Kafka Streams already has the concept of a https://kafka.apache.org/36/javadoc/org/apache/kafka/clients/producer/ProducerInterceptor.html[ProducerInterceptor].
+`ProducerInterceptor` are called after the key and value serialization, at the difference with xref:_output_record_interceptor[`OutputRecordInterceptor`] which are called before.
+
 But as the rest of Kafka Streams SPI, it is based on a class name and a default constructor for instantiation.
 It does not support CDI resolution.
 

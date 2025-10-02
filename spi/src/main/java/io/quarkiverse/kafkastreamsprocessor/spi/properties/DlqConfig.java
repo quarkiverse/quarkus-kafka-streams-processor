@@ -19,6 +19,7 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -29,4 +30,14 @@ public interface DlqConfig {
      * Topic to use as dead-letter-queue
      */
     Optional<String> topic();
+
+    /**
+     * Allows to inject custom configuration for the CloudEventSerializer that will be used to serialize the input
+     * cloud event to the DLQ.
+     * <p>
+     * The possible keys that can be used are documented in {@link CloudEventOutputConfig#cloudEventSerializerConfig()}.
+     *
+     * @see CloudEventOutputConfig#cloudEventSerializerConfig()
+     */
+    Map<String, String> cloudEventSerializerConfig();
 }

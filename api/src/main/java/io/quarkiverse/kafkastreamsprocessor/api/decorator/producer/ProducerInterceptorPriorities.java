@@ -21,16 +21,15 @@ package io.quarkiverse.kafkastreamsprocessor.api.decorator.producer;
 
 /**
  * Priorities of the producer interceptors the framework provides.
- *
- * @deprecated Change any producer interceptor into a
- *             {@link io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptor}.
  */
-@Deprecated(forRemoval = true, since = "4.1")
 public final class ProducerInterceptorPriorities {
     /**
      * Priority of the interceptor that will inject the tracing headers for propagation.
      */
+    @Deprecated(forRemoval = true, since = "4.1")
     public static final int TRACING = 100;
+
+    public static final int CLOUD_EVENT_SERIALIZATION = 200;
 
     private ProducerInterceptorPriorities() {
 

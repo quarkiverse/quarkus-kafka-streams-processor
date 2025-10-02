@@ -1,0 +1,88 @@
+= CloudEvent support
+
+Cloud Events are a specification for describing event data in a common way.
+Events are everywhere, yet event publishers tend to describe events differently.
+The motivations are consistency, accessibility and portability.
+
+== Activation
+
+The activation is done separately for input and output:
+
+* xref:includes/quarkus-kafka-streams-processor.adoc#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`kafkastreamsprocessor.input.is-cloud-event`] to `true` so consumed messages are parsed as `CloudEvent`.
+* xref:includes/quarkus-kafka-streams-processor.adoc#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`kafkastreamsprocessor.output.is-cloud-event`] to `true` so produced messages are encapsulated as `CloudEvent`.
+
+== API
+
+After activation of the input, you will be able in your processor to access the metadata that was sent along with the `CloudEvent` through the injection of the `CloudEventContextHandler`:
+
+[source,java]
+----
+@Processor
+public class MyProcessor implements ContextualProcessor<String, String, String, String> {
+  @Inject
+  CloudEventContextHandler handler;
+
+  @Override
+  public void process(Record<String, String> record) {
+    if (handler.getIncomingContext().getSource().getHost().contains("myhost.io")) { // <1>
+      // ignoring record
+    }
+    context.forward(record);
+  }
+}
+----
+
+<1> Accessing some metadata of the `CloudEvent` using `CloudEventContextHandler#getIncomingContext()`
+
+If you activated `CloudEvent` as output, you will have to provide the metadata for it.
+This can be done using the `CloudEventContextHandler` again:
+
+[source,java]
+----
+@Processor
+public class MyProcessor implements ContextualProcessor<String, String, String, String> {
+  @Inject
+  CloudEventContextHandler handler;
+
+  @Override
+  public void process(Record<String, String> record) {
+    cloudEventContextHandler.setOutgoingContext( // <1>
+          cloudEventContextHandler.contextBuilder() // <2>
+              .withExtension("extension", "value")
+              .build());
+    context.forward(record);
+  }
+}
+----
+
+<1> Setting the `CloudEvent` metadata used to build the outgoing `CloudEvent` object using `CloudEventContextHandler#setOutgoingContext()`
+<2> Using a builder provider by the handler to avoid having exceptions because no source, no type and no id have been provided.
+If no id is defined, a UUID is generated.
+For source and type, it is taken from configuration:
++
+* xref:includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source[`kafkastreamsprocessor.output.cloud-events-source`] with a default source for all outgoing CloudEvent
+* xref:includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type[`kafkastreamsprocessor.output.cloud-events-type`] with a default type for all outgoing CloudEvent
+
+== Serialization customization
+
+The `CloudEventSerializer` can be configured with some key/value configuration.
+This can be customized with xref:includes/quarkus-kafka-streams-processor.adoc#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.output.cloud-event-serializer-config`].
+The potential values are quickly documented in the https://www.javadoc.io/doc/io.cloudevents/cloudevents-kafka/latest/index.html[Javadoc of clientevents-kafka] but follows a more pieced-together version for convenience.
+
+* `cloudevents.serializer.encoding`:
+Potential values are:
+** `STRUCTURED`: Structured mode.
+The payload and the metadata are all serialized as JSON and used as the payload of the Kafka message.
+** `BINARY`: Binary mode (Default).
+The metadata is inserted as headers to the Kafka message.
+* `cloudevents.serializer.event_format`: if encoding (previous key) is set to `STRUCTURED`, what will be the data format of the payload.
+The available formats provided by the cloud event Java SDK can be found https://github.com/cloudevents/sdk-java/tree/main/formats[here].
+Potential values:
+** `application/cloudevents+json`: JSON format with Jackson.
+You will need the `cloudevents-json-jackson` artifact on the classpath.
+** `application/cloudevents+protobuf`: Protobuf format.
+You will need the `cloudevents-protobuf` artifact on the classpath.
+** `application/cloudevents+xml`: XML format using JAXP.
+You will need the `cloudevents-xml` artifact on the classpath.
+** `application/cloudevents+avrocompact`: the Avro Compact format.
+You will need the `cloudevents-avro-compact` artifact on the classpath.
