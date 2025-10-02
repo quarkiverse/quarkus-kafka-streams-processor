@@ -1,0 +1,699 @@
+diff --git a/integration-tests/cloud-events/Readme.md b/integration-tests/cloud-events/Readme.md
+new file mode 100644
+index 0000000..46967c7
+--- /dev/null
++++ b/integration-tests/cloud-events/Readme.md
+@@ -0,0 +1 @@
++# Cloud events
+\ No newline at end of file
+diff --git a/integration-tests/cloud-events/pom.xml b/integration-tests/cloud-events/pom.xml
+new file mode 100644
+index 0000000..ad08841
+--- /dev/null
++++ b/integration-tests/cloud-events/pom.xml
+@@ -0,0 +1,183 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++  <parent>
++    <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++    <artifactId>quarkus-kafka-streams-processor-integration-tests</artifactId>
++    <version>5.0.1-SNAPSHOT</version>
++  </parent>
++  <modelVersion>4.0.0</modelVersion>
++
++  <artifactId>quarkus-kafka-streams-processor-cloud-events-sample</artifactId>
++  <name>quarkus-kafka-streams-processor-cloud-events-sample</name>
++
++  <dependencyManagement>
++    <dependencies>
++      <dependency>
++        <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++        <artifactId>quarkus-kafka-streams-processor-bom</artifactId>
++        <version>${project.version}</version>
++        <type>pom</type>
++        <scope>import</scope>
++      </dependency>
++      <dependency>
++        <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++        <artifactId>quarkus-kafka-streams-processor-test-bom</artifactId>
++        <version>${project.version}</version>
++        <type>pom</type>
++        <scope>import</scope>
++      </dependency>
++    </dependencies>
++  </dependencyManagement>
++
++  <dependencies>
++    <dependency>
++      <groupId>io.cloudevents</groupId>
++      <artifactId>cloudevents-kafka</artifactId>
++      <version>4.0.1</version>
++    </dependency>
++
++    <!-- Microprofile APIs -->
++    <dependency>
++      <groupId>jakarta.inject</groupId>
++      <artifactId>jakarta.inject-api</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>jakarta.enterprise</groupId>
++      <artifactId>jakarta.enterprise.cdi-api</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.eclipse.microprofile.config</groupId>
++      <artifactId>microprofile-config-api</artifactId>
++    </dependency>
++
++    <!-- Quarkus extensions -->
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-kafka-streams</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++      <artifactId>quarkus-kafka-streams-processor</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++      <artifactId>quarkus-kafka-streams-processor-impl</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-smallrye-health</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-opentelemetry</artifactId>
++      <scope>runtime</scope>
++    </dependency>
++
++    <dependency>
++      <groupId>org.apache.kafka</groupId>
++      <artifactId>kafka-streams</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.apache.kafka</groupId>
++      <artifactId>kafka-clients</artifactId>
++    </dependency>
++
++    <dependency>
++      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++      <artifactId>quarkus-kafka-streams-processor-api</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++      <artifactId>quarkus-kafka-streams-processor-protobuf-binding</artifactId>
++      <version>${project.version}</version>
++    </dependency>
++    <dependency>
++      <groupId>de.sven-jacobs</groupId>
++      <artifactId>loremipsum</artifactId>
++    </dependency>
++
++    <dependency>
++      <groupId>org.junit.jupiter</groupId>
++      <artifactId>junit-jupiter-engine</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.junit.jupiter</groupId>
++      <artifactId>junit-jupiter-api</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-junit5</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkus</groupId>
++      <artifactId>quarkus-test-common</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.springframework.kafka</groupId>
++      <artifactId>spring-kafka-test</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.apache.kafka</groupId>
++      <artifactId>kafka-streams-test-utils</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.awaitility</groupId>
++      <artifactId>awaitility</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.mockito</groupId>
++      <artifactId>mockito-core</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.mockito</groupId>
++      <artifactId>mockito-junit-jupiter</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>com.github.daniel-shuy</groupId>
++      <artifactId>kafka-protobuf-serde</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.rest-assured</groupId>
++      <artifactId>rest-assured</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.projectlombok</groupId>
++      <artifactId>lombok</artifactId>
++      <scope>provided</scope>
++    </dependency>
++    <dependency>
++      <groupId>org.slf4j</groupId>
++      <artifactId>slf4j-api</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>org.hamcrest</groupId>
++      <artifactId>hamcrest</artifactId>
++      <scope>test</scope>
++    </dependency>
++    <dependency>
++      <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
++      <artifactId>quarkus-kafka-streams-processor-test-framework</artifactId>
++      <scope>test</scope>
++    </dependency>
++  </dependencies>
++</project>
+diff --git a/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/CloudEventConfigCustomizer.java b/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/CloudEventConfigCustomizer.java
+new file mode 100644
+index 0000000..85c80b8
+--- /dev/null
++++ b/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/CloudEventConfigCustomizer.java
+@@ -0,0 +1,51 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import org.apache.kafka.common.serialization.Serde;
++import org.apache.kafka.common.serialization.Serdes;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.kafka.CloudEventDeserializer;
++import io.cloudevents.kafka.CloudEventSerializer;
++import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
++import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
++import jakarta.annotation.Priority;
++import jakarta.enterprise.context.Dependent;
++import jakarta.inject.Inject;
++
++@Dependent
++@Priority(1)
++public class CloudEventConfigCustomizer implements ConfigurationCustomizer {
++    private final Serde<CloudEvent> serde;
++    private final CloudEventSerializer serializer;
++
++    @Inject
++    public CloudEventConfigCustomizer() {
++        this.serializer = new CloudEventSerializer();
++        this.serde = new Serdes.WrapperSerde<>(serializer, new CloudEventDeserializer());
++    }
++
++    @Override
++    public void fillConfiguration(Configuration configuration) {
++        configuration.setSourceValueSerde(serde);
++        configuration.setSinkValueSerializer(serializer);
++    }
++}
+diff --git a/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessor.java b/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessor.java
+new file mode 100644
+index 0000000..02ca07b
+--- /dev/null
++++ b/integration-tests/cloud-events/src/main/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessor.java
+@@ -0,0 +1,60 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import java.nio.charset.StandardCharsets;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.builder.CloudEventBuilder;
++import io.cloudevents.core.data.PojoCloudEventData;
++import jakarta.inject.Inject;
++
++import org.apache.kafka.streams.processor.api.ContextualProcessor;
++import org.apache.kafka.streams.processor.api.Record;
++
++import com.google.protobuf.InvalidProtocolBufferException;
++
++import de.svenjacobs.loremipsum.LoremIpsum;
++import io.quarkiverse.kafkastreamsprocessor.api.Processor;
++import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
++import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
++import lombok.extern.slf4j.Slf4j;
++
++@Slf4j
++@Processor
++public class PingProcessor extends ContextualProcessor<String, CloudEvent, String, CloudEvent> {
++    @Override
++    public void process(Record<String, CloudEvent> ping) {
++        try {
++            Ping unwrapped = Ping.parser().parseFrom(ping.value().getData().toBytes());
++            CloudEvent wrappedPong = CloudEventBuilder.from(ping.value()).withData(
++                PojoCloudEventData.wrap(
++                    Ping.newBuilder().setMessage(Integer.toString(unwrapped.getMessage().length())).build(),
++                    Ping::toByteArray))
++                .withDataContentType(Ping.class.getTypeName())
++                .build();
++            context().forward(ping.withValue(wrappedPong));
++        } catch (InvalidProtocolBufferException e) {
++
++        }
++    }
++}
+diff --git a/integration-tests/cloud-events/src/main/resources/application.properties b/integration-tests/cloud-events/src/main/resources/application.properties
+new file mode 100644
+index 0000000..85ec4dd
+--- /dev/null
++++ b/integration-tests/cloud-events/src/main/resources/application.properties
+@@ -0,0 +1,14 @@
++kafkastreamsprocessor.input.topic=ping-events
++kafkastreamsprocessor.output.topic=pong-events
++quarkus.kafka-streams.topics=ping-events,pong-events
++kafka-streams.producer.linger.ms=0
++quarkus.kubernetes.labels.key1=value1
++quarkus.kubernetes.labels.key2=value2
++
++# Runs native test with test profile https://github.com/quarkusio/quarkus/issues/4371
++quarkus.test.integration-test-profile=test
++%test.quarkus.kafka-streams.application-id=simple-sample
++quarkus.kafka.devservices.provider=kafka-native
++quarkus.kafka.devservices.topic-partitions.ping-events=2
++quarkus.kafka.devservices.topic-partitions.pong-events=1
++quarkus.http.test-port=0
+diff --git a/integration-tests/cloud-events/src/test/PingProcessorIT.java b/integration-tests/cloud-events/src/test/PingProcessorIT.java
+new file mode 100644
+index 0000000..2d01847
+--- /dev/null
++++ b/integration-tests/cloud-events/src/test/PingProcessorIT.java
+@@ -0,0 +1,26 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import io.quarkus.test.junit.QuarkusIntegrationTest;
++
++@QuarkusIntegrationTest
++public class PingProcessorIT extends PingProcessorQuarkusTest {
++}
+diff --git a/integration-tests/cloud-events/src/test/PingProcessorQuarkusTest.java b/integration-tests/cloud-events/src/test/PingProcessorQuarkusTest.java
+new file mode 100644
+index 0000000..e0e0790
+--- /dev/null
++++ b/integration-tests/cloud-events/src/test/PingProcessorQuarkusTest.java
+@@ -0,0 +1,108 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++import java.nio.charset.StandardCharsets;
++import java.util.List;
++import java.util.Map;
++
++import org.apache.kafka.clients.consumer.ConsumerRecord;
++import org.apache.kafka.clients.consumer.KafkaConsumer;
++import org.apache.kafka.clients.producer.KafkaProducer;
++import org.apache.kafka.clients.producer.ProducerRecord;
++import org.apache.kafka.common.serialization.StringDeserializer;
++import org.apache.kafka.common.serialization.StringSerializer;
++import org.awaitility.Durations;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.kafka.test.utils.KafkaTestUtils;
++
++import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
++import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
++
++import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
++import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
++import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
++import io.quarkus.test.common.QuarkusTestResource;
++import io.quarkus.test.junit.QuarkusTest;
++
++/**
++ * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
++ */
++@QuarkusTest
++@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
++public class PingProcessorQuarkusTest {
++    @KafkaBootstrapServers
++    String kafkaBootstrapServers;
++
++    String senderTopic = "ping-events";
++
++    String consumerTopic = "pong-events";
++
++    KafkaProducer<String, Ping> producer;
++
++    KafkaConsumer<String, Ping> consumer;
++
++    @BeforeEach
++    public void setup() {
++        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
++        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new KafkaProtobufDeserializer<>(Ping.parser()));
++        consumer.subscribe(List.of(consumerTopic));
++
++        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
++        producer = new KafkaProducer<>(producerProps, new StringSerializer(),
++                new KafkaProtobufSerializer<>());
++    }
++
++    @AfterEach
++    public void tearDown() {
++        producer.close();
++        consumer.close();
++    }
++
++    @Test
++    public void testCount() {
++        producer.send(new ProducerRecord<>(senderTopic, Ping.newBuilder().setMessage("world").build()));
++        producer.flush();
++        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS);
++        assertEquals("5", record.value().getMessage());
++    }
++
++    @Test
++    public void testRetryableException() {
++        producer.send(new ProducerRecord<>(senderTopic, Ping.newBuilder().setMessage("retry-10").build()));
++        producer.flush();
++        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS);
++        assertEquals("OK", record.value().getMessage());
++    }
++
++    @Test
++    public void testBigMessage() {
++        producer.send(new ProducerRecord<>(senderTopic, Ping.newBuilder().setMessage("bigMessage-100000").build()));
++        producer.flush();
++
++        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS);
++        assertEquals(100000, record.value().getMessage().getBytes(StandardCharsets.UTF_8).length);
++    }
++
++}
+diff --git a/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorQuarkusTest.java b/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorQuarkusTest.java
+new file mode 100644
+index 0000000..3c2bf39
+--- /dev/null
++++ b/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorQuarkusTest.java
+@@ -0,0 +1,100 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++import java.net.URI;
++import java.nio.charset.StandardCharsets;
++import java.util.List;
++import java.util.Map;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.data.PojoCloudEventData;
++import io.cloudevents.core.v1.CloudEventBuilder;
++import io.cloudevents.kafka.CloudEventDeserializer;
++import io.cloudevents.kafka.CloudEventSerializer;
++import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
++import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
++import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
++import io.quarkus.test.common.QuarkusTestResource;
++import io.quarkus.test.junit.QuarkusTest;
++
++import org.apache.kafka.clients.consumer.ConsumerRecord;
++import org.apache.kafka.clients.consumer.KafkaConsumer;
++import org.apache.kafka.clients.producer.KafkaProducer;
++import org.apache.kafka.clients.producer.ProducerRecord;
++import org.apache.kafka.common.serialization.StringDeserializer;
++import org.apache.kafka.common.serialization.StringSerializer;
++import org.awaitility.Durations;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.kafka.test.utils.KafkaTestUtils;
++
++/**
++ * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
++ */
++@QuarkusTest
++@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
++class PingProcessorQuarkusTest {
++  @KafkaBootstrapServers
++  String kafkaBootstrapServers;
++
++  String senderTopic = "ping-events";
++
++  String consumerTopic = "pong-events";
++
++  KafkaProducer<String, CloudEvent> producer;
++
++  KafkaConsumer<String, CloudEvent> consumer;
++
++  @BeforeEach
++  void setup() {
++    Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
++    consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
++    consumer.subscribe(List.of(consumerTopic));
++
++    Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
++    producer = new KafkaProducer<>(producerProps, new StringSerializer(),
++        new CloudEventSerializer());
++  }
++
++  @AfterEach
++  void tearDown() {
++    producer.close();
++    consumer.close();
++  }
++
++  @Test
++    void testCount() throws Exception {
++        Ping world = Ping.newBuilder().setMessage("world").build();
++        PojoCloudEventData eventData = PojoCloudEventData.wrap(world, Ping::toByteArray);
++        CloudEvent event = new CloudEventBuilder().newBuilder().withData(eventData)
++                .withSource(URI.create("blabla"))
++                    .withId("blabla")
++                        .withType(Ping.class.getTypeName()).build();
++        producer.send(new ProducerRecord<>(senderTopic, event));
++        producer.flush();
++        ConsumerRecord<String, CloudEvent> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS);
++        assertEquals("5", Ping.parseFrom(record.value().getData().toBytes()).getMessage());
++    }
++
++}
+diff --git a/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorTest.java b/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorTest.java
+new file mode 100644
+index 0000000..611c5b5
+--- /dev/null
++++ b/integration-tests/cloud-events/src/test/java/io/quarkiverse/kafkastreamsprocessor/sample/cloudevents/PingProcessorTest.java
+@@ -0,0 +1,89 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.sample.cloudevents;
++
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.equalTo;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.mockito.Mockito.verify;
++
++import java.net.URI;
++import java.nio.charset.StandardCharsets;
++
++import org.apache.kafka.streams.processor.api.ProcessorContext;
++import org.apache.kafka.streams.processor.api.Record;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.ArgumentCaptor;
++import org.mockito.Captor;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.data.PojoCloudEventData;
++import io.cloudevents.core.v1.CloudEventBuilder;
++import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
++import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
++
++@ExtendWith(MockitoExtension.class)
++public class PingProcessorTest {
++
++    @Mock
++    ProcessorContext<String, CloudEvent> context;
++
++    PingProcessor processor;
++
++    @Captor
++    ArgumentCaptor<Record<String, CloudEvent>> captor;
++
++    @BeforeEach
++    public void setup() {
++        processor = new PingProcessor();
++        processor.init(context);
++    }
++
++    @Test
++    public void repliesWithPong() {
++        PojoCloudEventData<Ping> pingPojoCloudEventData =
++            PojoCloudEventData.wrap(Ping.newBuilder().setMessage("world").build(), Ping::toByteArray);
++        CloudEvent ping = new CloudEventBuilder().withDataContentType(Ping.class.getTypeName())
++            .withId("myID")
++            .withSource(URI.create("https://example.com"))
++            .withType("Blabla")
++            .withData(pingPojoCloudEventData)
++            .build();
++        System.out.println(ping.toString());
++        System.out.println(ping.getData().toString());
++
++        processor.process(new Record<>("key", ping, 0L));
++
++        verify(context).forward(captor.capture());
++        CloudEvent pong = captor.getValue().value();
++
++        System.out.println(pong.toString());
++        System.out.println(pong.getData().toString());
++        assertThat(pong.getId(), equalTo("myID"));
++        assertThat(pong.getDataContentType(), equalTo(Ping.class.getTypeName()));
++        assertThat(pong.getData().toBytes(), equalTo(Ping.newBuilder().setMessage("5").build().toByteArray()));
++    }
++
++}
+diff --git a/integration-tests/pom.xml b/integration-tests/pom.xml
+index 4e65a21..94e0be1 100644
+--- a/integration-tests/pom.xml
++++ b/integration-tests/pom.xml
+@@ -18,6 +18,7 @@
+     <module>stateful</module>
+     <module>stateful-global</module>
+     <module>custom-serde</module>
++    <module>cloud-events</module>
+   </modules>
+   <build>
+     <plugins>

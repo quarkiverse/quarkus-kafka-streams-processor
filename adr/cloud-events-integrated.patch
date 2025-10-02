@@ -1,0 +1,1005 @@
+diff --git a/api/pom.xml b/api/pom.xml
+index 8bc8533..ada8ffe 100644
+--- a/api/pom.xml
++++ b/api/pom.xml
+@@ -70,6 +70,10 @@
+       <groupId>io.quarkus</groupId>
+       <artifactId>quarkus-core</artifactId>
+     </dependency>
++    <dependency>
++      <groupId>io.cloudevents</groupId>
++      <artifactId>cloudevents-api</artifactId>
++    </dependency>
+ 
+     <!-- Test -->
+     <dependency>
+diff --git a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/cloudevents/CloudEventContextHandler.java b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/cloudevents/CloudEventContextHandler.java
+new file mode 100644
+index 0000000..d840d6d
+--- /dev/null
++++ b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/cloudevents/CloudEventContextHandler.java
+@@ -0,0 +1,9 @@
++package io.quarkiverse.kafkastreamsprocessor.api.cloudevents;
++
++import io.cloudevents.CloudEventContext;
++
++public interface CloudEventContextHandler {
++    CloudEventContext getIncomingContext();
++
++    void setOutgoingContext(CloudEventContext cloudEventContext);
++}
+diff --git a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/outputrecord/OutputRecordInterceptor.java b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/outputrecord/OutputRecordInterceptor.java
+index ecb8662..795781d 100644
+--- a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/outputrecord/OutputRecordInterceptor.java
++++ b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/outputrecord/OutputRecordInterceptor.java
+@@ -33,7 +33,8 @@ public interface OutputRecordInterceptor {
+      * {@link org.apache.kafka.streams.processor.api.ProcessorContext#forward(Record, String)}.
+      *
+      * @param record the record as the processor requested it to be forwarded
++     * @param childName topic name
+      * @return the new record with any modifications this interceptor wants to apply before serialization.
+      */
+-    Record interceptOutputRecord(Record record);
++    Record interceptOutputRecord(Record record, String childName);
+ }
+diff --git a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/processor/ProcessorDecoratorPriorities.java b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/processor/ProcessorDecoratorPriorities.java
+index 733c749..1ebe576 100644
+--- a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/processor/ProcessorDecoratorPriorities.java
++++ b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/processor/ProcessorDecoratorPriorities.java
+@@ -71,6 +71,12 @@ public final class ProcessorDecoratorPriorities {
+      */
+     public static final int CDI_REQUEST_SCOPE = 200;
+ 
++    /**
++     * Priority of the decorator in charge or initializing a "request context" for the duration of the processing of the
++     * ContextualProcessor#process(Record)} method. It is closed afterward.
++     */
++    public static final int CLOUD_EVENT_DESERIALIZING = 230;
++
+     /**
+      * Priority for the decorator that wraps the {@link org.apache.kafka.streams.processor.api.ProcessorContext} to
+      * intercept calls to its <code>forward</code> methods.
+diff --git a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/producer/ProducerInterceptorPriorities.java b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/producer/ProducerInterceptorPriorities.java
+index c6cfc24..b2e1348 100644
+--- a/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/producer/ProducerInterceptorPriorities.java
++++ b/api/src/main/java/io/quarkiverse/kafkastreamsprocessor/api/decorator/producer/ProducerInterceptorPriorities.java
+@@ -32,6 +32,8 @@ public final class ProducerInterceptorPriorities {
+      */
+     public static final int TRACING = 100;
+ 
++    public static final int CLOUD_EVENT_SERIALIZATION = 200;
++
+     private ProducerInterceptorPriorities() {
+ 
+     }
+diff --git a/bom/application/pom.xml b/bom/application/pom.xml
+index a536e74..5bd4a6b 100644
+--- a/bom/application/pom.xml
++++ b/bom/application/pom.xml
+@@ -59,6 +59,13 @@
+         <artifactId>kafka-protobuf-serde</artifactId>
+         <version>2.2.0</version>
+       </dependency>
++      <dependency>
++        <groupId>io.cloudevents</groupId>
++        <artifactId>cloudevents-bom</artifactId>
++        <version>4.0.1</version>
++        <type>pom</type>
++        <scope>import</scope>
++      </dependency>
+     </dependencies>
+   </dependencyManagement>
+ </project>
+diff --git a/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor.adoc b/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor.adoc
+index aa2e800..3e3e287 100644
+--- a/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor.adoc
++++ b/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor.adoc
+@@ -74,6 +74,48 @@ endif::add-copy-button-to-env-var[]
+ |list of string
+ |required icon:exclamation-circle[title=Configuration property is required]
+ 
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-config-cloud-event-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-config-cloud-event-config[`kafkastreamsprocessor.input.cloud-event-config."cloud-event-config"`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.input.cloud-event-config."cloud-event-config"+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++`
++endif::add-copy-button-to-env-var[]
++--
++|Map<String,String>
++|
++
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`kafkastreamsprocessor.input.is-cloud-event`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.input.is-cloud-event+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Whether cloud events are potentially used on the input
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++`
++endif::add-copy-button-to-env-var[]
++--
++|boolean
++|`false`
++
+ a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
+ ifdef::add-copy-button-to-config-props[]
+ config_property_copy_button:+++kafkastreamsprocessor.output.topic+++[]
+@@ -116,6 +158,48 @@ endif::add-copy-button-to-env-var[]
+ |string
+ |required icon:exclamation-circle[title=Configuration property is required]
+ 
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`kafkastreamsprocessor.output.is-cloud-event`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.output.is-cloud-event+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Whether cloud events are potentially used on the input
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++`
++endif::add-copy-button-to-env-var[]
++--
++|boolean
++|`false`
++
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-config-cloud-event-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-config-cloud-event-config[`kafkastreamsprocessor.output.cloud-event-config."cloud-event-config"`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.output.cloud-event-config."cloud-event-config"+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++`
++endif::add-copy-button-to-env-var[]
++--
++|Map<String,String>
++|
++
+ a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+ ifdef::add-copy-button-to-config-props[]
+ config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]
+diff --git a/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc b/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc
+index aa2e800..3e3e287 100644
+--- a/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc
++++ b/docs/modules/ROOT/pages/includes/quarkus-kafka-streams-processor_kafkastreamsprocessor.adoc
+@@ -74,6 +74,48 @@ endif::add-copy-button-to-env-var[]
+ |list of string
+ |required icon:exclamation-circle[title=Configuration property is required]
+ 
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-config-cloud-event-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-config-cloud-event-config[`kafkastreamsprocessor.input.cloud-event-config."cloud-event-config"`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.input.cloud-event-config."cloud-event-config"+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++`
++endif::add-copy-button-to-env-var[]
++--
++|Map<String,String>
++|
++
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`kafkastreamsprocessor.input.is-cloud-event`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.input.is-cloud-event+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Whether cloud events are potentially used on the input
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++`
++endif::add-copy-button-to-env-var[]
++--
++|boolean
++|`false`
++
+ a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
+ ifdef::add-copy-button-to-config-props[]
+ config_property_copy_button:+++kafkastreamsprocessor.output.topic+++[]
+@@ -116,6 +158,48 @@ endif::add-copy-button-to-env-var[]
+ |string
+ |required icon:exclamation-circle[title=Configuration property is required]
+ 
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`kafkastreamsprocessor.output.is-cloud-event`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.output.is-cloud-event+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Whether cloud events are potentially used on the input
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++`
++endif::add-copy-button-to-env-var[]
++--
++|boolean
++|`false`
++
++a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-config-cloud-event-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-config-cloud-event-config[`kafkastreamsprocessor.output.cloud-event-config."cloud-event-config"`]##
++ifdef::add-copy-button-to-config-props[]
++config_property_copy_button:+++kafkastreamsprocessor.output.cloud-event-config."cloud-event-config"+++[]
++endif::add-copy-button-to-config-props[]
++
++
++[.description]
++--
++Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++
++
++ifdef::add-copy-button-to-env-var[]
++Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++[]
++endif::add-copy-button-to-env-var[]
++ifndef::add-copy-button-to-env-var[]
++Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENT_CONFIG__CLOUD_EVENT_CONFIG_+++`
++endif::add-copy-button-to-env-var[]
++--
++|Map<String,String>
++|
++
+ a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+ ifdef::add-copy-button-to-config-props[]
+ config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]
+diff --git a/impl/pom.xml b/impl/pom.xml
+index c6ed842..74eebc2 100644
+--- a/impl/pom.xml
++++ b/impl/pom.xml
+@@ -128,6 +128,10 @@
+       <groupId>io.smallrye.common</groupId>
+       <artifactId>smallrye-common-vertx-context</artifactId>
+     </dependency>
++    <dependency>
++      <groupId>io.cloudevents</groupId>
++      <artifactId>cloudevents-kafka</artifactId>
++    </dependency>
+ 
+     <dependency>
+       <groupId>org.projectlombok</groupId>
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/TopologyProducer.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/TopologyProducer.java
+index bec33dc..edfecf4 100644
+--- a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/TopologyProducer.java
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/TopologyProducer.java
+@@ -28,11 +28,15 @@ import jakarta.enterprise.inject.spi.BeanManager;
+ import jakarta.inject.Inject;
+ import jakarta.inject.Provider;
+ 
++import org.apache.kafka.common.serialization.Deserializer;
++import org.apache.kafka.common.serialization.Serializer;
+ import org.apache.kafka.streams.KafkaClientSupplier;
+ import org.apache.kafka.streams.Topology;
+ import org.apache.kafka.streams.processor.api.Processor;
+ import org.apache.kafka.streams.processor.api.ProcessorSupplier;
+ 
++import io.cloudevents.kafka.CloudEventDeserializer;
++import io.cloudevents.kafka.CloudEventSerializer;
+ import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
+ import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
+ import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurationCustomizer;
+@@ -183,7 +187,7 @@ public class TopologyProducer {
+         Topology topology = new Topology();
+         sourceToTopicMapping.forEach(
+                 (String source, String[] topics) -> topology.addSource(source, configuration.getSourceKeySerde().deserializer(),
+-                        configuration.getSourceValueSerde().deserializer(), topics));
++                        getSourceValueDeserializer(configuration, kStreamsProcessorConfig), topics));
+         topology.addProcessor(PROCESSOR_NAME,
+                 kStreamProcessorSupplier,
+                 sourceToTopicMapping.keySet().toArray(new String[] {}));
+@@ -193,7 +197,7 @@ public class TopologyProducer {
+         if (kStreamsProcessorConfig.dlq().topic().isPresent()) {
+             topology.addSink(DLQ_SINK_NAME, kStreamsProcessorConfig.dlq().topic().get(),
+                     configuration.getSourceKeySerde().serializer(),
+-                    configuration.getSourceValueSerde().serializer(), PROCESSOR_NAME);
++                    getSourceValueSerializer(configuration, kStreamsProcessorConfig), PROCESSOR_NAME);
+         }
+ 
+         configuration.getStoreConfigurations()
+@@ -203,6 +207,29 @@ public class TopologyProducer {
+         return topology;
+     }
+ 
++    private Deserializer<?> getSourceValueDeserializer(TopologyConfigurationImpl configuration,
++            KStreamsProcessorConfig kStreamsProcessorConfig) {
++        if (kStreamsProcessorConfig.input().isCloudEvent()) {
++            return new CloudEventDeserializer();
++        }
++        return configuration.getSourceValueSerde().deserializer();
++    }
++
++    //    private Serializer<?> getSinkValueSerializer(TopologyConfigurationImpl configuration, KStreamsProcessorConfig kStreamsProcessorConfig) {
++    //        if (kStreamsProcessorConfig.output().isCloudEvent()) {
++    //            return new CloudEventSerializer();
++    //        }
++    //        return configuration.getSourceValueSerde().serializer();
++    //    }
++
++    private Serializer<?> getSourceValueSerializer(TopologyConfigurationImpl configuration,
++            KStreamsProcessorConfig kStreamsProcessorConfig) {
++        if (kStreamsProcessorConfig.input().isCloudEvent()) {
++            return new CloudEventSerializer();
++        }
++        return configuration.getSourceValueSerde().serializer();
++    }
++
+     private void addGlobalStores(TopologyConfigurationImpl configuration, Topology topology) {
+         configuration.getGlobalStoreConfigurations()
+                 .forEach(config -> {
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/cloudevents/CloudEventContextHandlerImpl.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/cloudevents/CloudEventContextHandlerImpl.java
+new file mode 100644
+index 0000000..09116aa
+--- /dev/null
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/cloudevents/CloudEventContextHandlerImpl.java
+@@ -0,0 +1,20 @@
++package io.quarkiverse.kafkastreamsprocessor.impl.cloudevents;
++
++import jakarta.enterprise.context.RequestScoped;
++
++import io.cloudevents.CloudEventContext;
++import io.quarkiverse.kafkastreamsprocessor.api.cloudevents.CloudEventContextHandler;
++import lombok.Getter;
++import lombok.Setter;
++
++@RequestScoped
++@Getter
++@Setter
++public class CloudEventContextHandlerImpl implements CloudEventContextHandler {
++    private CloudEventContext incomingContext;
++    private CloudEventContext outgoingContext;
++
++    public CloudEventContext resolveOutgoingContext() {
++        return outgoingContext == null ? incomingContext : outgoingContext;
++    }
++}
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/CloudEventSerializingOutputRecordInterceptor.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/CloudEventSerializingOutputRecordInterceptor.java
+new file mode 100644
+index 0000000..ae9ef0f
+--- /dev/null
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/CloudEventSerializingOutputRecordInterceptor.java
+@@ -0,0 +1,84 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.impl.decorator.outputrecord;
++
++import jakarta.inject.Inject;
++
++import org.apache.kafka.common.header.Headers;
++import org.apache.kafka.common.serialization.Serializer;
++import org.apache.kafka.streams.processor.api.Record;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.builder.CloudEventBuilder;
++import io.cloudevents.core.data.PojoCloudEventData;
++import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptor;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.outputrecord.OutputRecordInterceptorPriorities;
++import io.quarkiverse.kafkastreamsprocessor.impl.cloudevents.CloudEventContextHandlerImpl;
++import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
++import lombok.RequiredArgsConstructor;
++
++/**
++ * Producer interceptor that injects the tracing headers for propagation.
++ */
++//@ApplicationScoped
++public class CloudEventSerializingOutputRecordInterceptor implements OutputRecordInterceptor {
++    private final KStreamsProcessorConfig kStreamsProcessorConfig;
++    private final Configuration configuration;
++    private final CloudEventContextHandlerImpl contextHandler;
++
++    @Inject
++    public CloudEventSerializingOutputRecordInterceptor(KStreamsProcessorConfig kStreamsProcessorConfig,
++            Configuration configuration, CloudEventContextHandlerImpl contextHandler) {
++        this.kStreamsProcessorConfig = kStreamsProcessorConfig;
++        this.configuration = configuration;
++        this.contextHandler = contextHandler;
++    }
++
++    @Override
++    public Record interceptOutputRecord(Record record, String childName) {
++        if (kStreamsProcessorConfig.output().isCloudEvent()) {
++            PojoCloudEventData<Object> cloudEventData = PojoCloudEventData.wrap(record.value(),
++                    new SerializerToBytes(configuration, record.headers(), childName));
++            CloudEvent cloudEvent = CloudEventBuilder.fromContext(contextHandler.resolveOutgoingContext())
++                    .withData(cloudEventData)
++                    .build();
++            return record.withValue(cloudEvent);
++        }
++        return record;
++    }
++
++    @RequiredArgsConstructor
++    private static class SerializerToBytes implements PojoCloudEventData.ToBytes<Object> {
++        private final Configuration configuration;
++        private final Headers headers;
++        private final String topic;
++
++        @Override
++        public byte[] convert(Object o) throws Exception {
++            return ((Serializer<Object>) configuration.getSinkValueSerializer()).serialize(topic, headers, o);
++        }
++    }
++
++    @Override
++    public int priority() {
++        return OutputRecordInterceptorPriorities.TRACING;
++    }
++}
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/TracingOutputRecordInterceptor.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/TracingOutputRecordInterceptor.java
+index 3da77a6..91203a8 100644
+--- a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/TracingOutputRecordInterceptor.java
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/outputrecord/TracingOutputRecordInterceptor.java
+@@ -46,7 +46,7 @@ public class TracingOutputRecordInterceptor implements OutputRecordInterceptor {
+     }
+ 
+     @Override
+-    public Record interceptOutputRecord(Record record) {
++    public Record interceptOutputRecord(Record record, String childName) {
+         openTelemetry.getPropagators().getTextMapPropagator().fields().forEach(record.headers()::remove);
+         openTelemetry.getPropagators()
+                 .getTextMapPropagator()
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/CloudEventDeserializingDecorator.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/CloudEventDeserializingDecorator.java
+new file mode 100644
+index 0000000..89d1289
+--- /dev/null
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/CloudEventDeserializingDecorator.java
+@@ -0,0 +1,58 @@
++package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
++
++import jakarta.annotation.Priority;
++import jakarta.enterprise.context.Dependent;
++import jakarta.inject.Inject;
++
++import org.apache.kafka.common.serialization.Deserializer;
++import org.apache.kafka.streams.processor.api.ProcessorContext;
++import org.apache.kafka.streams.processor.api.Record;
++
++import io.cloudevents.CloudEvent;
++import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
++import io.quarkiverse.kafkastreamsprocessor.impl.cloudevents.CloudEventContextHandlerImpl;
++import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
++
++@Dependent
++@Priority(ProcessorDecoratorPriorities.CLOUD_EVENT_DESERIALIZING)
++public class CloudEventDeserializingDecorator extends AbstractProcessorDecorator {
++    private final KStreamsProcessorConfig kStreamsProcessorConfig;
++    private final Configuration configuration;
++    private final CloudEventContextHandlerImpl contextHandler;
++
++    private ProcessorContext context;
++
++    @Inject
++    public CloudEventDeserializingDecorator(KStreamsProcessorConfig kStreamsProcessorConfig,
++            Configuration configuration, CloudEventContextHandlerImpl contextHandler) {
++        this.kStreamsProcessorConfig = kStreamsProcessorConfig;
++        this.configuration = configuration;
++        this.contextHandler = contextHandler;
++    }
++
++    @Override
++    public void init(ProcessorContext context) {
++        this.context = context;
++        getDelegate().init(context);
++    }
++
++    @Override
++    public void process(Record record) {
++        if (kStreamsProcessorConfig.input().isCloudEvent()) {
++            if (record.value() instanceof CloudEvent cloudEvent) {
++                Deserializer<?> deserializer = configuration.getSourceValueSerde().deserializer();
++                deserializer.configure(kStreamsProcessorConfig.input().cloudEventConfig(), false);
++                Object deserialized = deserializer.deserialize(context.recordMetadata().get().topic(),
++                        record.headers(), cloudEvent.getData().toBytes());
++                contextHandler.setIncomingContext(cloudEvent);
++                getDelegate().process(record.withValue(deserialized));
++            } else {
++                throw new IllegalStateException("Cloud event activated, should have received a value of type CloudEvent");
++            }
++        } else {
++            getDelegate().process(record);
++        }
++    }
++}
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecorator.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecorator.java
+index e82ec42..02a4b12 100644
+--- a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecorator.java
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecorator.java
+@@ -82,7 +82,7 @@ public class OutputRecordInterceptionDecorator extends AbstractProcessorDecorato
+         @Override
+         public void forward(Record record, String childName) {
+             for (OutputRecordInterceptor outputRecordInterceptor : outputRecordInterceptors) {
+-                record = outputRecordInterceptor.interceptOutputRecord(record);
++                record = outputRecordInterceptor.interceptOutputRecord(record, childName);
+             }
+             delegate.forward(record, childName);
+         }
+diff --git a/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/producer/CloudEventSerializingProducerInterceptor.java b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/producer/CloudEventSerializingProducerInterceptor.java
+new file mode 100644
+index 0000000..c2b1d26
+--- /dev/null
++++ b/impl/src/main/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/producer/CloudEventSerializingProducerInterceptor.java
+@@ -0,0 +1,75 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.impl.decorator.producer;
++
++import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.inject.Inject;
++
++import org.apache.kafka.clients.producer.ProducerRecord;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.builder.CloudEventBuilder;
++import io.cloudevents.core.data.BytesCloudEventData;
++import io.cloudevents.kafka.CloudEventSerializer;
++import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerInterceptorPriorities;
++import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
++import io.quarkiverse.kafkastreamsprocessor.impl.cloudevents.CloudEventContextHandlerImpl;
++import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
++
++/**
++ * Producer interceptor that injects the tracing headers for propagation.
++ */
++@ApplicationScoped
++@Deprecated(forRemoval = true, since = "4.1")
++public class CloudEventSerializingProducerInterceptor implements ProducerOnSendInterceptor {
++    private final KStreamsProcessorConfig kStreamsProcessorConfig;
++    private final Configuration configuration;
++    private final CloudEventContextHandlerImpl contextHandler;
++
++    @Inject
++    public CloudEventSerializingProducerInterceptor(KStreamsProcessorConfig kStreamsProcessorConfig,
++            Configuration configuration, CloudEventContextHandlerImpl contextHandler) {
++        this.kStreamsProcessorConfig = kStreamsProcessorConfig;
++        this.configuration = configuration;
++        this.contextHandler = contextHandler;
++    }
++
++    @Override
++    public ProducerRecord<byte[], byte[]> onSend(ProducerRecord<byte[], byte[]> record) {
++        if (kStreamsProcessorConfig.output().isCloudEvent()) {
++            BytesCloudEventData wrapped = BytesCloudEventData.wrap(record.value());
++            CloudEvent cloudEvent = CloudEventBuilder.fromContext(contextHandler.resolveOutgoingContext())
++                    .withData(wrapped)
++                    .build();
++            CloudEventSerializer cloudEventSerializer = new CloudEventSerializer();
++            cloudEventSerializer.configure(kStreamsProcessorConfig.output().cloudEventConfig(), false);
++            byte[] serializedCloudEvent = cloudEventSerializer.serialize(record.topic(), record.headers(), cloudEvent);
++            return new ProducerRecord<>(record.topic(), record.partition(), record.timestamp(), record.key(),
++                    serializedCloudEvent, record.headers());
++        }
++        return record;
++    }
++
++    @Override
++    public int priority() {
++        return ProducerInterceptorPriorities.CLOUD_EVENT_SERIALIZATION;
++    }
++}
+diff --git a/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/CloudEventQuarkusTest.java b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/CloudEventQuarkusTest.java
+new file mode 100644
+index 0000000..4b03593
+--- /dev/null
++++ b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/CloudEventQuarkusTest.java
+@@ -0,0 +1,146 @@
++/*-
++ * #%L
++ * Quarkus Kafka Streams Processor
++ * %%
++ * Copyright (C) 2024 Amadeus s.a.s.
++ * %%
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * #L%
++ */
++package io.quarkiverse.kafkastreamsprocessor.impl;
++
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.contains;
++import static org.hamcrest.Matchers.equalTo;
++
++import java.net.URI;
++import java.time.Duration;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++
++import jakarta.enterprise.inject.Alternative;
++import jakarta.inject.Inject;
++
++import org.apache.kafka.clients.consumer.ConsumerRecord;
++import org.apache.kafka.clients.consumer.KafkaConsumer;
++import org.apache.kafka.clients.producer.KafkaProducer;
++import org.apache.kafka.clients.producer.ProducerRecord;
++import org.apache.kafka.common.serialization.StringDeserializer;
++import org.apache.kafka.common.serialization.StringSerializer;
++import org.apache.kafka.streams.processor.api.ContextualProcessor;
++import org.apache.kafka.streams.processor.api.Record;
++import org.eclipse.microprofile.config.inject.ConfigProperty;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.kafka.test.utils.KafkaTestUtils;
++
++import io.cloudevents.CloudEvent;
++import io.cloudevents.core.v1.CloudEventBuilder;
++import io.cloudevents.kafka.CloudEventDeserializer;
++import io.cloudevents.kafka.CloudEventSerializer;
++import io.quarkiverse.kafkastreamsprocessor.api.Processor;
++import io.quarkiverse.kafkastreamsprocessor.api.cloudevents.CloudEventContextHandler;
++import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
++import io.quarkus.test.junit.QuarkusTest;
++import io.quarkus.test.junit.QuarkusTestProfile;
++import io.quarkus.test.junit.TestProfile;
++import lombok.extern.slf4j.Slf4j;
++
++@QuarkusTest
++@TestProfile(CloudEventQuarkusTest.TestProfile.class)
++public class CloudEventQuarkusTest {
++    @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
++    String senderTopic;
++
++    @ConfigProperty(name = "kafkastreamsprocessor.output.topic")
++    String consumerTopic;
++
++    @ConfigProperty(name = "kafka.bootstrap.servers")
++    String bootstrapServers;
++
++    KafkaProducer<String, CloudEvent> producer;
++
++    KafkaConsumer<String, CloudEvent> consumer;
++
++    @BeforeEach
++    public void setup() {
++        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
++                new CloudEventSerializer());
++        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", "true");
++        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
++        consumer.subscribe(List.of(consumerTopic));
++    }
++
++    @AfterEach
++    public void tearDown() throws Exception {
++        producer.close();
++        consumer.close();
++    }
++
++    @Test
++    public void exchangeCloudEvents() throws Exception {
++        CloudEvent cloudEvent = new CloudEventBuilder()
++                .withData(PingMessage.Ping.newBuilder().setMessage("blabla").build().toByteArray())
++                .withType(PingMessage.Ping.class.getTypeName())
++                .withId("blabla")
++                .withSource(URI.create("blabla"))
++                .build();
++        ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
++
++        producer.send(sentRecord);
++        producer.flush();
++
++        ConsumerRecord<String, CloudEvent> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
++                Duration.ofSeconds(10));
++
++        assertThat(singleRecord.key(), equalTo("key"));
++        assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(), equalTo("blabla"));
++        System.out.println(singleRecord.headers());
++        assertThat(singleRecord.value().getType(), equalTo(PingMessage.Ping.class.getTypeName()));
++        assertThat(singleRecord.value().getId(), equalTo("blabla"));
++        assertThat(singleRecord.value().getSource().toString(), equalTo("blabla"));
++        assertThat(singleRecord.value().getExtensionNames(), contains("someextension"));
++    }
++
++    @Processor
++    @Alternative
++    @Slf4j
++    public static class TestProcessor extends ContextualProcessor<String, PingMessage.Ping, String, PingMessage.Ping> {
++        @Inject
++        CloudEventContextHandler cloudEventContextHandler;
++
++        @Override
++        public void process(Record<String, PingMessage.Ping> record) {
++            cloudEventContextHandler.setOutgoingContext(
++                    io.cloudevents.core.builder.CloudEventBuilder.fromContext(cloudEventContextHandler.getIncomingContext())
++                            .withExtension("someextension", "extensionvalue")
++                            .build());
++            context().forward(record);
++        }
++    }
++
++    public static class TestProfile implements QuarkusTestProfile {
++        @Override
++        public Map<String, String> getConfigOverrides() {
++            return Map.of("kafkastreamsprocessor.input.is-cloud-event", "true", "kafkastreamsprocessor.output.is-cloud-event",
++                    "true");
++        }
++
++        @Override
++        public Set<Class<?>> getEnabledAlternatives() {
++            return Set.of(TestProcessor.class);
++        }
++    }
++}
+diff --git a/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorQuarkusTest.java b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorQuarkusTest.java
+index 64e79cd..d5e4209 100644
+--- a/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorQuarkusTest.java
++++ b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorQuarkusTest.java
+@@ -103,7 +103,7 @@ class OutputRecordInterceptionDecoratorQuarkusTest {
+     @ApplicationScoped
+     public static class OutputRecordInterceptor1 implements OutputRecordInterceptor {
+         @Override
+-        public Record interceptOutputRecord(Record record) {
++        public Record interceptOutputRecord(Record record, String childName) {
+             return record.withKey(record.key() + "s")
+                     .withValue(PingMessage.Ping.newBuilder().setMessage(((PingMessage.Ping) record.value()).getMessage() + "s")
+                             .build())
+@@ -120,7 +120,7 @@ class OutputRecordInterceptionDecoratorQuarkusTest {
+     @ApplicationScoped
+     public static class OutputRecordInterceptor2 implements OutputRecordInterceptor {
+         @Override
+-        public Record interceptOutputRecord(Record record) {
++        public Record interceptOutputRecord(Record record, String childName) {
+             return record.withKey(record.key() + "e")
+                     .withValue(PingMessage.Ping.newBuilder().setMessage(((PingMessage.Ping) record.value()).getMessage() + "e")
+                             .build())
+diff --git a/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorTest.java b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorTest.java
+index 5817554..11d4c7e 100644
+--- a/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorTest.java
++++ b/impl/src/test/java/io/quarkiverse/kafkastreamsprocessor/impl/decorator/processor/OutputRecordInterceptionDecoratorTest.java
+@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.hamcrest.Matchers.equalTo;
+ import static org.hamcrest.Matchers.nullValue;
+ import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.ArgumentMatchers.anyString;
+ import static org.mockito.Mockito.doAnswer;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+@@ -77,10 +78,10 @@ class OutputRecordInterceptionDecoratorTest {
+         Headers header3 = new RecordHeaders().add("header3", "value3".getBytes(StandardCharsets.UTF_8));
+         doAnswer(new ForwardAnswer("aKey", "aValue", header1,
+                 new Record("anotherKey", "anotherValue", 0L, header2)))
+-                .when(outputRecordInterceptor1).interceptOutputRecord(any());
++                .when(outputRecordInterceptor1).interceptOutputRecord(any(), anyString());
+         doAnswer(new ForwardAnswer("anotherKey", "anotherValue", header2,
+                 new Record("yetAnotherKey", "yetAnotherValue", 0L, header3)))
+-                .when(outputRecordInterceptor2).interceptOutputRecord(any());
++                .when(outputRecordInterceptor2).interceptOutputRecord(any(), anyString());
+     }
+ 
+     @RequiredArgsConstructor
+diff --git a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/KStreamsProcessorConfigGenerator.java b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/KStreamsProcessorConfigGenerator.java
+index fd62192..f080296 100644
+--- a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/KStreamsProcessorConfigGenerator.java
++++ b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/KStreamsProcessorConfigGenerator.java
+@@ -130,6 +130,10 @@ class KStreamsProcessorConfigGenerator {
+ 
+         private Map<String, SourceConfig> sources;
+ 
++        private boolean isCloudEvent;
++
++        private Map<String, String> cloudEventConfig;
++
+         @Override
+         public Optional<String> topic() {
+             return topic;
+@@ -157,6 +161,24 @@ class KStreamsProcessorConfigGenerator {
+                 Map<String, SourceConfig> sources) {
+             this.sources = sources;
+         }
++
++        @Override
++        public boolean isCloudEvent() {
++            return isCloudEvent;
++        }
++
++        public void setIsCloudEvent(boolean isCloudEvent) {
++            this.isCloudEvent = isCloudEvent;
++        }
++
++        @Override
++        public Map<String, String> cloudEventConfig() {
++            return cloudEventConfig;
++        }
++
++        public void setCloudEventConfig(Map<String, String> cloudEventConfig) {
++            this.cloudEventConfig = cloudEventConfig;
++        }
+     }
+ 
+     private static class SourceConfigImpl implements SourceConfig {
+@@ -177,6 +199,10 @@ class KStreamsProcessorConfigGenerator {
+ 
+         private Map<String, SinkConfig> sinks;
+ 
++        private boolean isCloudEvent;
++
++        private Map<String, String> cloudEventConfig;
++
+         @Override
+         public Optional<String> topic() {
+             return topic;
+@@ -194,6 +220,24 @@ class KStreamsProcessorConfigGenerator {
+         public void setSinks(Map<String, SinkConfig> sinks) {
+             this.sinks = sinks;
+         }
++
++        @Override
++        public boolean isCloudEvent() {
++            return isCloudEvent;
++        }
++
++        public void setIsCloudEvent(boolean isCloudEvent) {
++            this.isCloudEvent = isCloudEvent;
++        }
++
++        @Override
++        public Map<String, String> cloudEventConfig() {
++            return cloudEventConfig;
++        }
++
++        public void setCloudEventConfig(Map<String, String> cloudEventConfig) {
++            this.cloudEventConfig = cloudEventConfig;
++        }
+     }
+ 
+     private static class SinkConfigImpl implements SinkConfig {
+diff --git a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/InputConfig.java b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/InputConfig.java
+index 3ef8c9f..3fcbe59 100644
+--- a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/InputConfig.java
++++ b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/InputConfig.java
+@@ -23,6 +23,8 @@ import java.util.List;
+ import java.util.Map;
+ import java.util.Optional;
+ 
++import io.smallrye.config.WithDefault;
++
+ /**
+  * Configuration related to the messages consumed by the Processor
+  */
+@@ -47,4 +49,18 @@ public interface InputConfig {
+      * Allows to regroup topics by sources in multi-input use cases.
+      */
+     Map<String, SourceConfig> sources();
++
++    /**
++     * Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++     *
++     * @see <a href="https://www.javadoc.io/doc/io.cloudevents/cloudevents-kafka/latest/index.html">CloudEventSerializer
++     *      Javadoc</a>
++     */
++    Map<String, String> cloudEventConfig();
++
++    /**
++     * Whether cloud events are potentially used on the input
++     */
++    @WithDefault("false")
++    boolean isCloudEvent();
+ }
+diff --git a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/OutputConfig.java b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/OutputConfig.java
+index 1fae237..d8b6afd 100644
+--- a/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/OutputConfig.java
++++ b/spi/src/main/java/io/quarkiverse/kafkastreamsprocessor/spi/properties/OutputConfig.java
+@@ -22,6 +22,8 @@ package io.quarkiverse.kafkastreamsprocessor.spi.properties;
+ import java.util.Map;
+ import java.util.Optional;
+ 
++import io.smallrye.config.WithDefault;
++
+ /**
+  * Configuration related to the messages produced by the Processor
+  */
+@@ -36,4 +38,18 @@ public interface OutputConfig {
+      * topics.
+      */
+     Map<String, SinkConfig> sinks();
++
++    /**
++     * Whether cloud events are potentially used on the input
++     */
++    @WithDefault("false")
++    boolean isCloudEvent();
++
++    /**
++     * Allows to inject custom configuration for the CloudEventSerializer if a CloudEvent is detected.
++     *
++     * @see <a href="https://www.javadoc.io/doc/io.cloudevents/cloudevents-kafka/latest/index.html">CloudEventSerializer
++     *      Javadoc</a>
++     */
++    Map<String, String> cloudEventConfig();
+ }
