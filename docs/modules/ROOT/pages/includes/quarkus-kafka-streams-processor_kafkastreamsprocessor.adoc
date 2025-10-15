@@ -93,7 +93,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_INPUT_IS_CLOUD_EVENT+++`
 endif::add-copy-button-to-env-var[]
 --
 |boolean
-|`false`
+|`+++false+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config[`kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"`]##
 ifdef::add-copy-button-to-config-props[]
@@ -181,7 +181,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_IS_CLOUD_EVENT+++`
 endif::add-copy-button-to-env-var[]
 --
 |boolean
-|`false`
+|`+++false+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"`]##
 ifdef::add-copy-button-to-config-props[]
@@ -271,7 +271,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_SPEC_VERSION
 endif::add-copy-button-to-env-var[]
 --
 a|`v03`, `v1`
-|`v1`
+|`+++v1+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
 ifdef::add-copy-button-to-config-props[]
@@ -380,7 +380,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_GLOBAL_DLQ_MAX_MESSAGE_SIZE+++`
 endif::add-copy-button-to-env-var[]
 --
 |int
-|`2147483647`
+|`+++2147483647+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy[`kafkastreamsprocessor.error-strategy`]##
 ifdef::add-copy-button-to-config-props[]
@@ -407,7 +407,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_ERROR_STRATEGY+++`
 endif::add-copy-button-to-env-var[]
 --
 |string
-|`continue`
+|`+++continue+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries[`kafkastreamsprocessor.retry.max-retries`]##
 ifdef::add-copy-button-to-config-props[]
@@ -428,7 +428,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_RETRIES+++`
 endif::add-copy-button-to-env-var[]
 --
 |int
-|`-1`
+|`+++-1+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay[`kafkastreamsprocessor.retry.delay`]##
 ifdef::add-copy-button-to-config-props[]
@@ -449,7 +449,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY+++`
 endif::add-copy-button-to-env-var[]
 --
 |long
-|`0`
+|`+++0+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit[`kafkastreamsprocessor.retry.delay-unit`]##
 ifdef::add-copy-button-to-config-props[]
@@ -472,7 +472,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DELAY_UNIT+++`
 endif::add-copy-button-to-env-var[]
 --
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
-|`millis`
+|`+++millis+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration[`kafkastreamsprocessor.retry.max-duration`]##
 ifdef::add-copy-button-to-config-props[]
@@ -493,7 +493,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_MAX_DURATION+++`
 endif::add-copy-button-to-env-var[]
 --
 |long
-|`180000`
+|`+++180000+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit[`kafkastreamsprocessor.retry.duration-unit`]##
 ifdef::add-copy-button-to-config-props[]
@@ -516,7 +516,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_DURATION_UNIT+++`
 endif::add-copy-button-to-env-var[]
 --
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
-|`millis`
+|`+++millis+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter[`kafkastreamsprocessor.retry.jitter`]##
 ifdef::add-copy-button-to-config-props[]
@@ -537,7 +537,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER+++`
 endif::add-copy-button-to-env-var[]
 --
 |long
-|`200`
+|`+++200+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit[`kafkastreamsprocessor.retry.jitter-delay-unit`]##
 ifdef::add-copy-button-to-config-props[]
@@ -560,7 +560,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_JITTER_DELAY_UNIT+++`
 endif::add-copy-button-to-env-var[]
 --
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
-|`millis`
+|`+++millis+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on[`kafkastreamsprocessor.retry.retry-on`]##
 ifdef::add-copy-button-to-config-props[]
@@ -583,7 +583,7 @@ Environment variable: `+++KAFKASTREAMSPROCESSOR_RETRY_RETRY_ON+++`
 endif::add-copy-button-to-env-var[]
 --
 |list of string
-|`io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException`
+|`+++io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException+++`
 
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on[`kafkastreamsprocessor.retry.abort-on`]##
 ifdef::add-copy-button-to-config-props[]
