@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
     <artifactId>quarkus-kafka-streams-processor-bom-parent</artifactId>
-    <version>5.0.1-SNAPSHOT</version>
+    <version>5.1.0</version>
   </parent>
   <artifactId>quarkus-kafka-streams-processor-test-bom</artifactId>
   <name>quarkus-kafka-streams-processor-test-bom</name>
