@@ -22,6 +22,7 @@ package io.quarkiverse.kafkastreamsprocessor.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -147,8 +148,8 @@ class TopologyProducerTest {
     @BeforeEach
     public void setUp() {
         processorSupplier = mock(KStreamProcessorSupplier.class);
-        when(processorSupplier.get()).thenReturn(mock(org.apache.kafka.streams.processor.api.Processor.class),
-                mock(org.apache.kafka.streams.processor.api.Processor.class));
+        doAnswer(i -> mock(org.apache.kafka.streams.processor.api.Processor.class))
+                .when(processorSupplier).get();
         configuration = mock(TopologyConfigurationImpl.class);
         when(configuration.getSourceKeySerde()).thenReturn(mock(Serde.class));
     }
