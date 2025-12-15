@@ -4,8 +4,6 @@ import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import org.jspecify.annotations.NonNull;
-
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.CloudEventExtension;
@@ -305,7 +303,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull String value) {
+    public NonFailingCloudEventBuilder withExtension(String key, String value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -314,7 +312,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull Number value) {
+    public NonFailingCloudEventBuilder withExtension(String key, Number value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -323,7 +321,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull Boolean value) {
+    public NonFailingCloudEventBuilder withExtension(String key, Boolean value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -332,7 +330,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull URI value) {
+    public NonFailingCloudEventBuilder withExtension(String key, URI value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -341,7 +339,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull OffsetDateTime value) {
+    public NonFailingCloudEventBuilder withExtension(String key, OffsetDateTime value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -350,7 +348,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull String key, @NonNull byte[] value) {
+    public NonFailingCloudEventBuilder withExtension(String key, byte[] value) {
         delegate.withExtension(key, value);
         return this;
     }
@@ -359,7 +357,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withExtension(@NonNull CloudEventExtension extension) {
+    public NonFailingCloudEventBuilder withExtension(CloudEventExtension extension) {
         delegate.withExtension(extension);
         return this;
     }
@@ -368,7 +366,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withoutExtension(@NonNull String key) {
+    public NonFailingCloudEventBuilder withoutExtension(String key) {
         delegate.withoutExtension(key);
         return this;
     }
@@ -377,7 +375,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * {@inheritDoc}
      */
     @Override
-    public NonFailingCloudEventBuilder withoutExtension(@NonNull CloudEventExtension extension) {
+    public NonFailingCloudEventBuilder withoutExtension(CloudEventExtension extension) {
         delegate.withoutExtension(extension);
         return this;
     }

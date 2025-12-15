@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+    <artifactId>quarkus-kafka-streams-processor-integration-tests</artifactId>
+    <version>6.0.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>quarkus-kafka-streams-processor-protobuf-binding-protoc-3</artifactId>
+  <name>quarkus-kafka-streams-processor-protobuf-binding-protoc-3</name>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+        <artifactId>quarkus-kafka-streams-processor-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
+        <artifactId>quarkus-kafka-streams-processor-test-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <properties>
+    <protobuf3.version>3.25.8</protobuf3.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf3.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <!-- https://github.com/trustin/os-maven-plugin#issues-with-eclipse-m2e-or-other-ides -->
+      <plugin>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>detect</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.xolstice.maven.plugins</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-java-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>generate-python-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile-python</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <protocArtifact>com.google.protobuf:protoc:${protobuf3.version}:exe:${os.detected.classifier}</protocArtifact>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

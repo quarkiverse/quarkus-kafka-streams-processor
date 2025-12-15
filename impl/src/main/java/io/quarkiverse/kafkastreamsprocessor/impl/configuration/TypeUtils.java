@@ -29,6 +29,8 @@ import jakarta.enterprise.util.TypeLiteral;
 import org.apache.kafka.streams.processor.api.Processor;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
@@ -44,11 +46,12 @@ public final class TypeUtils {
 
     static Parser<MessageLite> createParserFromType(Class<?> protobufMessageType) {
         try {
-            if (com.google.protobuf.GeneratedMessageV3.class.isAssignableFrom(protobufMessageType)) {
+            if (GeneratedMessageV3.class.isAssignableFrom(protobufMessageType) ||
+                    GeneratedMessage.class.isAssignableFrom(protobufMessageType)) {
                 return (Parser<MessageLite>) protobufMessageType.getMethod("parser").invoke(null);
             } else {
                 throw new IllegalArgumentException("Payload type " + protobufMessageType + " can not assigned to "
-                        + com.google.protobuf.GeneratedMessageV3.class);
+                        + GeneratedMessageV3.class + " or " + GeneratedMessage.class);
             }
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalArgumentException("Cannot instantiate a parser from type " + protobufMessageType, e);
@@ -61,7 +64,8 @@ public final class TypeUtils {
     public static Class<?> reifiedProcessorType(BeanManager beanManager) {
         TypeLiteral<Processor<?, ?, ?, ?>> kafka3ProcessorType = new TypeLiteral<>() {
         };
-        return beanManager.getBeans(kafka3ProcessorType.getType()).stream()
+        return beanManager.getBeans(kafka3ProcessorType.getType())
+                .stream()
                 .filter(b -> b.getStereotypes().contains(io.quarkiverse.kafkastreamsprocessor.api.Processor.class))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -70,9 +74,9 @@ public final class TypeUtils {
     }
 
     /**
-     * Determine the type's payload type (V or Vin generic type arg of processor API). With Kafka 3.x, we can no longer look
-     * at the signature of the process method as Record is also a generic type. However, we can look at the type hierarchy
-     * of the processor.
+     * Determine the type's payload type (V or Vin generic type arg of processor API). With Kafka 3.x, we can no longer
+     * look at the signature of the process method as Record is also a generic type. However, we can look at the type
+     * hierarchy of the processor.
      * <p>
      * Recursion stops at the first superclass or superinterface which is a parametrized type, and we assume the payload
      * type is the 2nd type argument, which works with Kafka 3 APIs. The Kafka 2 API is no longer supported.

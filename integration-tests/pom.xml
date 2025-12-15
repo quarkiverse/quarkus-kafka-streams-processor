@@ -4,17 +4,21 @@
   <parent>
     <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
     <artifactId>quarkus-kafka-streams-processor-parent</artifactId>
-    <version>5.2.0-SNAPSHOT</version>
+    <version>6.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-kafka-streams-processor-integration-tests</artifactId>
   <name>quarkus-kafka-streams-processor-integration-tests</name>
   <packaging>pom</packaging>
   <modules>
     <module>protobuf-binding</module>
+    <module>protobuf-binding-protoc-3</module>
+    <module>protobuf-binding-edition-2024</module>
     <module>json-pojo</module>
     <module>kafka-to-rest</module>
     <module>multioutput</module>
     <module>simple</module>
+    <module>proto-3-generated</module>
+    <module>edition-2024-generated</module>
     <module>stateful</module>
     <module>stateful-global</module>
     <module>custom-serde</module>

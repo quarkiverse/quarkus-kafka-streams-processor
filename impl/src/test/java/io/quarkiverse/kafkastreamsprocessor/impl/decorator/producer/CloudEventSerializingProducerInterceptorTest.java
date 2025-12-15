@@ -21,7 +21,6 @@ import java.util.UUID;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,7 +92,7 @@ class CloudEventSerializingProducerInterceptorTest {
         assertThat(headers, hasEntry("myheader", "headervalue"));
     }
 
-    private static @NonNull Map<String, String> transformHeaders(ProducerRecord<byte[], byte[]> output) {
+    private static Map<String, String> transformHeaders(ProducerRecord<byte[], byte[]> output) {
         Map<String, String> headers = new HashMap<>();
         output.headers().forEach(h -> headers.put(h.key(), new String(h.value(), StandardCharsets.UTF_8)));
         return headers;
