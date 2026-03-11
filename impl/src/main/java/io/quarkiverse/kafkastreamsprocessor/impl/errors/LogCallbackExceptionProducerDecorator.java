@@ -36,7 +36,8 @@ import lombok.extern.slf4j.Slf4j;
  * {@link Producer} decorator that logs exception that occurs at producing time
  * <p>
  * This decorator is meant to be used with raw kafka {@link Producer} that are not wrapped inside kafka stream where we
- * have trigger of {@link ProductionExceptionHandler} or {@link DeserializationExceptionHandler} in order to react to
+ * have trigger of {@link ProductionExceptionHandler} or {@link DlqProducerService}, which intercepts failure from
+ * {@link DeserializationExceptionHandler} or any runtime error happening during the message processing, in order to react to
  * errors.
  */
 @RequiredArgsConstructor
