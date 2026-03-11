@@ -29,14 +29,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
 import io.cloudevents.kafka.CloudEventDeserializer;
-import io.cloudevents.kafka.CloudEventSerializer;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.configuration.DefaultConfigurationCustomizer;
@@ -58,11 +56,6 @@ public class TopologyProducer {
      * Default name attached to the unique {@link Processor} this topology produces
      */
     public static final String PROCESSOR_NAME = "Processor";
-
-    /**
-     * Default sink name of the dead-letter queue
-     */
-    public static final String DLQ_SINK_NAME = "DLQ";
 
     /**
      * Class containing the configuration related to kafka streams processor
@@ -194,11 +187,6 @@ public class TopologyProducer {
         sinkToTopicMapping
                 .forEach((String sink, String topic) -> topology.addSink(sink, topic, configuration.getSinkKeySerializer(),
                         configuration.getSinkValueSerializer(), PROCESSOR_NAME));
-        if (kStreamsProcessorConfig.dlq().topic().isPresent()) {
-            topology.addSink(DLQ_SINK_NAME, kStreamsProcessorConfig.dlq().topic().get(),
-                    configuration.getSourceKeySerde().serializer(),
-                    getSourceValueSerializer(configuration, kStreamsProcessorConfig), PROCESSOR_NAME);
-        }
 
         configuration.getStoreConfigurations()
                 .forEach(storeConfiguration -> topology.addStateStore(storeConfiguration.getStoreBuilder(), PROCESSOR_NAME));
@@ -216,17 +204,6 @@ public class TopologyProducer {
             return deserializer;
         }
         return configuration.getSourceValueSerde().deserializer();
-    }
-
-    private Serializer<?> getSourceValueSerializer(TopologyConfigurationImpl configuration,
-            KStreamsProcessorConfig kStreamsProcessorConfig) {
-        // defaulting to CloudEventSerializer if kafkastreamsprocessor.input.is-cloud-event is true
-        if (kStreamsProcessorConfig.input().isCloudEvent()) {
-            CloudEventSerializer serializer = new CloudEventSerializer();
-            serializer.configure(kStreamsProcessorConfig.dlq().cloudEventSerializerConfig(), false);
-            return serializer;
-        }
-        return configuration.getSourceValueSerde().serializer();
     }
 
     private void addGlobalStores(TopologyConfigurationImpl configuration, Topology topology) {

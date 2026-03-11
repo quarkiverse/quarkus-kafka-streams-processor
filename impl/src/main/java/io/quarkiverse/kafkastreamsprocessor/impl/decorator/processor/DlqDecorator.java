@@ -19,6 +19,8 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor;
 
+import static org.apache.kafka.common.record.TimestampType.CREATE_TIME;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,7 +29,9 @@ import jakarta.decorator.Delegate;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.FixedKeyRecord;
@@ -37,12 +41,12 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.apache.kafka.streams.processor.internals.InternalProcessorContext;
 
+import io.cloudevents.kafka.CloudEventSerializer;
+import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.AbstractProcessorDecorator;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDecoratorPriorities;
-import io.quarkiverse.kafkastreamsprocessor.impl.TopologyProducer;
-import io.quarkiverse.kafkastreamsprocessor.impl.errors.DlqMetadataHandler;
+import io.quarkiverse.kafkastreamsprocessor.impl.errors.DlqProducerService;
 import io.quarkiverse.kafkastreamsprocessor.impl.errors.ErrorHandlingStrategy;
-import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import lombok.AccessLevel;
@@ -68,19 +72,24 @@ public class DlqDecorator extends AbstractProcessorDecorator {
     private final Set<String> functionalSinks;
 
     /**
-     * Tool to enrich a message metadata before its storage in the dead letter queue
-     */
-    private final DlqMetadataHandler dlqMetadataHandler;
-
-    /**
-     * container of all metrics of the framework
-     */
-    private final KafkaStreamsProcessorMetrics metrics;
-
-    /**
      * Whether the dead-letter queue mechanism is activated for this microservice
      */
     private final boolean activated;
+
+    /**
+     * Delegate that handles DLQ message production
+     */
+    private final DlqProducerService dlqDelegate;
+
+    /**
+     * The configuration of the Kafka Streams processor
+     */
+    private final Configuration configuration;
+
+    /**
+     * Class containing the configuration related to kafka streams processor
+     */
+    private final KStreamsProcessorConfig kStreamsProcessorConfig;
 
     /**
      * Keeping a reference to the ProcessorContext to be able to use it in the {@link Processor#process(Record)} method
@@ -88,12 +97,15 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      */
     private ProcessorContext context;
 
-    DlqDecorator(Set<String> functionalSinks, DlqMetadataHandler dlqMetadataHandler,
-            KafkaStreamsProcessorMetrics metrics, boolean activated) {
+    DlqDecorator(Set<String> functionalSinks, boolean activated,
+            DlqProducerService dlqDelegate,
+            Configuration configuration,
+            KStreamsProcessorConfig kStreamsProcessorConfig) {
         this.functionalSinks = functionalSinks;
-        this.dlqMetadataHandler = dlqMetadataHandler;
-        this.metrics = metrics;
         this.activated = activated;
+        this.dlqDelegate = dlqDelegate;
+        this.configuration = configuration;
+        this.kStreamsProcessorConfig = kStreamsProcessorConfig;
     }
 
     /**
@@ -101,23 +113,25 @@ public class DlqDecorator extends AbstractProcessorDecorator {
      *
      * @param sinkToTopicMappingBuilder
      *        utility to get access to the mapping between sinks and Kafka topics
-     * @param dlqMetadataHandler
-     *        the enricher of metadata before sending message to the dead letter queue
-     * @param metrics
-     *        container of all metrics of the framework
      * @param kStreamsProcessorConfig
      *        It contains the configuration for the error strategy configuration property value (default
      *        {@link ErrorHandlingStrategy#CONTINUE})
      *        and the configuration Kafka topic to use for dead letter queue (optional)
+     * @param dlqDelegate
+     *        delegate that handles DLQ production with properly configured producer
+     * @param configuration
+     *        the configuration of the kafka streams processor
      */
     @Inject
     public DlqDecorator(
-            SinkToTopicMappingBuilder sinkToTopicMappingBuilder, DlqMetadataHandler dlqMetadataHandler,
-            KafkaStreamsProcessorMetrics metrics,
-            KStreamsProcessorConfig kStreamsProcessorConfig) { // NOSONAR Optional with microprofile-config
-        this(sinkToTopicMappingBuilder.sinkToTopicMapping().keySet(), dlqMetadataHandler, metrics,
+            SinkToTopicMappingBuilder sinkToTopicMappingBuilder,
+            KStreamsProcessorConfig kStreamsProcessorConfig,
+            DlqProducerService dlqDelegate,
+            Configuration configuration) { // NOSONAR Optional with microprofile-config
+        this(sinkToTopicMappingBuilder.sinkToTopicMapping().keySet(),
                 ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
-                        kStreamsProcessorConfig.dlq().topic()));
+                        kStreamsProcessorConfig.dlq().topic()),
+                dlqDelegate, configuration, kStreamsProcessorConfig);
     }
 
     /**
@@ -158,17 +172,47 @@ public class DlqDecorator extends AbstractProcessorDecorator {
             } catch (RuntimeException e) { // NOSONAR
                 Optional<RecordMetadata> recordMetadata = context.recordMetadata();
                 if (recordMetadata.isPresent()) {
-                    dlqMetadataHandler.addMetadata(record.headers(), recordMetadata.get().topic(),
-                            recordMetadata.get().partition(), e);
-                    context.forward(record, TopologyProducer.DLQ_SINK_NAME);
-                    // Re-throw so the exception gets logged
-                    metrics.microserviceDlqSentCounter().increment();
+                    Serializer<Object> keySerializer = (Serializer<Object>) configuration.getSourceKeySerde().serializer();
+                    Serializer<Object> valueSerializer = (Serializer<Object>) getSourceValueSerializer(configuration,
+                            kStreamsProcessorConfig);
+                    byte[] serializedKey = keySerializer.serialize(recordMetadata.get().topic(), record.headers(),
+                            record.key());
+                    byte[] serializedValue = valueSerializer.serialize(recordMetadata.get().topic(), record.headers(),
+                            record.value());
+
+                    ConsumerRecord<byte[], byte[]> consumerRecord = new ConsumerRecord<>(
+                            recordMetadata.get().topic(),
+                            recordMetadata.get().partition(),
+                            recordMetadata.get().offset(),
+                            record.timestamp(),
+                            CREATE_TIME,
+                            serializedKey != null ? serializedKey.length : 0,
+                            serializedValue != null ? serializedValue.length : 0,
+                            serializedKey,
+                            serializedValue,
+                            record.headers(),
+                            Optional.empty());
+
+                    dlqDelegate.sendToDlq(consumerRecord, e, context.taskId(), false);
+
+                    // throw exception to fail OpenTelemetry span
                     throw e;
                 }
             }
         } else {
             getDelegate().process(record);
         }
+    }
+
+    Serializer<?> getSourceValueSerializer(Configuration configuration,
+            KStreamsProcessorConfig kStreamsProcessorConfig) {
+        // defaulting to CloudEventSerializer if kafkastreamsprocessor.input.is-cloud-event is true
+        if (kStreamsProcessorConfig.input().isCloudEvent()) {
+            CloudEventSerializer serializer = new CloudEventSerializer();
+            serializer.configure(kStreamsProcessorConfig.dlq().cloudEventSerializerConfig(), false);
+            return serializer;
+        }
+        return configuration.getSourceValueSerde().serializer();
     }
 
     @RequiredArgsConstructor(access = AccessLevel.MODULE)
