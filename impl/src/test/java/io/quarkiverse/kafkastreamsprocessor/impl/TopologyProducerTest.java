@@ -65,7 +65,6 @@ import io.quarkiverse.kafkastreamsprocessor.impl.configuration.store.DefaultGlob
 import io.quarkiverse.kafkastreamsprocessor.impl.decorator.processor.TracingDecorator;
 import io.quarkiverse.kafkastreamsprocessor.spi.SinkToTopicMappingBuilder;
 import io.quarkiverse.kafkastreamsprocessor.spi.SourceToTopicsMappingBuilder;
-import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.GlobalStateStoreConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.InputConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
@@ -77,9 +76,6 @@ class TopologyProducerTest {
 
     @Mock
     InputConfig inputConfig;
-
-    @Mock
-    DlqConfig dlqConfig;
 
     @Mock
     Map<String, GlobalStateStoreConfig> globalStoreConfig;
@@ -159,10 +155,7 @@ class TopologyProducerTest {
 
     private TopologyProducer newTopologyProducer(
             Map<String, String[]> sourceToTopicMapping,
-            Map<String, String> sinkToTopicMapping,
-            String dlq) {
-        when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
-        when(dlqConfig.topic()).thenReturn(Optional.ofNullable(dlq));
+            Map<String, String> sinkToTopicMapping) {
         when(kStreamsProcessorConfig.input()).thenReturn(inputConfig);
         when(sourceToTopicsMappingBuilder.sourceToTopicsMapping()).thenReturn(sourceToTopicMapping);
         when(sinkToTopicMappingBuilder.sinkToTopicMapping()).thenReturn(sinkToTopicMapping);
@@ -174,7 +167,6 @@ class TopologyProducerTest {
     private void verifyTopology(
             Map<String, String[]> sourceToTopicMapping,
             Map<String, String> sinkToTopicMapping,
-            String dlq,
             TopologyDescription topology,
             Map<String, List<String>> processorsStoreMapping,
             Collection<GlobalStoreExpectation> globalStoreExpectations) {
@@ -203,9 +195,6 @@ class TopologyProducerTest {
         assertEquals(sourceToTopicMapping.size(), sources.size());
         assertEquals(1, processors.size());
         int expectedSinks = sinkToTopicMapping.size();
-        if (dlq != null) {
-            expectedSinks += 1;
-        }
         assertEquals(expectedSinks, sinks.size());
 
         for (TopologyDescription.Source source : sources) {
@@ -221,7 +210,7 @@ class TopologyProducerTest {
             assertEquals(Set.of(processors.get(0)), sink.predecessors());
             assertEquals(Set.of(), sink.successors());
 
-            assertEquals(sinkToTopicMapping.getOrDefault(sink.name(), dlq), sink.topic());
+            assertEquals(sinkToTopicMapping.get(sink.name()), sink.topic());
         }
 
         if (processorsStoreMapping != null) {
@@ -265,15 +254,13 @@ class TopologyProducerTest {
     void topology_whenMultipleOutputTopics_shouldGenerateTopology() {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
-                Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null);
+                Map.of("pong", "pong-topic", "pang", "pang-topic"));
         mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
 
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null,
                 topology, null, null);
     }
 
@@ -281,8 +268,7 @@ class TopologyProducerTest {
     void topology_whenMultipleSources_shouldGenerateTopology() {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("ping", new String[] { "ping-topic", "ping-topic2" }, "pang", new String[] { "pang-topic" }),
-                Map.of("pong", "pong-topic"),
-                null);
+                Map.of("pong", "pong-topic"));
         mockSourceValueSerde();
 
         TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
@@ -290,32 +276,14 @@ class TopologyProducerTest {
         verifyTopology(
                 Map.of("ping", new String[] { "ping-topic", "ping-topic2" }, "pang", new String[] { "pang-topic" }),
                 Map.of("pong", "pong-topic"),
-                null,
                 topology, null, null);
     }
 
     @Test
-    void topology_whenMultipleOutputTopicsAndDLQ_shouldGenerateTopology() {
+    void topology_whenMultipleOutputTopicsAndStores_shouldGenerateTopology() {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
-                Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                "local-dlq");
-        mockSourceValueSerde();
-
-        TopologyDescription topology = topologyProducer.topology(configuration, processorSupplier).describe();
-
-        verifyTopology(Map.of("source", new String[] { "ping-topic" }),
-                Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                "local-dlq",
-                topology, null, null);
-    }
-
-    @Test
-    void topology_whenMultipleOutputTopicsAndDLQAndStores_shouldGenerateTopology() {
-        TopologyProducer topologyProducer = newTopologyProducer(
-                Map.of("source", new String[] { "ping-topic" }),
-                Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null);
+                Map.of("pong", "pong-topic", "pang", "pang-topic"));
         mockSourceValueSerde();
 
         List<StoreConfiguration> storeConfigurations = buildStoreConfiguration();
@@ -326,7 +294,6 @@ class TopologyProducerTest {
 
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null,
                 topology, Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")), null);
     }
 
@@ -354,8 +321,7 @@ class TopologyProducerTest {
 
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
-                Map.of("sink", "pong-topic"),
-                null);
+                Map.of("sink", "pong-topic"));
 
         List<StoreConfiguration> storeConfigurations = buildStoreConfiguration();
         List<GlobalStoreConfiguration> globalStoreConfigurations = buildGlobalStoreConfiguration();
@@ -368,7 +334,6 @@ class TopologyProducerTest {
 
         verifyTopology(Map.of("source", new String[] { "ping-topic" }),
                 Map.of("sink", "pong-topic"),
-                null,
                 topology,
                 Map.of("Processor", Arrays.asList("ping-indexes", "ping-data")),
                 List.of(new GlobalStoreExpectation("global-data", "global-data-topic"),
@@ -394,8 +359,7 @@ class TopologyProducerTest {
     void shouldPutCloudEventDeserializerIfCloudEventActivatedForInput() {
         TopologyProducer topologyProducer = newTopologyProducer(
                 Map.of("source", new String[] { "ping-topic" }),
-                Map.of("pong", "pong-topic", "pang", "pang-topic"),
-                null);
+                Map.of("pong", "pong-topic", "pang", "pang-topic"));
 
         when(inputConfig.isCloudEvent()).thenReturn(true);
 

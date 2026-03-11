@@ -19,6 +19,10 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl;
 
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_CAUSE;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_PARTITION;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_REASON;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_TOPIC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,6 +30,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +69,9 @@ import lombok.extern.slf4j.Slf4j;
 @QuarkusTest
 @TestProfile(CloudEventQuarkusTest.TestProfile.class)
 public class CloudEventQuarkusTest {
+    private static final String DLQ_TOPIC_NAME = "dlq-topic";
+    private static final String PROCESS_AND_FAIL_MESSAGE = "Process&Fail";
+
     @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
     String senderTopic;
 
@@ -77,19 +85,27 @@ public class CloudEventQuarkusTest {
 
     KafkaConsumer<String, CloudEvent> consumer;
 
+    KafkaConsumer<String, CloudEvent> dlqConsumer;
+
     @BeforeEach
     public void setup() {
         producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
                 new CloudEventSerializer());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", "true");
+
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", true);
         consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
         consumer.subscribe(List.of(consumerTopic));
+
+        Map<String, Object> dlqConsumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "dlq", true);
+        dlqConsumer = new KafkaConsumer<>(dlqConsumerProps, new StringDeserializer(), new CloudEventDeserializer());
+        dlqConsumer.subscribe(List.of(DLQ_TOPIC_NAME));
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         producer.close();
         consumer.close();
+        dlqConsumer.close();
     }
 
     @Test
@@ -117,6 +133,35 @@ public class CloudEventQuarkusTest {
         assertThat(singleRecord.value().getExtensionNames(), contains("someextension"));
     }
 
+    @Test
+    public void cloudEventsProcessingErrorsShouldGoInTheDLQ() throws Exception {
+        CloudEvent cloudEvent = new CloudEventBuilder()
+                .withData(PingMessage.Ping.newBuilder().setMessage(PROCESS_AND_FAIL_MESSAGE).build().toByteArray())
+                .withType("string-message")
+                .withId(UUID.randomUUID().toString())
+                .withSource(URI.create("blabla"))
+                .build();
+        ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
+
+        producer.send(sentRecord);
+        producer.flush();
+
+        ConsumerRecord<String, CloudEvent> dlqRecord = KafkaTestUtils.getSingleRecord(dlqConsumer, DLQ_TOPIC_NAME,
+                Duration.ofSeconds(10));
+
+        assertThat(dlqRecord.key(), equalTo("key"));
+        assertThat(PingMessage.Ping.parseFrom(dlqRecord.value().getData().toBytes()).getMessage(),
+                equalTo(PROCESS_AND_FAIL_MESSAGE));
+        System.out.println(dlqRecord.headers());
+        assertThat(dlqRecord.value().getType(), equalTo(cloudEvent.getType()));
+        assertThat(dlqRecord.value().getId(), equalTo(cloudEvent.getId()));
+        assertThat(dlqRecord.value().getSource(), equalTo(cloudEvent.getSource()));
+        assertThat(headerValue(dlqRecord, DLQ_REASON), equalTo("Processor code throwing exception"));
+        assertThat(headerValue(dlqRecord, DLQ_CAUSE), equalTo("java.lang.Throwable"));
+        assertThat(headerValue(dlqRecord, DLQ_PARTITION), equalTo("0"));
+        assertThat(headerValue(dlqRecord, DLQ_TOPIC), equalTo(senderTopic));
+    }
+
     @Processor
     @Alternative
     @Slf4j
@@ -126,6 +171,10 @@ public class CloudEventQuarkusTest {
 
         @Override
         public void process(Record<String, PingMessage.Ping> record) {
+            if (record.value().getMessage().equals(PROCESS_AND_FAIL_MESSAGE)) {
+                throw new RuntimeException("Processor code throwing exception", new Throwable());
+            }
+
             assertThat(cloudEventContextHandler.getIncomingContext().getSource().toString(), equalTo("blabla"));
             assertThat(cloudEventContextHandler.getIncomingContext().getType(), equalTo("string-message"));
             assertThat(cloudEventContextHandler.getIncomingContext().getId(), notNullValue());
@@ -135,12 +184,18 @@ public class CloudEventQuarkusTest {
         }
     }
 
+    private String headerValue(ConsumerRecord<?, ?> record, String headerName) {
+        return new String(record.headers().lastHeader(headerName).value(), StandardCharsets.UTF_8);
+    }
+
     public static class TestProfile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
             return Map.of("kafkastreamsprocessor.input.is-cloud-event", "true", "kafkastreamsprocessor.output.is-cloud-event",
                     "true", "kafkastreamsprocessor.output.cloud-events-type", "mirrored-string-message",
-                    "kafkastreamsprocessor.output.cloud-events-source", "my-test-processor");
+                    "kafkastreamsprocessor.output.cloud-events-source", "my-test-processor",
+                    "kafkastreamsprocessor.error-strategy", "dead-letter-queue",
+                    "kafkastreamsprocessor.dlq.topic", DLQ_TOPIC_NAME);
         }
 
         @Override

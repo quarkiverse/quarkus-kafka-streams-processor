@@ -19,23 +19,16 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.errors.DeserializationExceptionHandler;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
-import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
-import io.quarkiverse.kafkastreamsprocessor.impl.KafkaClientSupplierDecorator;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.arc.Unremovable;
@@ -52,10 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 @ApplicationScoped
 @Unremovable
 public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationExceptionHandler {
-    /**
-     * Tool object that enriches the metadata of messages before sending them to the microservice's specific DLQ.
-     */
-    private final DlqMetadataHandler dlqMetadataHandler;
 
     /**
      * Metrics container for this framework
@@ -63,39 +52,32 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
     private final KafkaStreamsProcessorMetrics metrics;
 
     /**
-     * Kafka producer supplier for this framework
-     */
-    private final KafkaClientSupplier clientSupplier;
-
-    /**
-     * The class containing all the configuration related to kafka stream processor
+     * Class containing the configuration related to kafka streams processor
      */
     private final KStreamsProcessorConfig kStreamsProcessorConfig;
 
-    /** True if the dead letter queue strategy is selected and properly configured */
-    boolean sendToDlq;
+    /**
+     * The service able to produce messages to the local DLQ
+     */
+    private final DlqProducerService dlqDelegate;
 
-    /** Producer for the dlq topic */
-    Producer<byte[], byte[]> dlqProducer;
+    /** True if the dead letter queue strategy is selected and properly configured */
+    private boolean sendToDlq;
 
     /**
      * Injection constructor
      *
-     * @param kafkaClientSupplier a supplier of {@link org.apache.kafka.clients.producer.KafkaProducer}
      * @param metrics the metrics container of this framework
-     * @param dlqMetadataHandler tool to enrich message metadata before sending them to the microservice's DLQ
-     *        the configuration error strategy for the application. See { @link {@link ErrorHandlingStrategy}
      * @param kStreamsProcessorConfig The configuration related to kafka processor
+     * @param dlqDelegate The service able to produce messages to the local DLQ
      */
     @Inject
-    public LogAndSendToDlqExceptionHandlerDelegate(KafkaClientSupplier kafkaClientSupplier,
-            KafkaStreamsProcessorMetrics metrics,
-            DlqMetadataHandler dlqMetadataHandler,
-            KStreamsProcessorConfig kStreamsProcessorConfig) {
-        this.clientSupplier = kafkaClientSupplier;
+    public LogAndSendToDlqExceptionHandlerDelegate(KafkaStreamsProcessorMetrics metrics,
+            KStreamsProcessorConfig kStreamsProcessorConfig,
+            DlqProducerService dlqDelegate) {
         this.metrics = metrics;
-        this.dlqMetadataHandler = dlqMetadataHandler;
         this.kStreamsProcessorConfig = kStreamsProcessorConfig;
+        this.dlqDelegate = dlqDelegate;
     }
 
     /**
@@ -107,7 +89,7 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
             final Exception exception) {
         metrics.processorErrorCounter().increment();
         if (sendToDlq) {
-            sendToDlq(context, record, exception);
+            dlqDelegate.sendToDlq(record, exception, context.taskId(), true);
         } else {
             // No DLQ to send message to, drop it
             log.error("Exception caught during Deserialization, message dropped; " +
@@ -118,30 +100,7 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
         return DeserializationHandlerResponse.CONTINUE;
     }
 
-    private void sendToDlq(final ProcessorContext context, final ConsumerRecord<byte[], byte[]> record,
-            final Exception exception) {
-        // Send to dead letter queue
-        metrics.microserviceDlqSentCounter().increment();
-        log.error("Exception caught during Deserialization, sending to the dead letter queue topic; " +
-                "taskId: {}, topic: {}, partition: {}, offset: {}",
-                context.taskId(), record.topic(), record.partition(), record.offset(),
-                exception);
-
-        // We cannot use context.forward here: we are given a fake context without source information
-        // https://issues.apache.org/jira/browse/KAFKA-9566
-        dlqProducer.send(new ProducerRecord<>(kStreamsProcessorConfig.dlq().topic().get(), null, record.timestamp(),
-                record.key(), record.value(),
-                dlqMetadataHandler.withMetadata(record.headers(), record.topic(), record.partition(), exception)));
-    }
-
     /**
-     * If DLQ is active, it initializes a {@link Producer} for the DLQ with the
-     * {@link KafkaClientSupplierDecorator#DLQ_PRODUCER} flag
-     * so it is only decorated with {@link ProducerOnSendInterceptor} that have
-     * {@link ProducerOnSendInterceptor#skipForDLQ()} returning <code>false</code>.
-     * <p>
-     * <b>Original documentation:</b>
-     * <p>
      * {@inheritDoc}
      */
     @Override
@@ -149,20 +108,6 @@ public class LogAndSendToDlqExceptionHandlerDelegate implements DeserializationE
         // Resolve the DLQ strategy once to fail fast in case of misconfiguration
         sendToDlq = ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
                 kStreamsProcessorConfig.dlq().topic());
-        if (sendToDlq) {
-            Map<String, Object> dlqConfigMap = new HashMap<>(configs);
-            dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
-            dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));
-        }
-    }
-
-    /**
-     * Properly close the producer before Kubernetes forcefully destroys everything
-     */
-    @PreDestroy
-    public void close() {
-        if (dlqProducer != null) {
-            dlqProducer.close(GlobalDLQProductionExceptionHandlerDelegate.GRACEFUL_PERIOD);
-        }
+        dlqDelegate.configure(configs);
     }
 }
