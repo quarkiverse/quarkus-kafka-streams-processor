@@ -20,13 +20,13 @@
 package io.quarkiverse.kafkastreamsprocessor.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,8 +62,8 @@ import io.quarkus.test.junit.TestProfile;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
-@TestProfile(CloudEventQuarkusTest.TestProfile.class)
-public class CloudEventQuarkusTest {
+@TestProfile(CloudEventTimestampQuarkusTest.DisabledTimestampProfile.class)
+public class CloudEventTimestampQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
     String senderTopic;
 
@@ -81,7 +81,7 @@ public class CloudEventQuarkusTest {
     public void setup() {
         producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
                 new CloudEventSerializer());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", "true");
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test-timestamp", "true");
         consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
         consumer.subscribe(List.of(consumerTopic));
     }
@@ -93,12 +93,12 @@ public class CloudEventQuarkusTest {
     }
 
     @Test
-    public void exchangeCloudEvents() throws Exception {
+    public void autoTimestampInsertDisabled() throws Exception {
         CloudEvent cloudEvent = new CloudEventBuilder()
-                .withData(PingMessage.Ping.newBuilder().setMessage("blabla").build().toByteArray())
+                .withData(PingMessage.Ping.newBuilder().setMessage("test-no-timestamp").build().toByteArray())
                 .withType("string-message")
                 .withId(UUID.randomUUID().toString())
-                .withSource(URI.create("blabla"))
+                .withSource(URI.create("test-source"))
                 .build();
         ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
 
@@ -109,13 +109,34 @@ public class CloudEventQuarkusTest {
                 Duration.ofSeconds(10));
 
         assertThat(singleRecord.key(), equalTo("key"));
-        assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(), equalTo("blabla"));
-        System.out.println(singleRecord.headers());
-        assertThat(singleRecord.value().getType(), equalTo("mirrored-string-message"));
-        assertThat(singleRecord.value().getId(), not(equalTo(cloudEvent.getId())));
-        assertThat(singleRecord.value().getSource().toString(), equalTo("my-test-processor"));
-        assertThat(singleRecord.value().getExtensionNames(), contains("someextension"));
+        assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(),
+                equalTo("test-no-timestamp"));
+        assertThat(singleRecord.value().getTime(), nullValue());
+    }
+
+    @Test
+    public void explicitTimestampPreservedWhenAutoInsertDisabled() throws Exception {
+        OffsetDateTime explicitTime = OffsetDateTime.now().minusHours(2);
+        CloudEvent cloudEvent = new CloudEventBuilder()
+                .withData(PingMessage.Ping.newBuilder().setMessage("test-explicit-timestamp").build().toByteArray())
+                .withType("string-message")
+                .withId(UUID.randomUUID().toString())
+                .withSource(URI.create("test-source"))
+                .withTime(explicitTime)
+                .build();
+        ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
+
+        producer.send(sentRecord);
+        producer.flush();
+
+        ConsumerRecord<String, CloudEvent> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
+                Duration.ofSeconds(10));
+
+        assertThat(singleRecord.key(), equalTo("key"));
+        assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(),
+                equalTo("test-explicit-timestamp"));
         assertThat(singleRecord.value().getTime(), notNullValue());
+        assertThat(singleRecord.value().getTime(), equalTo(explicitTime));
     }
 
     @Processor
@@ -127,21 +148,26 @@ public class CloudEventQuarkusTest {
 
         @Override
         public void process(Record<String, PingMessage.Ping> record) {
-            assertThat(cloudEventContextHandler.getIncomingContext().getSource().toString(), equalTo("blabla"));
+            assertThat(cloudEventContextHandler.getIncomingContext().getSource().toString(), equalTo("test-source"));
             assertThat(cloudEventContextHandler.getIncomingContext().getType(), equalTo("string-message"));
             assertThat(cloudEventContextHandler.getIncomingContext().getId(), notNullValue());
             cloudEventContextHandler.setOutgoingContext(
-                    cloudEventContextHandler.contextBuilder().withExtension("someextension", "blabla").build());
+                    cloudEventContextHandler.contextBuilder()
+                            .withTime(cloudEventContextHandler.getIncomingContext().getTime())
+                            .build());
             context().forward(record);
         }
     }
 
-    public static class TestProfile implements QuarkusTestProfile {
+    public static class DisabledTimestampProfile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
-            return Map.of("kafkastreamsprocessor.input.is-cloud-event", "true", "kafkastreamsprocessor.output.is-cloud-event",
-                    "true", "kafkastreamsprocessor.output.cloud-events-type", "mirrored-string-message",
-                    "kafkastreamsprocessor.output.cloud-events-source", "my-test-processor");
+            return Map.of(
+                    "kafkastreamsprocessor.input.is-cloud-event", "true",
+                    "kafkastreamsprocessor.output.is-cloud-event", "true",
+                    "kafkastreamsprocessor.output.cloud-events-type", "mirrored-string-message",
+                    "kafkastreamsprocessor.output.cloud-events-source", "my-test-processor",
+                    "kafkastreamsprocessor.output.cloud-events-insert-timestamp", "false");
         }
 
         @Override
