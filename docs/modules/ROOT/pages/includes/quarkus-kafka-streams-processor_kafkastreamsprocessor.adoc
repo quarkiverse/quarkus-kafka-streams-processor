@@ -273,6 +273,28 @@ endif::add-copy-button-to-env-var[]
 a|`v03`, `v1`
 |`+++v1+++`
 
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp[`kafkastreamsprocessor.output.cloud-events-insert-timestamp`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-insert-timestamp+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Allows to automatically insert a timestamp in the CloudEvent when building the outgoing message, if the time was not explicitly set.
+It is used only if `OutputConfig++#++isCloudEvent()` is `true`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_INSERT_TIMESTAMP+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++KAFKASTREAMSPROCESSOR_OUTPUT_CLOUD_EVENTS_INSERT_TIMESTAMP+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
 a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]

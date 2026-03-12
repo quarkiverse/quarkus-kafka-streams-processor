@@ -84,4 +84,15 @@ public interface OutputConfig {
      */
     @WithDefault("V1")
     SpecVersion cloudEventsSpecVersion();
+
+    /**
+     * Allows to automatically insert a timestamp in the CloudEvent when building the outgoing message,
+     * if the time was not explicitly set.
+     *
+     * It is used only if {@link OutputConfig#isCloudEvent()} is <code>true</code>.
+     *
+     * @return true if timestamp should be auto-inserted (default), false otherwise
+     */
+    @WithDefault("true")
+    boolean cloudEventsInsertTimestamp();
 }
