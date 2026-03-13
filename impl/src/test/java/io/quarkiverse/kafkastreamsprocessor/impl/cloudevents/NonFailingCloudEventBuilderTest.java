@@ -42,6 +42,7 @@ class NonFailingCloudEventBuilderTest {
         when(config.output()).thenReturn(outputConfig);
 
         lenient().when(outputConfig.cloudEventsSpecVersion()).thenReturn(SpecVersion.V1);
+        lenient().when(outputConfig.cloudEventsInsertTimestamp()).thenReturn(true);
     }
 
     @Test
@@ -200,6 +201,46 @@ class NonFailingCloudEventBuilderTest {
                 .build();
 
         assertThat(event.getTime(), equalTo(now));
+    }
+
+    @Test
+    void autoInsertTimestampWhenNotSet() {
+        CloudEvent event = builderWithSourceIdAndTypeFilled()
+                .build();
+
+        assertThat(event.getTime(), notNullValue());
+    }
+
+    @Test
+    void autoInsertTimestampDisabled() {
+        when(outputConfig.cloudEventsInsertTimestamp()).thenReturn(false);
+
+        CloudEvent event = builderWithSourceIdAndTypeFilled()
+                .build();
+
+        assertThat(event.getTime(), nullValue());
+    }
+
+    @Test
+    void autoInsertTimestampDisabledWhenTimeIsSet() {
+        OffsetDateTime specificTime = OffsetDateTime.now().minusHours(1);
+
+        CloudEvent event = builderWithSourceIdAndTypeFilled()
+                .withTime(specificTime)
+                .build();
+
+        assertThat(event.getTime(), equalTo(specificTime));
+    }
+
+    @Test
+    void explicitTimeOverridesAutoInsert() {
+        OffsetDateTime specificTime = OffsetDateTime.now().minusHours(1);
+
+        CloudEvent event = builderWithSourceIdAndTypeFilled()
+                .withTime(specificTime)
+                .build();
+
+        assertThat(event.getTime(), equalTo(specificTime));
     }
 
     @Test

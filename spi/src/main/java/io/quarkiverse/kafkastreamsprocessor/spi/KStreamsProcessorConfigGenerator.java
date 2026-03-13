@@ -34,6 +34,9 @@ class KStreamsProcessorConfigGenerator {
         fillSources(config, input);
         OutputConfigImpl output = new OutputConfigImpl();
         output.setTopic(config.getOptionalValue("kafkastreamsprocessor.output.topic", String.class));
+        output.setCloudEventsInsertTimestamp(
+                config.getOptionalValue("kafkastreamsprocessor.output.cloud-events-insert-timestamp", Boolean.class)
+                        .orElse(true));
         fillSinks(config, output);
         KStreamsProcessorConfigImpl kStreamsProcessorConfig = new KStreamsProcessorConfigImpl();
         kStreamsProcessorConfig.setInput(input);
@@ -210,6 +213,8 @@ class KStreamsProcessorConfigGenerator {
 
         private SpecVersion cloudEventsSpecVersion;
 
+        private boolean cloudEventsInsertTimestamp = true;
+
         @Override
         public Optional<String> topic() {
             return topic;
@@ -271,6 +276,15 @@ class KStreamsProcessorConfigGenerator {
 
         public void setCloudEventsSpecVersion(SpecVersion cloudEventsSpecVersion) {
             this.cloudEventsSpecVersion = cloudEventsSpecVersion;
+        }
+
+        @Override
+        public boolean cloudEventsInsertTimestamp() {
+            return cloudEventsInsertTimestamp;
+        }
+
+        public void setCloudEventsInsertTimestamp(boolean cloudEventsInsertTimestamp) {
+            this.cloudEventsInsertTimestamp = cloudEventsInsertTimestamp;
         }
     }
 
