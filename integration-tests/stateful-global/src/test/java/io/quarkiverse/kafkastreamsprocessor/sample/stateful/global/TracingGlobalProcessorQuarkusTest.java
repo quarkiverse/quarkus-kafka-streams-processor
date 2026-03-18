@@ -2,17 +2,6 @@ package io.quarkiverse.kafkastreamsprocessor.sample.stateful.global;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
-
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -26,6 +15,15 @@ import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationComp
 import io.quarkiverse.kafkastreamsprocessor.testframework.StateDirCleaningResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 @QuarkusTest
 @QuarkusTestResource(value = StateDirCleaningResource.class, restrictToAnnotatedClass = true)
@@ -86,12 +84,17 @@ public class TracingGlobalProcessorQuarkusTest {
 
         ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush();
 
-        TracesAssert.assertThat(testSpanExporter.getSpans()).hasTracesSatisfyingExactly(
-                trace -> trace.hasSpansSatisfyingExactly(
-                        span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()).hasName("parent"),
-                        span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
-                                .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
-                                .hasName("global-store-" + "store-data-capital")));
+        // Filter for the trace that contains our parent span (ignoring global store initialization spans)
+        String expectedTraceId = parentSpan.getSpanContext().getTraceId();
+        TracesAssert.assertThat(testSpanExporter.getSpans())
+                .filteredOn(trace -> trace.stream()
+                        .anyMatch(span -> span.getTraceId().equals(expectedTraceId)))
+                .hasTracesSatisfyingExactly(
+                        trace -> trace.hasSpansSatisfyingExactly(
+                                span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()).hasName("parent"),
+                                span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
+                                        .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
+                                        .hasName("global-store-" + "store-data-capital")));
     }
 
     private void clearSpans() {
