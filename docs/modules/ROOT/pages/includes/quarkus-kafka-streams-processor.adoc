@@ -1,7 +1,6 @@
 [.configuration-legend]
 icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
-
-[.configuration-reference.searchable,cols="80,.^10,.^10"]
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
 |===
 
 h|[.header-title]##Configuration property##
@@ -282,8 +281,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-Allows to automatically insert a timestamp in the CloudEvent when building the outgoing message, if the time was not explicitly set.
-It is used only if `OutputConfig++#++isCloudEvent()` is `true`.
+Allows to automatically insert a timestamp in the CloudEvent when building the outgoing message, if the time was not explicitly set. It is used only if `OutputConfig++#++isCloudEvent()` is `true`.
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -417,9 +415,9 @@ Kafka error handling strategy.
 
 Possible values are:
 
-- `continue`: (default) drop the message and continue processing
-- `dead-letter-queue`: send the message to the DLQ and continue processing
-- `fail`: (not implemented yet) fail and stop processing more message
+ - `continue`: (default) drop the message and continue processing
+ - `dead-letter-queue`: send the message to the DLQ and continue processing
+ - `fail`: (not implemented yet) fail and stop processing more message
 
 
 ifdef::add-copy-button-to-env-var[]
