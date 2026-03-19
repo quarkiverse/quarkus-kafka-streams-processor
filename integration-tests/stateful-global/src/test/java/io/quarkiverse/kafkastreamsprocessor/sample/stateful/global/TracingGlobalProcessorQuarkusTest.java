@@ -86,12 +86,17 @@ public class TracingGlobalProcessorQuarkusTest {
 
         ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush();
 
-        TracesAssert.assertThat(testSpanExporter.getSpans()).hasTracesSatisfyingExactly(
-                trace -> trace.hasSpansSatisfyingExactly(
-                        span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()).hasName("parent"),
-                        span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
-                                .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
-                                .hasName("global-store-" + "store-data-capital")));
+        // Filter for the trace that contains our parent span (ignoring global store initialization spans)
+        String expectedTraceId = parentSpan.getSpanContext().getTraceId();
+        TracesAssert.assertThat(testSpanExporter.getSpans())
+                .filteredOn(trace -> trace.stream()
+                        .anyMatch(span -> span.getTraceId().equals(expectedTraceId)))
+                .hasTracesSatisfyingExactly(
+                        trace -> trace.hasSpansSatisfyingExactly(
+                                span -> span.hasSpanId(parentSpan.getSpanContext().getSpanId()).hasName("parent"),
+                                span -> span.hasTraceId(parentSpan.getSpanContext().getTraceId())
+                                        .hasParentSpanId(parentSpan.getSpanContext().getSpanId())
+                                        .hasName("global-store-" + "store-data-capital")));
     }
 
     private void clearSpans() {

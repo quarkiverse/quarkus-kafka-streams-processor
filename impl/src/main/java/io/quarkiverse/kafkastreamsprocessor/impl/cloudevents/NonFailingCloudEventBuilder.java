@@ -2,6 +2,7 @@ package io.quarkiverse.kafkastreamsprocessor.impl.cloudevents;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
@@ -21,6 +22,8 @@ import io.quarkiverse.kafkastreamsprocessor.spi.properties.OutputConfig;
  * <li>defaulting source to {@link OutputConfig#cloudEventsSource()}</li>
  * <li>defaulting type to {@link OutputConfig#cloudEventsType()}</li>
  * <li>defaulting id to a generated UUID</li>
+ * <li>optionally inserting the current time if not explicitly set (controlled by
+ * {@link OutputConfig#cloudEventsInsertTimestamp()}, default is true)</li>
  * </ul>
  * <p>
  * This allows to avoid IllegalStateException on the origin build method.
@@ -40,6 +43,8 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
     private URI source;
 
     private String type;
+
+    private OffsetDateTime time;
 
     /**
      * Constructor
@@ -89,6 +94,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      * <li>source to {@link OutputConfig#cloudEventsSource()}</li>
      * <li>type to {@link OutputConfig#cloudEventsType()}</li>
      * <li>id to a generated UUID</li>
+     * <li>time to current time if not explicitly set and {@link OutputConfig#cloudEventsInsertTimestamp()} is true</li>
      * </ul>
      */
     @Override
@@ -114,9 +120,13 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
                         "with the kafkastreamsprocessor.output.cloud-events-type configuration property.");
             }
         }
+        if (time == null && config.output().cloudEventsInsertTimestamp()) {
+            time = OffsetDateTime.now(ZoneOffset.UTC);
+        }
         return delegate.withType(type)
                 .withSource(source)
                 .withId(id)
+                .withTime(time)
                 .build();
     }
 
@@ -216,7 +226,7 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
      */
     @Override
     public NonFailingCloudEventBuilder withTime(OffsetDateTime time) {
-        delegate.withTime(time);
+        this.time = time;
         return this;
     }
 
@@ -390,7 +400,8 @@ public class NonFailingCloudEventBuilder implements CloudEventBuilder {
         return new NonFailingCloudEventBuilder(config, delegate.newBuilder())
                 .withSource(source)
                 .withType(type)
-                .withId(id);
+                .withId(id)
+                .withTime(time);
     }
 
     /**
