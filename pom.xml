@@ -28,7 +28,7 @@
     <tag>HEAD</tag>
   </scm>
   <properties>
-    <quarkus.version>3.30.3</quarkus.version>
+    <quarkus.version>3.34.1</quarkus.version>
     <protobuf.version>4.32.1</protobuf.version>
   </properties>
 
