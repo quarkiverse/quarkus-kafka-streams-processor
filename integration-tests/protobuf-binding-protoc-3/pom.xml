@@ -30,7 +30,7 @@
   </dependencyManagement>
 
   <properties>
-    <protobuf3.version>3.25.8</protobuf3.version>
+    <protobuf3.version>4.34.1</protobuf3.version>
   </properties>
 
   <dependencies>
