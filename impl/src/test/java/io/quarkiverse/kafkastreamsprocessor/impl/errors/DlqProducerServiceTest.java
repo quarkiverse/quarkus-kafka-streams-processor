@@ -193,4 +193,30 @@ class DlqProducerServiceTest {
 
         verify(dlqMetadataHandler).withMetadata(originalHeaders, SOURCE_TOPIC, PARTITION, exception);
     }
+
+    @Test
+    void shouldCloseOldProducerWhenConfigureCalledMultipleTimes() {
+        when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
+        when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
+
+        @SuppressWarnings("unchecked")
+        Producer<byte[], byte[]> firstProducer = org.mockito.Mockito.mock(Producer.class);
+        @SuppressWarnings("unchecked")
+        Producer<byte[], byte[]> secondProducer = org.mockito.Mockito.mock(Producer.class);
+
+        when(kafkaClientSupplier.getProducer(any()))
+                .thenReturn(firstProducer)
+                .thenReturn(secondProducer);
+
+        // First configure call - creates first producer
+        service.configure(Collections.emptyMap());
+
+        // Second configure call - should close first producer before creating second
+        service.configure(Collections.emptyMap());
+
+        // Verify first producer was closed
+        verify(firstProducer).close();
+        // Verify second producer was created
+        verify(kafkaClientSupplier, org.mockito.Mockito.times(2)).getProducer(any());
+    }
 }

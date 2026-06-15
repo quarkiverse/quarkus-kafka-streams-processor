@@ -125,6 +125,16 @@ public class DlqProducerService implements Configurable {
         sendToDlq = ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
                 kStreamsProcessorConfig.dlq().topic());
         if (sendToDlq) {
+            // Close existing producer before creating a new one to prevent resource leak
+            if (dlqProducer != null) {
+                try {
+                    dlqProducer.close();
+                    log.debug("Closed existing DLQ producer before reconfiguration");
+                } catch (Exception e) {
+                    log.warn("Failed to close existing DLQ producer during reconfiguration", e);
+                }
+            }
+
             Map<String, Object> dlqConfigMap = new HashMap<>(configs);
             dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
             dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));

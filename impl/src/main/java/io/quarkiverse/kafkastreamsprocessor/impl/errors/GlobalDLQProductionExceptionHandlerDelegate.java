@@ -146,6 +146,16 @@ class GlobalDLQProductionExceptionHandlerDelegate implements ProductionException
         Map<String, Object> producerConfig = (Map<String, Object>) config;
 
         if (kStreamsProcessorConfig.globalDlq().topic().isPresent()) {
+            // Close existing producer before creating a new one to prevent resource leak
+            if (kafkaProducer != null) {
+                try {
+                    kafkaProducer.close();
+                    log.debug("Closed existing global DLQ producer before reconfiguration");
+                } catch (Exception e) {
+                    log.warn("Failed to close existing global DLQ producer during reconfiguration", e);
+                }
+            }
+
             Map<String, Object> dqlProducerConfig = new HashMap<>(producerConfig);
             dqlProducerConfig.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG,
                     kStreamsProcessorConfig.globalDlq().maxMessageSize());
