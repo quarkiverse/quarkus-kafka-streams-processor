@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -192,5 +193,17 @@ class DlqProducerServiceTest {
         service.sendToDlq(consumerRecord, exception, new TaskId(0, PARTITION), false);
 
         verify(dlqMetadataHandler).withMetadata(originalHeaders, SOURCE_TOPIC, PARTITION, exception);
+    }
+
+    @Test
+    void shouldNotRecreateProducerOnSubsequentConfigureCalls() {
+        when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
+        when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
+        when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducer);
+
+        service.configure(Collections.emptyMap());
+        service.configure(Collections.emptyMap());
+
+        verify(kafkaClientSupplier, times(1)).getProducer(any());
     }
 }
