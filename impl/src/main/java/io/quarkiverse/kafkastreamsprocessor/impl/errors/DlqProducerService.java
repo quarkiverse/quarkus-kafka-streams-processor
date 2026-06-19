@@ -125,9 +125,11 @@ public class DlqProducerService implements Configurable {
         sendToDlq = ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
                 kStreamsProcessorConfig.dlq().topic());
         if (sendToDlq) {
-            Map<String, Object> dlqConfigMap = new HashMap<>(configs);
-            dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
-            dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));
+            if (dlqProducer == null) {
+                Map<String, Object> dlqConfigMap = new HashMap<>(configs);
+                dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
+                dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));
+            }
         }
     }
 
