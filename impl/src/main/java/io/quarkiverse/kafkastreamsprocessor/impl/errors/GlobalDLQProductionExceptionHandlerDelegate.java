@@ -146,11 +146,13 @@ class GlobalDLQProductionExceptionHandlerDelegate implements ProductionException
         Map<String, Object> producerConfig = (Map<String, Object>) config;
 
         if (kStreamsProcessorConfig.globalDlq().topic().isPresent()) {
-            Map<String, Object> dqlProducerConfig = new HashMap<>(producerConfig);
-            dqlProducerConfig.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG,
-                    kStreamsProcessorConfig.globalDlq().maxMessageSize());
-            dqlProducerConfig.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
-            kafkaProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dqlProducerConfig));
+            if (kafkaProducer == null) {
+                Map<String, Object> dqlProducerConfig = new HashMap<>(producerConfig);
+                dqlProducerConfig.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG,
+                        kStreamsProcessorConfig.globalDlq().maxMessageSize());
+                dqlProducerConfig.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
+                kafkaProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dqlProducerConfig));
+            }
         }
     }
 
