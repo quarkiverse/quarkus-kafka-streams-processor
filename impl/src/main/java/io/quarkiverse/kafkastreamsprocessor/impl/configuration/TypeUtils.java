@@ -30,7 +30,6 @@ import org.apache.kafka.streams.processor.api.Processor;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
@@ -46,12 +45,11 @@ public final class TypeUtils {
 
     static Parser<MessageLite> createParserFromType(Class<?> protobufMessageType) {
         try {
-            if (GeneratedMessageV3.class.isAssignableFrom(protobufMessageType) ||
-                    GeneratedMessage.class.isAssignableFrom(protobufMessageType)) {
+            if (GeneratedMessage.class.isAssignableFrom(protobufMessageType)) {
                 return (Parser<MessageLite>) protobufMessageType.getMethod("parser").invoke(null);
             } else {
                 throw new IllegalArgumentException("Payload type " + protobufMessageType + " can not assigned to "
-                        + GeneratedMessageV3.class + " or " + GeneratedMessage.class);
+                        + GeneratedMessage.class);
             }
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalArgumentException("Cannot instantiate a parser from type " + protobufMessageType, e);
