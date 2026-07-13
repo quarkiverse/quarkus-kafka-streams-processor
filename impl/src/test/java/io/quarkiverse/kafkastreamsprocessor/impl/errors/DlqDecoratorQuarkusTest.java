@@ -23,8 +23,10 @@ import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsPro
 import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_PARTITION;
 import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_REASON;
 import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.DLQ_TOPIC;
+import static io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorHeaders.W3C_TRACE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.nio.charset.StandardCharsets;
@@ -167,13 +169,17 @@ public class DlqDecoratorQuarkusTest {
         ConsumerRecord<String, PingMessage.Ping> dlqRecord = dlqRecords.iterator().next();
         assertThat(dlqRecord.key(), equalTo("blabla"));
         assertThat(dlqRecord.value().getMessage(), equalTo(PROCESS_AND_FAIL_MESSAGE));
-        assertThat(dlqRecord.headers().toArray().length, equalTo(5));
+        assertThat(dlqRecord.headers().toArray().length, equalTo(6));
         assertThat(headerValue(dlqRecord, "header1"), equalTo("value"));
         assertThat(headerValue(dlqRecord, DLQ_REASON), equalTo("Processor code throwing exception"));
         assertThat(headerValue(dlqRecord, DLQ_CAUSE), equalTo("java.lang.Throwable"));
         assertThat(headerValue(dlqRecord, DLQ_PARTITION), equalTo("0"));
         assertThat(headerValue(dlqRecord, DLQ_TOPIC), equalTo(kStreamsProcessorConfig.input().topic().get()));
         assertThat(dlqRecord.headers().lastHeader(PRODUCER_INTERCEPTOR_ADDED_HEADER_NAME), nullValue());
+
+        // ensure trace headers were injected into the DLQ record; we expect only the headers configured by
+        // propagator to be actually propagated
+        assertThat(dlqRecord.headers().lastHeader(W3C_TRACE_ID), notNullValue());
 
         ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush().join(10, TimeUnit.SECONDS);
 
@@ -195,12 +201,15 @@ public class DlqDecoratorQuarkusTest {
         ConsumerRecord<String, PingMessage.Ping> dlqRecord = dlqRecords.iterator().next();
         assertThat(dlqRecord.key(), equalTo("blabla"));
         assertThat(dlqRecord.value().getMessage(), equalTo(INTERCEPT_AND_FAIL_MESSAGE));
-        assertThat(dlqRecord.headers().toArray().length, equalTo(4));
+        assertThat(dlqRecord.headers().toArray().length, equalTo(5));
         assertThat(headerValue(dlqRecord, DLQ_REASON), equalTo("Interceptor code throwing exception"));
         assertThat(headerValue(dlqRecord, DLQ_CAUSE), equalTo("java.lang.Throwable"));
         assertThat(headerValue(dlqRecord, DLQ_PARTITION), equalTo("0"));
         assertThat(headerValue(dlqRecord, DLQ_TOPIC), equalTo(kStreamsProcessorConfig.input().topic().get()));
         assertThat(dlqRecord.headers().lastHeader(PRODUCER_INTERCEPTOR_ADDED_HEADER_NAME), nullValue());
+
+        // ensure trace headers were injected into the DLQ record
+        assertThat(dlqRecord.headers().lastHeader(W3C_TRACE_ID), notNullValue());
 
         ((OpenTelemetrySdk) openTelemetry).getSdkTracerProvider().forceFlush().join(10, TimeUnit.SECONDS);
 

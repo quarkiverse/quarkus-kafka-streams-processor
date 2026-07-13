@@ -7,7 +7,7 @@ h|[.header-title]##Configuration property##
 h|Type
 h|Default
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[`kafkastreamsprocessor.input.topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topic[`+++kafkastreamsprocessor.input.topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.input.topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -30,7 +30,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics[`kafkastreamsprocessor.input.topics`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-topics[`+++kafkastreamsprocessor.input.topics+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.input.topics+++[]
 endif::add-copy-button-to-config-props[]
@@ -53,7 +53,7 @@ endif::add-copy-button-to-env-var[]
 |list of string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics[`kafkastreamsprocessor.input.sources."sources".topics`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-sources-sources-topics[`+++kafkastreamsprocessor.input.sources."sources".topics+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.input.sources."sources".topics+++[]
 endif::add-copy-button-to-config-props[]
@@ -74,7 +74,7 @@ endif::add-copy-button-to-env-var[]
 |list of string
 |required icon:exclamation-circle[title=Configuration property is required]
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`kafkastreamsprocessor.input.is-cloud-event`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-is-cloud-event[`+++kafkastreamsprocessor.input.is-cloud-event+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.input.is-cloud-event+++[]
 endif::add-copy-button-to-config-props[]
@@ -95,7 +95,7 @@ endif::add-copy-button-to-env-var[]
 |boolean
 |`+++false+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config[`kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-input-cloud-event-deserializer-config-cloud-event-deserializer-config[`+++kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.input.cloud-event-deserializer-config."cloud-event-deserializer-config"+++[]
 endif::add-copy-button-to-config-props[]
@@ -120,7 +120,7 @@ endif::add-copy-button-to-env-var[]
 |Map<String,String>
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`kafkastreamsprocessor.output.topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-topic[`+++kafkastreamsprocessor.output.topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -141,7 +141,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic[`kafkastreamsprocessor.output.sinks."sinks".topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-sinks-sinks-topic[`+++kafkastreamsprocessor.output.sinks."sinks".topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.sinks."sinks".topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -162,7 +162,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |required icon:exclamation-circle[title=Configuration property is required]
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`kafkastreamsprocessor.output.is-cloud-event`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-is-cloud-event[`+++kafkastreamsprocessor.output.is-cloud-event+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.is-cloud-event+++[]
 endif::add-copy-button-to-config-props[]
@@ -183,7 +183,7 @@ endif::add-copy-button-to-env-var[]
 |boolean
 |`+++false+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-event-serializer-config-cloud-event-serializer-config[`+++kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.cloud-event-serializer-config."cloud-event-serializer-config"+++[]
 endif::add-copy-button-to-config-props[]
@@ -206,7 +206,7 @@ endif::add-copy-button-to-env-var[]
 |Map<String,String>
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type[`kafkastreamsprocessor.output.cloud-events-type`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-type[`+++kafkastreamsprocessor.output.cloud-events-type+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-type+++[]
 endif::add-copy-button-to-config-props[]
@@ -229,7 +229,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source[`kafkastreamsprocessor.output.cloud-events-source`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-source[`+++kafkastreamsprocessor.output.cloud-events-source+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-source+++[]
 endif::add-copy-button-to-config-props[]
@@ -252,7 +252,7 @@ endif::add-copy-button-to-env-var[]
 |link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/URI.html[URI]
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version[`kafkastreamsprocessor.output.cloud-events-spec-version`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-spec-version[`+++kafkastreamsprocessor.output.cloud-events-spec-version+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-spec-version+++[]
 endif::add-copy-button-to-config-props[]
@@ -273,7 +273,7 @@ endif::add-copy-button-to-env-var[]
 a|`v03`, `v1`
 |`+++v1+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp[`kafkastreamsprocessor.output.cloud-events-insert-timestamp`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-output-cloud-events-insert-timestamp[`+++kafkastreamsprocessor.output.cloud-events-insert-timestamp+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.output.cloud-events-insert-timestamp+++[]
 endif::add-copy-button-to-config-props[]
@@ -294,7 +294,7 @@ endif::add-copy-button-to-env-var[]
 |boolean
 |`+++true+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`kafkastreamsprocessor.global-stores."global-stores".topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-stores-global-stores-topic[`+++kafkastreamsprocessor.global-stores."global-stores".topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.global-stores."global-stores".topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -315,7 +315,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |required icon:exclamation-circle[title=Configuration property is required]
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`kafkastreamsprocessor.dlq.topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-topic[`+++kafkastreamsprocessor.dlq.topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.dlq.topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -336,7 +336,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config[`kafkastreamsprocessor.dlq.cloud-event-serializer-config."cloud-event-serializer-config"`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-dlq-cloud-event-serializer-config-cloud-event-serializer-config[`+++kafkastreamsprocessor.dlq.cloud-event-serializer-config."cloud-event-serializer-config"+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.dlq.cloud-event-serializer-config."cloud-event-serializer-config"+++[]
 endif::add-copy-button-to-config-props[]
@@ -359,7 +359,7 @@ endif::add-copy-button-to-env-var[]
 |Map<String,String>
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[`kafkastreamsprocessor.global-dlq.topic`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-topic[`+++kafkastreamsprocessor.global-dlq.topic+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.global-dlq.topic+++[]
 endif::add-copy-button-to-config-props[]
@@ -380,7 +380,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size[`kafkastreamsprocessor.global-dlq.max-message-size`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-global-dlq-max-message-size[`+++kafkastreamsprocessor.global-dlq.max-message-size+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.global-dlq.max-message-size+++[]
 endif::add-copy-button-to-config-props[]
@@ -403,7 +403,7 @@ endif::add-copy-button-to-env-var[]
 |int
 |`+++2147483647+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy[`kafkastreamsprocessor.error-strategy`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-error-strategy[`+++kafkastreamsprocessor.error-strategy+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.error-strategy+++[]
 endif::add-copy-button-to-config-props[]
@@ -415,9 +415,9 @@ Kafka error handling strategy.
 
 Possible values are:
 
- - `continue`: (default) drop the message and continue processing
- - `dead-letter-queue`: send the message to the DLQ and continue processing
- - `fail`: (not implemented yet) fail and stop processing more message
+ * `continue`: (default) drop the message and continue processing
+ * `dead-letter-queue`: send the message to the DLQ and continue processing
+ * `fail`: (not implemented yet) fail and stop processing more message
 
 
 ifdef::add-copy-button-to-env-var[]
@@ -430,7 +430,7 @@ endif::add-copy-button-to-env-var[]
 |string
 |`+++continue+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries[`kafkastreamsprocessor.retry.max-retries`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-retries[`+++kafkastreamsprocessor.retry.max-retries+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.max-retries+++[]
 endif::add-copy-button-to-config-props[]
@@ -451,7 +451,7 @@ endif::add-copy-button-to-env-var[]
 |int
 |`+++-1+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay[`kafkastreamsprocessor.retry.delay`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay[`+++kafkastreamsprocessor.retry.delay+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.delay+++[]
 endif::add-copy-button-to-config-props[]
@@ -472,7 +472,7 @@ endif::add-copy-button-to-env-var[]
 |long
 |`+++0+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit[`kafkastreamsprocessor.retry.delay-unit`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-delay-unit[`+++kafkastreamsprocessor.retry.delay-unit+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.delay-unit+++[]
 endif::add-copy-button-to-config-props[]
@@ -495,7 +495,7 @@ endif::add-copy-button-to-env-var[]
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
 |`+++millis+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration[`kafkastreamsprocessor.retry.max-duration`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-max-duration[`+++kafkastreamsprocessor.retry.max-duration+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.max-duration+++[]
 endif::add-copy-button-to-config-props[]
@@ -516,7 +516,7 @@ endif::add-copy-button-to-env-var[]
 |long
 |`+++180000+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit[`kafkastreamsprocessor.retry.duration-unit`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-duration-unit[`+++kafkastreamsprocessor.retry.duration-unit+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.duration-unit+++[]
 endif::add-copy-button-to-config-props[]
@@ -539,7 +539,7 @@ endif::add-copy-button-to-env-var[]
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
 |`+++millis+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter[`kafkastreamsprocessor.retry.jitter`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter[`+++kafkastreamsprocessor.retry.jitter+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.jitter+++[]
 endif::add-copy-button-to-config-props[]
@@ -560,7 +560,7 @@ endif::add-copy-button-to-env-var[]
 |long
 |`+++200+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit[`kafkastreamsprocessor.retry.jitter-delay-unit`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-jitter-delay-unit[`+++kafkastreamsprocessor.retry.jitter-delay-unit+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.jitter-delay-unit+++[]
 endif::add-copy-button-to-config-props[]
@@ -583,7 +583,7 @@ endif::add-copy-button-to-env-var[]
 a|`nanos`, `micros`, `millis`, `seconds`, `minutes`, `hours`, `half-days`, `days`, `weeks`, `months`, `years`, `decades`, `centuries`, `millennia`, `eras`, `forever`
 |`+++millis+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on[`kafkastreamsprocessor.retry.retry-on`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-retry-on[`+++kafkastreamsprocessor.retry.retry-on+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.retry-on+++[]
 endif::add-copy-button-to-config-props[]
@@ -606,7 +606,7 @@ endif::add-copy-button-to-env-var[]
 |list of string
 |`+++io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException+++`
 
-a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on[`kafkastreamsprocessor.retry.abort-on`]##
+a| [[quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on]] [.property-path]##link:#quarkus-kafka-streams-processor_kafkastreamsprocessor-retry-abort-on[`+++kafkastreamsprocessor.retry.abort-on+++`]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++kafkastreamsprocessor.retry.abort-on+++[]
 endif::add-copy-button-to-config-props[]

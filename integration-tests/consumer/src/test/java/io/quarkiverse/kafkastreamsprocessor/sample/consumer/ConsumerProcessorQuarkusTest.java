@@ -20,8 +20,11 @@
 package io.quarkiverse.kafkastreamsprocessor.sample.consumer;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.is;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -64,21 +67,26 @@ public class ConsumerProcessorQuarkusTest {
     @Test
     public void shouldStoreConsumedEvents() throws Exception {
         // Ensure the storage is empty before the test
-        given().when().delete("/cached-events")
-                .then().statusCode(200);
-        given().when().get("/cached-events")
-                .then().statusCode(200)
+        given().when()
+                .delete("/cached-events")
+                .then()
+                .statusCode(200);
+        given().when()
+                .get("/cached-events")
+                .then()
+                .statusCode(200)
                 .body(is("No events cached"));
 
         producer.send(new ProducerRecord<>(senderTopic, "MyEventKey", "{ \"value\": \"Hello, World!\" }"));
         producer.flush();
 
-        // Wait for the event to be processed
-        Thread.sleep(1000);
-
-        given()
-                .when().get("/cached-events")
-                .then().statusCode(200)
-                .body(is("Key: MyEventKey, Value: MyData[value=Hello, World!]\n"));
+        await().atMost(Duration.ofSeconds(10))
+                .until(() -> "Key: MyEventKey, Value: MyData[value=Hello, World!]\n".equals(
+                        when().get("/cached-events")
+                                .then()
+                                .statusCode(200)
+                                .extract()
+                                .body()
+                                .asString()));
     }
 }
