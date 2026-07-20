@@ -22,6 +22,8 @@ package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
 import java.util.Map;
 
+import io.quarkus.runtime.annotations.ConfigPhase;
+import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
@@ -29,6 +31,7 @@ import io.smallrye.config.WithDefault;
  * Root of the configuration of the <code>quarkus-kafka-streams-processor</code> Quarkiverse extension.
  */
 @ConfigMapping(prefix = "kafkastreamsprocessor")
+@ConfigRoot(phase = ConfigPhase.RUN_TIME)
 public interface KStreamsProcessorConfig {
     /**
      * The Kafka topics for incoming messages

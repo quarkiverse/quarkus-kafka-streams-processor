@@ -37,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.quarkus.test.common.DevServicesContext;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
+import io.quarkus.value.registry.ValueRegistry;
 
 @ExtendWith(MockitoExtension.class)
 class QuarkusIntegrationCompatibleKafkaDevServicesResourceTest {
@@ -94,6 +95,11 @@ class QuarkusIntegrationCompatibleKafkaDevServicesResourceTest {
 
         DefaultTestInjectorCopy(Object testInstance) {
             this.testInstance = testInstance;
+        }
+
+        @Override
+        public ValueRegistry valueRegistry() {
+            return null;
         }
 
         @Override
