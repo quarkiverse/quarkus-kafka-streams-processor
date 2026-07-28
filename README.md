@@ -42,6 +42,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/gastaldi"><img src="https://avatars.githubusercontent.com/u/54133?v=4" width="100px;" alt=""/><br /><sub><b>gastaldi</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=gastaldi" title="Code">💻</a> </td>
     <td align="center"><a href="https://github.com/Annlazar"><img src="https://avatars.githubusercontent.com/u/26568868?v=4" width="100px;" alt=""/><br /><sub><b>Annlazar</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=Annlazar" title="Code">💻</a> </td>
     <td align="center"><a href="https://github.com/nreant1A"><img src="https://avatars.githubusercontent.com/u/173859415?v=4" width="100px;" alt=""/><br /><sub><b>nreant1A</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=nreant1A" title="Code">💻</a> </td>
+    <td align="center"><a href="https://github.com/amelliani1A"><img src="https://avatars.githubusercontent.com/u/272270451?v=4" width="100px;" alt=""/><br /><sub><b>amelliani1A</b></sub></a><br /><a href="https://github.com/quarkiverse/quarkus-kafka-streams-processor/commits?author=amelliani1A" title="Code">💻</a> </td>
   </tr>
 </table>
 

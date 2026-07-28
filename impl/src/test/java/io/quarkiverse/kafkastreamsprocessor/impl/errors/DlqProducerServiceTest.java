@@ -19,13 +19,16 @@
  */
 package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,9 +49,14 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.quarkiverse.kafkastreamsprocessor.impl.KafkaClientSupplierDecorator;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.MockKafkaStreamsProcessorMetrics;
+import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.DlqConfig;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 
@@ -73,6 +81,18 @@ class DlqProducerServiceTest {
     KStreamsProcessorConfig kStreamsProcessorConfig;
 
     @Mock
+    OpenTelemetry openTelemetry;
+
+    @Mock
+    ContextPropagators contextPropagators;
+
+    @Mock
+    TextMapPropagator textMapPropagator;
+
+    @Mock
+    KafkaTextMapSetter kafkaTextMapSetter;
+
+    @Mock
     DlqConfig dlqConfig;
 
     @Mock
@@ -91,7 +111,8 @@ class DlqProducerServiceTest {
     @BeforeEach
     void setUp() {
         when(kStreamsProcessorConfig.dlq()).thenReturn(dlqConfig);
-        service = new DlqProducerService(kafkaClientSupplier, metrics, dlqMetadataHandler, kStreamsProcessorConfig);
+        service = new DlqProducerService(kafkaClientSupplier, metrics, dlqMetadataHandler, kStreamsProcessorConfig,
+                openTelemetry, kafkaTextMapSetter);
     }
 
     @Test
@@ -131,6 +152,9 @@ class DlqProducerServiceTest {
         when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
         when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
         when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducer);
+        when(openTelemetry.getPropagators()).thenReturn(contextPropagators);
+        when(contextPropagators.getTextMapPropagator()).thenReturn(textMapPropagator);
+        when(textMapPropagator.fields()).thenReturn(singletonList("traceparent"));
         RecordHeaders enrichedHeaders = new RecordHeaders();
         when(dlqMetadataHandler.withMetadata(any(), any(), any(), any())).thenReturn(enrichedHeaders);
         when(consumerRecord.topic()).thenReturn(SOURCE_TOPIC);
@@ -139,7 +163,8 @@ class DlqProducerServiceTest {
         when(consumerRecord.timestamp()).thenReturn(TIMESTAMP);
         when(consumerRecord.key()).thenReturn(KEY);
         when(consumerRecord.value()).thenReturn(VALUE);
-        when(consumerRecord.headers()).thenReturn(new RecordHeaders());
+        RecordHeaders originalHeaders = new RecordHeaders();
+        when(consumerRecord.headers()).thenReturn(originalHeaders);
 
         //Call configure first to initialize properly the dlq producer
         service.configure(Collections.emptyMap());
@@ -154,6 +179,9 @@ class DlqProducerServiceTest {
         assertThat(sentRecord.value(), is(VALUE));
         assertThat(sentRecord.timestamp(), is(TIMESTAMP));
         assertThat(sentRecord.headers(), is(enrichedHeaders));
+
+        // ensure propagator injected headers into the record.headers()
+        verify(textMapPropagator).inject(any(Context.class), eq(originalHeaders), eq(kafkaTextMapSetter));
     }
 
     @Test
@@ -162,7 +190,11 @@ class DlqProducerServiceTest {
         when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
         when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducer);
         when(dlqMetadataHandler.withMetadata(any(), any(), any(), any())).thenReturn(new RecordHeaders());
-        when(consumerRecord.headers()).thenReturn(new RecordHeaders());
+        when(openTelemetry.getPropagators()).thenReturn(contextPropagators);
+        when(contextPropagators.getTextMapPropagator()).thenReturn(textMapPropagator);
+        when(textMapPropagator.fields()).thenReturn(singletonList("traceparent"));
+        RecordHeaders headers = new RecordHeaders();
+        when(consumerRecord.headers()).thenReturn(headers);
         when(consumerRecord.timestamp()).thenReturn(TIMESTAMP);
 
         //Call configure first to initialize properly the dlq producer
@@ -171,6 +203,9 @@ class DlqProducerServiceTest {
         service.sendToDlq(consumerRecord, new RuntimeException("error"), new TaskId(0, PARTITION), false);
 
         assertThat(metrics.microserviceDlqSentCounter().count(), closeTo(1d, 0.01d));
+
+        // verify openTelemetry headers injection
+        verify(textMapPropagator).inject(any(Context.class), eq(headers), eq(kafkaTextMapSetter));
     }
 
     @Test
@@ -178,6 +213,9 @@ class DlqProducerServiceTest {
         when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
         when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
         when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducer);
+        when(openTelemetry.getPropagators()).thenReturn(contextPropagators);
+        when(contextPropagators.getTextMapPropagator()).thenReturn(textMapPropagator);
+        when(textMapPropagator.fields()).thenReturn(singletonList("traceparent"));
         RecordHeaders originalHeaders = new RecordHeaders();
         when(dlqMetadataHandler.withMetadata(any(), any(), any(), any())).thenReturn(new RecordHeaders());
         when(consumerRecord.topic()).thenReturn(SOURCE_TOPIC);
@@ -192,5 +230,17 @@ class DlqProducerServiceTest {
         service.sendToDlq(consumerRecord, exception, new TaskId(0, PARTITION), false);
 
         verify(dlqMetadataHandler).withMetadata(originalHeaders, SOURCE_TOPIC, PARTITION, exception);
+    }
+
+    @Test
+    void shouldNotRecreateProducerOnSubsequentConfigureCalls() {
+        when(dlqConfig.topic()).thenReturn(Optional.of(DLQ_TOPIC));
+        when(kStreamsProcessorConfig.errorStrategy()).thenReturn(ErrorHandlingStrategy.DEAD_LETTER_QUEUE);
+        when(kafkaClientSupplier.getProducer(any())).thenReturn(dlqProducer);
+
+        service.configure(Collections.emptyMap());
+        service.configure(Collections.emptyMap());
+
+        verify(kafkaClientSupplier, times(1)).getProducer(any());
     }
 }

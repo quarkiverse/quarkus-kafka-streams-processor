@@ -33,9 +33,12 @@ import org.apache.kafka.common.Configurable;
 import org.apache.kafka.streams.KafkaClientSupplier;
 import org.apache.kafka.streams.processor.TaskId;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
 import io.quarkiverse.kafkastreamsprocessor.api.decorator.producer.ProducerOnSendInterceptor;
 import io.quarkiverse.kafkastreamsprocessor.impl.KafkaClientSupplierDecorator;
 import io.quarkiverse.kafkastreamsprocessor.impl.metrics.KafkaStreamsProcessorMetrics;
+import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,6 +78,10 @@ public class DlqProducerService implements Configurable {
     /** True if the dead letter queue strategy is selected and properly configured */
     boolean sendToDlq;
 
+    private final OpenTelemetry openTelemetry;
+
+    private final KafkaTextMapSetter kafkaTextMapSetter;
+
     /**
      * Injection constructor
      *
@@ -88,15 +95,24 @@ public class DlqProducerService implements Configurable {
     public DlqProducerService(KafkaClientSupplier kafkaClientSupplier,
             KafkaStreamsProcessorMetrics metrics,
             DlqMetadataHandler dlqMetadataHandler,
-            KStreamsProcessorConfig kStreamsProcessorConfig) {
+            KStreamsProcessorConfig kStreamsProcessorConfig,
+            OpenTelemetry openTelemetry,
+            KafkaTextMapSetter kafkaTextMapSetter) {
         this.clientSupplier = kafkaClientSupplier;
         this.metrics = metrics;
         this.dlqMetadataHandler = dlqMetadataHandler;
         this.kStreamsProcessorConfig = kStreamsProcessorConfig;
+        this.openTelemetry = openTelemetry;
+        this.kafkaTextMapSetter = kafkaTextMapSetter;
     }
 
     public void sendToDlq(final ConsumerRecord<byte[], byte[]> record, final Exception exception, TaskId taskId,
             Boolean isDeserializationException) {
+        openTelemetry.getPropagators().getTextMapPropagator().fields().forEach(record.headers()::remove);
+        openTelemetry.getPropagators()
+                .getTextMapPropagator()
+                .inject(Context.current(), record.headers(), kafkaTextMapSetter);
+
         metrics.microserviceDlqSentCounter().increment();
         log.error("Exception caught during {}, sending to the dead letter queue topic; " +
                 "taskId: {}, topic: {}, partition: {}, offset: {}",
@@ -125,9 +141,11 @@ public class DlqProducerService implements Configurable {
         sendToDlq = ErrorHandlingStrategy.shouldSendToDlq(kStreamsProcessorConfig.errorStrategy(),
                 kStreamsProcessorConfig.dlq().topic());
         if (sendToDlq) {
-            Map<String, Object> dlqConfigMap = new HashMap<>(configs);
-            dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
-            dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));
+            if (dlqProducer == null) {
+                Map<String, Object> dlqConfigMap = new HashMap<>(configs);
+                dlqConfigMap.put(KafkaClientSupplierDecorator.DLQ_PRODUCER, true);
+                dlqProducer = new LogCallbackExceptionProducerDecorator(clientSupplier.getProducer(dlqConfigMap));
+            }
         }
     }
 

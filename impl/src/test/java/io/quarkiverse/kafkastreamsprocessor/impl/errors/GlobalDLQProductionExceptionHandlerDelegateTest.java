@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -123,5 +124,13 @@ class GlobalDLQProductionExceptionHandlerDelegateTest {
                 "key".getBytes(), "value".getBytes());
         globalDLQExceptionHandlerDelegate.handle(errorRecord, new TestException());
         assertThat(metrics.globalDlqSentCounter().count(), closeTo(0, 0));
+    }
+
+    @Test
+    public void shouldNotRecreateProducerOnSubsequentConfigureCalls() {
+        // configure() was already called once in @BeforeEach
+        globalDLQExceptionHandlerDelegate.configure(Collections.emptyMap());
+
+        verify(kafkaClientSupplier, times(1)).getProducer(any());
     }
 }
