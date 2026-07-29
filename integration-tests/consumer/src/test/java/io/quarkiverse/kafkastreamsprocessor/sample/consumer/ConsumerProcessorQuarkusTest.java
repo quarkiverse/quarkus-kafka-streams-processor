@@ -25,38 +25,36 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.is;
 
 import java.time.Duration;
-import java.util.Map;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
-import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
-import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 /**
  * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
  */
 @QuarkusTest
-@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class ConsumerProcessorQuarkusTest {
-    @KafkaBootstrapServers
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     String senderTopic = "input-topic";
 
-    KafkaProducer<String, String> producer;
+    ProducerBuilder<String, String> producer;
 
     @BeforeEach
     public void setup() {
-        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
-        producer = new KafkaProducer<>(producerProps, new StringSerializer(), new StringSerializer());
+        producer = companion.produceWithSerializers(new StringSerializer(), new StringSerializer());
     }
 
     @AfterEach
@@ -77,8 +75,8 @@ public class ConsumerProcessorQuarkusTest {
                 .statusCode(200)
                 .body(is("No events cached"));
 
-        producer.send(new ProducerRecord<>(senderTopic, "MyEventKey", "{ \"value\": \"Hello, World!\" }"));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(senderTopic, "MyEventKey", "{ \"value\": \"Hello, World!\" }"))
+                .awaitCompletion(Duration.ofSeconds(1));
 
         await().atMost(Duration.ofSeconds(10))
                 .until(() -> "Key: MyEventKey, Value: MyData[value=Hello, World!]\n".equals(

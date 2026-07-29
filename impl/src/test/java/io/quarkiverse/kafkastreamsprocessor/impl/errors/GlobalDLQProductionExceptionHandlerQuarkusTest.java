@@ -22,7 +22,7 @@ package io.quarkiverse.kafkastreamsprocessor.impl.errors;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -33,19 +33,16 @@ import java.util.Set;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Record;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
@@ -55,13 +52,20 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
 import io.restassured.http.ContentType;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
 @TestProfile(GlobalDLQProductionExceptionHandlerQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class GlobalDLQProductionExceptionHandlerQuarkusTest {
     private static final String GLOBALDLQ_TOPIC = "dlq-topic";
 
@@ -70,30 +74,22 @@ public class GlobalDLQProductionExceptionHandlerQuarkusTest {
 
     String inputTopic;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     @Inject
     MeterRegistry registry;
 
-    KafkaProducer<String, PingMessage.Ping> producer;
+    ProducerBuilder<String, PingMessage.Ping> producer;
 
-    KafkaConsumer<String, PingMessage.Ping> consumer;
-
-    KafkaConsumer<String, PingMessage.Ping> dlqConsumer;
+    ConsumerBuilder<String, PingMessage.Ping> consumer;
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(kafkaBootstrapServers), new StringSerializer(),
-                new KafkaProtobufSerializer<>());
-
-        Map<String, Object> dlqConsumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "dlq", "true");
-        dlqConsumer = new KafkaConsumer<>(dlqConsumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
-
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
+        producer = companion.produceWithSerializers(new StringSerializer(), new KafkaProtobufSerializer<>());
+        consumer = companion
+                .consumeWithDeserializers(new StringDeserializer(), new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()))
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
 
         registry.clear();
 
@@ -104,26 +100,21 @@ public class GlobalDLQProductionExceptionHandlerQuarkusTest {
     public void tearDown() {
         producer.close();
         consumer.close();
-        dlqConsumer.close();
     }
 
     @Test
     public void bigMessageShouldGoInDlqTopic() throws Exception {
-        consumer.subscribe(List.of(kStreamsProcessorConfig.output().topic().get()));
-        dlqConsumer.subscribe(List.of(GLOBALDLQ_TOPIC));
-
         String bigMessage = new LoremIpsum().getWords(100);
         PingMessage.Ping ping = PingMessage.Ping.newBuilder().setMessage(bigMessage).build();
 
-        producer.send(new ProducerRecord<>(inputTopic, 0, null, ping));
-        producer.send(new ProducerRecord<>(inputTopic, ping));
-        producer.send(new ProducerRecord<>(inputTopic, ping));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(inputTopic, 0, null, ping)).awaitCompletion(Duration.ofSeconds(1));
+        producer.fromRecords(new ProducerRecord<>(inputTopic, ping)).awaitCompletion(Duration.ofSeconds(1));
+        producer.fromRecords(new ProducerRecord<>(inputTopic, ping)).awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecords<String, PingMessage.Ping> dlqRecords = KafkaTestUtils.getRecords(dlqConsumer, Duration.ofSeconds(10),
-                3);
+        List<ConsumerRecord<String, PingMessage.Ping>> dlqRecords = consumer.fromTopics(GLOBALDLQ_TOPIC, 3)
+                .awaitCompletion(Duration.ofSeconds(10)).getRecords();
 
-        assertEquals(3, dlqRecords.count(), "We do not have 3 records big message in the DLQ");
+        assertThat(dlqRecords, hasSize(3));
 
         double globalDlqMessagesSent = getMetricAsFloat("\"kafkastreamsprocessor.global.dlq.sent\"");
         assertThat(globalDlqMessagesSent, closeTo(3.0d, 0.1d));

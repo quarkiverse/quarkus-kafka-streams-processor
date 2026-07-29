@@ -32,7 +32,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -41,8 +40,7 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -52,7 +50,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
@@ -61,13 +58,20 @@ import io.cloudevents.kafka.CloudEventSerializer;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.api.cloudevents.CloudEventContextHandler;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @TestProfile(CloudEventQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class CloudEventQuarkusTest {
     private static final String DLQ_TOPIC_NAME = "dlq-topic";
     private static final String PROCESS_AND_FAIL_MESSAGE = "Process&Fail";
@@ -78,34 +82,24 @@ public class CloudEventQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.output.topic")
     String consumerTopic;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<String, CloudEvent> producer;
+    ProducerBuilder<String, CloudEvent> producer;
 
-    KafkaConsumer<String, CloudEvent> consumer;
-
-    KafkaConsumer<String, CloudEvent> dlqConsumer;
+    ConsumerBuilder<String, CloudEvent> consumer;
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
-                new CloudEventSerializer());
-
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", true);
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
-        consumer.subscribe(List.of(consumerTopic));
-
-        Map<String, Object> dlqConsumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "dlq", true);
-        dlqConsumer = new KafkaConsumer<>(dlqConsumerProps, new StringDeserializer(), new CloudEventDeserializer());
-        dlqConsumer.subscribe(List.of(DLQ_TOPIC_NAME));
+        producer = companion.produceWithSerializers(new StringSerializer(), new CloudEventSerializer());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), new CloudEventDeserializer())
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         producer.close();
         consumer.close();
-        dlqConsumer.close();
     }
 
     @Test
@@ -118,11 +112,10 @@ public class CloudEventQuarkusTest {
                 .build();
         ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
 
-        producer.send(sentRecord);
-        producer.flush();
+        producer.fromRecords(sentRecord).awaitCompletion(Duration.ofSeconds(5));
 
-        ConsumerRecord<String, CloudEvent> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                Duration.ofSeconds(10));
+        ConsumerRecord<String, CloudEvent> singleRecord = consumer.fromTopics(consumerTopic, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
         assertThat(singleRecord.key(), equalTo("key"));
         assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(), equalTo("blabla"));
@@ -144,11 +137,10 @@ public class CloudEventQuarkusTest {
                 .build();
         ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
 
-        producer.send(sentRecord);
-        producer.flush();
+        producer.fromRecords(sentRecord).awaitCompletion(Duration.ofSeconds(5));
 
-        ConsumerRecord<String, CloudEvent> dlqRecord = KafkaTestUtils.getSingleRecord(dlqConsumer, DLQ_TOPIC_NAME,
-                Duration.ofSeconds(10));
+        ConsumerRecord<String, CloudEvent> dlqRecord = consumer.fromTopics(DLQ_TOPIC_NAME, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
         assertThat(dlqRecord.key(), equalTo("key"));
         assertThat(PingMessage.Ping.parseFrom(dlqRecord.value().getData().toBytes()).getMessage(),
