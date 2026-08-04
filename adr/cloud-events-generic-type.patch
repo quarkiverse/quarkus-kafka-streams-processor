@@ -413,8 +413,7 @@ index 0000000..e0e0790
 +import org.junit.jupiter.api.AfterEach;
 +import org.junit.jupiter.api.BeforeEach;
 +import org.junit.jupiter.api.Test;
-+import org.springframework.kafka.test.utils.KafkaTestUtils;
-+
+++
 +import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 +import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 +
@@ -539,8 +538,7 @@ index 0000000..3c2bf39
 +import org.junit.jupiter.api.AfterEach;
 +import org.junit.jupiter.api.BeforeEach;
 +import org.junit.jupiter.api.Test;
-+import org.springframework.kafka.test.utils.KafkaTestUtils;
-+
+++
 +/**
 + * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
 + */

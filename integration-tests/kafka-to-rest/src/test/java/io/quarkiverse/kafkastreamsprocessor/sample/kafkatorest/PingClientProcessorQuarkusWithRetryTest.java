@@ -25,24 +25,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.awaitility.Durations;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
@@ -51,20 +47,27 @@ import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
+@QuarkusTestResource(KafkaCompanionResource.class)
 class PingClientProcessorQuarkusWithRetryTest {
 
     @Inject
     KStreamsProcessorConfig kStreamsProcessorConfig;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<String, Ping> producer;
+    ProducerBuilder<String, Ping> producer;
 
-    KafkaConsumer<String, Ping> consumer;
+    ConsumerBuilder<String, Ping> consumer;
 
     // Building on the features provided by QuarkusMock, Quarkus also allows users to effortlessly take advantage of
     // Mockito for mocking the beans supported by QuarkusMock. This functionality is available via the
@@ -76,18 +79,15 @@ class PingClientProcessorQuarkusWithRetryTest {
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(kafkaBootstrapServers), new StringSerializer(),
-                new KafkaProtobufSerializer<>());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(Ping.parser()));
-        consumer.subscribe(List.of(kStreamsProcessorConfig.output().topic().get()));
+        producer = companion.produceWithSerializers(new StringSerializer(), new KafkaProtobufSerializer<>());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), new KafkaProtobufDeserializer<>(Ping.parser()))
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
     public void tearDown() {
-        producer.close(Durations.ONE_SECOND);
-        consumer.close(Durations.ONE_SECOND);
+        producer.close();
+        consumer.close();
     }
 
     @Test
@@ -99,14 +99,11 @@ class PingClientProcessorQuarkusWithRetryTest {
                 .thenThrow(mock(RetryableException.class))
                 .thenReturn("PONG");
 
-        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(),
-                Ping.newBuilder().setMessage("hello").build()));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(),
+                Ping.newBuilder().setMessage("hello").build())).awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecord<String, Ping> singleRecord = KafkaTestUtils.getSingleRecord(consumer,
-                kStreamsProcessorConfig.output().topic().get(),
-                Durations.TEN_SECONDS);
-        consumer.commitSync();
+        ConsumerRecord<String, Ping> singleRecord = consumer.fromTopics(kStreamsProcessorConfig.output().topic().get(), 1)
+                .awaitCompletion(Durations.TEN_SECONDS).getFirstRecord();
 
         assertEquals("PONG of hello", singleRecord.value().getMessage());
         verify(client, times(4)).ping(); // 3 retry + 1
