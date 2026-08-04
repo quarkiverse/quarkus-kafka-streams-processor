@@ -415,9 +415,9 @@ Kafka error handling strategy.
 
 Possible values are:
 
- * `continue`: (default) drop the message and continue processing
- * `dead-letter-queue`: send the message to the DLQ and continue processing
- * `fail`: (not implemented yet) fail and stop processing more message
+ - `continue`: (default) drop the message and continue processing
+ - `dead-letter-queue`: send the message to the DLQ and continue processing
+ - `fail`: (not implemented yet) fail and stop processing more message
 
 
 ifdef::add-copy-button-to-env-var[]
