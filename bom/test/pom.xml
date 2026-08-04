@@ -63,6 +63,10 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -101,6 +105,10 @@
             <artifactId>logback-classic</artifactId>
             <groupId>ch.qos.logback</groupId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -111,6 +119,10 @@
           <exclusion>
             <artifactId>logback-classic</artifactId>
             <groupId>ch.qos.logback</groupId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -126,6 +138,10 @@
           <exclusion>
             <artifactId>xercesImpl</artifactId>
             <groupId>xerces</groupId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
