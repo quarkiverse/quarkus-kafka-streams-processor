@@ -37,14 +37,14 @@ import io.quarkiverse.kafkastreamsprocessor.api.exception.RetryableException;
 import io.quarkus.builder.BuildChainBuilder;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class KafkaStreamsProcessorProcessorWithRetryTest {
 
     private static volatile List<ReflectiveClassBuildItem> registeredClasses;
 
     @RegisterExtension
-    static QuarkusUnitTest runner = new QuarkusUnitTest()
+    static QuarkusExtensionTest runner = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClass(io.quarkiverse.kafkastreamsprocessor.kafka.streams.test.MyProcessor.class))
             .overrideConfigKey("kafkastreamsprocessor.input.topics", "ping-events")
