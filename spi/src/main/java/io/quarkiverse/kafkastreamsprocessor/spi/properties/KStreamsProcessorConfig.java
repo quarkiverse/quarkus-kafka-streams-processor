@@ -22,13 +22,19 @@ package io.quarkiverse.kafkastreamsprocessor.spi.properties;
 
 import java.util.Map;
 
-import io.smallrye.config.ConfigMapping;
+import io.quarkus.runtime.annotations.ConfigGroup;
 import io.smallrye.config.WithDefault;
 
 /**
- * Root of the configuration of the <code>quarkus-kafka-streams-processor</code> Quarkiverse extension.
+ * Configuration of the <code>quarkus-kafka-streams-processor</code> Quarkiverse extension.
+ * <p>
+ * This is not the config root: the root is <code>KStreamsProcessorConfigRuntime</code> in the runtime module, which
+ * extends this interface and exposes it as a bean, so this type can be injected by the modules that do not depend on
+ * the runtime module.
  */
-@ConfigMapping(prefix = "kafkastreamsprocessor")
+// a group and not a mapping: a mapping would register a second bean of this type, making injection ambiguous,
+// and the group annotation is needed for the documentation of the properties to be generated
+@ConfigGroup
 public interface KStreamsProcessorConfig {
     /**
      * The Kafka topics for incoming messages

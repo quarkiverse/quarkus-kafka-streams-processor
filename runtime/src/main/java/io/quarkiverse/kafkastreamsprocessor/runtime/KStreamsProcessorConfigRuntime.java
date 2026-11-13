@@ -25,7 +25,9 @@ import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 
 /**
- * Interface to trick the injection of the {@link KStreamsProcessorConfig} in the deployment module
+ * Config root of the extension.
+ * <p>
+ * The properties are declared in {@link KStreamsProcessorConfig}, which this root exposes as a bean.
  */
 @ConfigMapping(prefix = "kafkastreamsprocessor")
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
