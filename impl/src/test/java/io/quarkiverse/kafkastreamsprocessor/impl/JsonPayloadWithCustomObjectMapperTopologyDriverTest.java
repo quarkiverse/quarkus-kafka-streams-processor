@@ -40,18 +40,17 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
-import io.quarkus.jackson.ObjectMapperCustomizer;
+import io.quarkus.jackson.JsonMapperBuilderCustomizer;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
 
 @QuarkusTest
 @TestProfile(JsonPayloadWithCustomObjectMapperTopologyDriverTest.JsonProcessorProfile.class)
@@ -111,9 +110,9 @@ class JsonPayloadWithCustomObjectMapperTopologyDriverTest {
 
     @Singleton
     @Alternative
-    public static class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {
-        public void customize(ObjectMapper mapper) {
-            mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    public static class RegisterCustomModuleCustomizer implements JsonMapperBuilderCustomizer {
+        public void customize(JsonMapper.Builder builder) {
+            builder.propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         }
     }
 

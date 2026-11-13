@@ -22,12 +22,11 @@ package io.quarkiverse.kafkastreamsprocessor.sample.jsonpojo;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerde;
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerializer;
+import tools.jackson.databind.ObjectMapper;
 
 @Dependent
 public class SampleConfigurationCustomizer implements ConfigurationCustomizer {

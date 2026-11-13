@@ -26,9 +26,8 @@ import jakarta.inject.Inject;
 
 import org.apache.kafka.common.serialization.Deserializer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 @ApplicationScoped
 @Slf4j

@@ -28,12 +28,12 @@ import jakarta.enterprise.util.TypeLiteral;
 
 import org.apache.kafka.streams.processor.api.Processor;
 
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.type.TypeFactory;
 
 /**
  * Helper class for type inference from kstream processor generic types

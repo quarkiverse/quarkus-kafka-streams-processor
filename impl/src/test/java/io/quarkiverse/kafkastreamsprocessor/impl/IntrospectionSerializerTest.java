@@ -31,9 +31,10 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.StringValue;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 class IntrospectionSerializerTest {
 
@@ -48,7 +49,7 @@ class IntrospectionSerializerTest {
     }
 
     @Test
-    void shouldSerializeJSonWhenPayloadIsPojo() throws JsonProcessingException {
+    void shouldSerializeJSonWhenPayloadIsPojo() throws JacksonException {
         JsonPojo pojo = new JsonPojo();
         serializer.serialize("whatever", pojo);
         verify(mapper).writeValueAsBytes(pojo);
@@ -62,8 +63,8 @@ class IntrospectionSerializerTest {
     }
 
     @Test
-    void shouldGenerateIllegalArgumentExceptionWhenASerializationOccurs() throws JsonProcessingException {
-        JsonProcessingException exception = mock(JsonProcessingException.class);
+    void shouldGenerateIllegalArgumentExceptionWhenASerializationOccurs() throws JacksonException {
+        JacksonException exception = mock(JacksonException.class);
         when(mapper.writeValueAsBytes(any())).thenThrow(exception);
         assertThrows(IllegalArgumentException.class, () -> serializer.serialize("whatever", new JsonPojo()));
     }

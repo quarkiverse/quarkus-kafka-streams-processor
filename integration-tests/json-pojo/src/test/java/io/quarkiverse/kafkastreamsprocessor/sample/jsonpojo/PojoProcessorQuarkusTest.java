@@ -37,9 +37,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -48,6 +45,8 @@ import io.quarkus.test.kafka.KafkaCompanionResource;
 import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
 import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @QuarkusTest
 @QuarkusTestResource(KafkaCompanionResource.class)
@@ -79,7 +78,7 @@ public class PojoProcessorQuarkusTest {
     }
 
     @Test
-    public void processorShouldHandleJsonString() throws JsonProcessingException {
+    public void processorShouldHandleJsonString() throws JacksonException {
         SamplePojo pojo = new SamplePojo("hello", 1234, true);
         String json = objectMapper.writeValueAsString(pojo);
 

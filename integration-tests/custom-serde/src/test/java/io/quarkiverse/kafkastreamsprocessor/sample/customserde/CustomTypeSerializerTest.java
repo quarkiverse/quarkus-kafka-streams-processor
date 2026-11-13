@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 class CustomTypeSerializerTest {
     CustomTypeSerializer serializer = new CustomTypeSerializer(new ObjectMapper());
