@@ -231,11 +231,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>json-path</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <artifactId>kafka-metadata</artifactId>
       <groupId>org.apache.kafka</groupId>
       <scope>test</scope>

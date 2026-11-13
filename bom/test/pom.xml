@@ -45,11 +45,6 @@
         <version>0.0.20131108.vaadin1</version>
       </dependency>
       <dependency>
-        <groupId>io.rest-assured</groupId>
-        <artifactId>json-path</artifactId>
-        <version>6.0.1</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-metadata</artifactId>
         <version>${kafka.version}</version>
