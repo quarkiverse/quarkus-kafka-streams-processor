@@ -1,17 +1,15 @@
 package io.quarkiverse.kafkastreamsprocessor.sample.stateful.global;
 
-import java.util.Map;
+import java.time.Duration;
 
 import jakarta.inject.Inject;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
@@ -21,23 +19,25 @@ import io.opentelemetry.context.Scope;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.testing.assertj.TracesAssert;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
-import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
-import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
 import io.quarkiverse.kafkastreamsprocessor.testframework.StateDirCleaningResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
 @QuarkusTestResource(value = StateDirCleaningResource.class, restrictToAnnotatedClass = true)
-@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class TracingGlobalProcessorQuarkusTest {
 
     String globalTopicCapital = "global-topic-capital";
 
-    KafkaProducer<String, String> producerGlobalTopicCapital;
+    ProducerBuilder<String, String> producerGlobalTopicCapital;
 
-    @KafkaBootstrapServers
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     @Inject
     OpenTelemetry openTelemetry;
@@ -53,11 +53,7 @@ public class TracingGlobalProcessorQuarkusTest {
 
     @BeforeEach
     public void setup() {
-        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
-
-        producerGlobalTopicCapital = new KafkaProducer<>(producerProps, new StringSerializer(),
-                new StringSerializer());
-
+        producerGlobalTopicCapital = companion.produceWithSerializers(new StringSerializer(), new StringSerializer());
         clearSpans();
     }
 
@@ -77,7 +73,8 @@ public class TracingGlobalProcessorQuarkusTest {
 
             Thread.sleep(1000L);
 
-            producerGlobalTopicCapital.send(new ProducerRecord<>(globalTopicCapital, 0, "ID1", "capitalize-me", headers));
+            producerGlobalTopicCapital.fromRecords(new ProducerRecord<>(globalTopicCapital, 0, "ID1", "capitalize-me", headers))
+                    .awaitCompletion(Duration.ofSeconds(1));
 
             Thread.sleep(1000L);
         } finally {

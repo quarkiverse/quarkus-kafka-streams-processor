@@ -24,7 +24,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * @deprecated Please use KafkaCompanionResource from
+ *             <a href="https://quarkus.io/guides/kafka#testing-using-a-kafka-broker">quarkus-test-kafka-companion</a>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD })
+@Deprecated(since = "7.0", forRemoval = true)
 public @interface KafkaBootstrapServers {
 }

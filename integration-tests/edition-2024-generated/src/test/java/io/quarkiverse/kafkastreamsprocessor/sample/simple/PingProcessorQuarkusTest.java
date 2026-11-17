@@ -21,12 +21,10 @@ package io.quarkiverse.kafkastreamsprocessor.sample.simple;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -34,43 +32,41 @@ import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 
 import io.quarkiverse.kafkastreamsprocessor.sample.message.Ping;
-import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
-import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 /**
  * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
  */
 @QuarkusTest
-@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class PingProcessorQuarkusTest {
-    @KafkaBootstrapServers
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     String senderTopic = "ping-events";
 
     String consumerTopic = "pong-events";
 
-    KafkaProducer<String, Ping> producer;
+    ProducerBuilder<String, Ping> producer;
 
-    KafkaConsumer<String, Ping> consumer;
+    ConsumerBuilder<String, Ping> consumer;
 
     @BeforeEach
     public void setup() {
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new KafkaProtobufDeserializer<>(Ping.parser()));
-        consumer.subscribe(List.of(consumerTopic));
-
-        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
-        producer = new KafkaProducer<>(producerProps, new StringSerializer(),
-                new KafkaProtobufSerializer<>());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), new KafkaProtobufDeserializer<>(Ping.parser()))
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
+        producer = companion.produceWithSerializers(new StringSerializer(), new KafkaProtobufSerializer<>());
     }
 
     @AfterEach
@@ -81,9 +77,10 @@ public class PingProcessorQuarkusTest {
 
     @Test
     public void testCount() {
-        producer.send(new ProducerRecord<>(senderTopic, Ping.newBuilder().setMessage("world").build()));
-        producer.flush();
-        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS);
+        producer.fromRecords(new ProducerRecord<>(senderTopic, Ping.newBuilder().setMessage("world").build()))
+                .awaitCompletion(Duration.ofSeconds(1));
+        ConsumerRecord<String, Ping> record = consumer.fromTopics(consumerTopic, 1).awaitCompletion(Durations.FIVE_SECONDS)
+                .getFirstRecord();
         assertEquals("5", record.value().getMessage());
     }
 
