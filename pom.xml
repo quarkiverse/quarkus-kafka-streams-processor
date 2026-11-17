@@ -3,7 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.quarkiverse</groupId>
+    
     <artifactId>quarkiverse-parent</artifactId>
+    
     <version>24</version>
   </parent>
   <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
