@@ -236,17 +236,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>smallrye-reactive-messaging-kafka-test-companion</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>kafka-metadata</artifactId>
-          <groupId>org.apache.kafka</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <artifactId>kafka-metadata</artifactId>
       <groupId>org.apache.kafka</groupId>
       <scope>test</scope>
@@ -313,6 +302,12 @@
       <groupId>io.smallrye.reactive</groupId>
       <artifactId>smallrye-reactive-messaging-kafka-test-companion</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>kafka-metadata</artifactId>
+          <groupId>org.apache.kafka</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
