@@ -28,8 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Lifecycle Manager to plug with @QuarkusTestResource that allows access to the kafka dev service even in a
  * QuarkusIntegrationTest.
+ *
+ * @deprecated Please use KafkaCompanionResource from
+ *             <a href="https://quarkus.io/guides/kafka#testing-using-a-kafka-broker">quarkus-test-kafka-companion</a>
  */
 @Slf4j
+@Deprecated(since = "7.0", forRemoval = true)
 public class QuarkusIntegrationCompatibleKafkaDevServicesResource
         implements QuarkusTestResourceLifecycleManager, DevServicesContext.ContextAware {
     String kafkaBootstrapServers;

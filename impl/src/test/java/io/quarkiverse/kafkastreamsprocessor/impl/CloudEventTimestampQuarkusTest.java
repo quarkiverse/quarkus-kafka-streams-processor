@@ -27,7 +27,6 @@ import static org.hamcrest.Matchers.nullValue;
 import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -36,8 +35,7 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -47,7 +45,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
@@ -56,13 +53,20 @@ import io.cloudevents.kafka.CloudEventSerializer;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.api.cloudevents.CloudEventContextHandler;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @TestProfile(CloudEventTimestampQuarkusTest.DisabledTimestampProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class CloudEventTimestampQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
     String senderTopic;
@@ -70,20 +74,18 @@ public class CloudEventTimestampQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.output.topic")
     String consumerTopic;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<String, CloudEvent> producer;
+    ProducerBuilder<String, CloudEvent> producer;
 
-    KafkaConsumer<String, CloudEvent> consumer;
+    ConsumerBuilder<String, CloudEvent> consumer;
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
-                new CloudEventSerializer());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test-timestamp", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), new CloudEventDeserializer());
-        consumer.subscribe(List.of(consumerTopic));
+        producer = companion.produceWithSerializers(new StringSerializer(), new CloudEventSerializer());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), new CloudEventDeserializer())
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
@@ -102,11 +104,10 @@ public class CloudEventTimestampQuarkusTest {
                 .build();
         ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
 
-        producer.send(sentRecord);
-        producer.flush();
+        producer.fromRecords(sentRecord).awaitCompletion(Duration.ofSeconds(5));
 
-        ConsumerRecord<String, CloudEvent> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                Duration.ofSeconds(10));
+        ConsumerRecord<String, CloudEvent> singleRecord = consumer.fromTopics(consumerTopic, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
         assertThat(singleRecord.key(), equalTo("key"));
         assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(),
@@ -126,11 +127,10 @@ public class CloudEventTimestampQuarkusTest {
                 .build();
         ProducerRecord<String, CloudEvent> sentRecord = new ProducerRecord<>(senderTopic, 0, "key", cloudEvent);
 
-        producer.send(sentRecord);
-        producer.flush();
+        producer.fromRecords(sentRecord).awaitCompletion(Duration.ofSeconds(5));
 
-        ConsumerRecord<String, CloudEvent> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                Duration.ofSeconds(10));
+        ConsumerRecord<String, CloudEvent> singleRecord = consumer.fromTopics(consumerTopic, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
         assertThat(singleRecord.key(), equalTo("key"));
         assertThat(PingMessage.Ping.parseFrom(singleRecord.value().getData().toBytes()).getMessage(),

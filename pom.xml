@@ -4,12 +4,12 @@
   <parent>
     <groupId>io.quarkiverse</groupId>
     <artifactId>quarkiverse-parent</artifactId>
-    <version>21</version>
+    <version>24</version>
   </parent>
   <groupId>io.quarkiverse.kafkastreamsprocessor</groupId>
   <artifactId>quarkus-kafka-streams-processor-parent</artifactId>
   <name>quarkus-kafka-streams-processor-parent</name>
-  <version>6.0.0-SNAPSHOT</version>
+  <version>6.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>bom</module>
@@ -28,8 +28,9 @@
     <tag>HEAD</tag>
   </scm>
   <properties>
-    <quarkus.version>3.37.0</quarkus.version>
+    <quarkus.version>3.40.1.2</quarkus.version>
     <protobuf.version>4.32.1</protobuf.version>
+    <lombok.version>1.18.46</lombok.version>
   </properties>
 
   <repositories>
@@ -51,6 +52,11 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>
@@ -67,6 +73,13 @@
             <compilerArgs>
               <arg>-parameters</arg>
             </compilerArgs>
+            <annotationProcessorPaths>
+              <annotationProcessorPath>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </annotationProcessorPath>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
         <plugin>
@@ -158,7 +171,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.14</version>
+            <version>0.8.15</version>
             <executions>
               <execution>
                 <id>default-prepare-agent</id>

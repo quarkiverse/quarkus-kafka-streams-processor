@@ -34,20 +34,16 @@ import java.util.Set;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Record;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
@@ -56,13 +52,20 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
 import io.restassured.http.ContentType;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
 @TestProfile(LogAndSendToDlqExceptionHandlerDelegateQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 class LogAndSendToDlqExceptionHandlerDelegateQuarkusTest {
     private static final String DLQ_TOPIC = "dlq-topic";
 
@@ -72,20 +75,20 @@ class LogAndSendToDlqExceptionHandlerDelegateQuarkusTest {
     @Inject
     MeterRegistry registry;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<String, PingMessage.Ping> producer;
+    ProducerBuilder<String, PingMessage.Ping> producer;
 
-    KafkaConsumer<String, PingMessage.Ping> consumer;
+    ConsumerBuilder<String, PingMessage.Ping> consumer;
 
-    KafkaConsumer<byte[], byte[]> dlqConsumer;
+    ConsumerBuilder<byte[], byte[]> dlqConsumer;
 
     @BeforeEach
     public void setup() {
         registry.clear();
 
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(kafkaBootstrapServers), new StringSerializer(),
+        producer = companion.produceWithSerializers(new StringSerializer(),
                 new KafkaProtobufSerializer<>() {
                     // Generate invalid protobuf messages to trigger a deserialization error
                     @Override
@@ -93,13 +96,8 @@ class LogAndSendToDlqExceptionHandlerDelegateQuarkusTest {
                         return "InvalidProtobufPayload".getBytes(StandardCharsets.UTF_8);
                     }
                 });
-
-        Map<String, Object> dlqConsumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "dlq", "true");
-        dlqConsumer = new KafkaConsumer<>(dlqConsumerProps, new ByteArrayDeserializer(),
-                new ByteArrayDeserializer());
-
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
+        dlqConsumer = companion.consumeWithDeserializers(new ByteArrayDeserializer(), new ByteArrayDeserializer());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(),
                 new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
     }
 
@@ -112,19 +110,21 @@ class LogAndSendToDlqExceptionHandlerDelegateQuarkusTest {
 
     @Test
     void deserializationErrorShouldGoInDlqTopic() throws Exception {
-        consumer.subscribe(List.of(kStreamsProcessorConfig.output().topic().get()));
-        dlqConsumer.subscribe(List.of(DLQ_TOPIC));
+        // use topic(s) in List.of(kStreamsProcessorConfig.output().topic().get()) with consumer.fromTopics at consumption time
+
+        // use topic(s) in List.of(DLQ_TOPIC) with consumer.fromTopics at consumption time
 
         PingMessage.Ping ping = PingMessage.Ping.newBuilder().setMessage("WillBeCorruptedBySerializer").build();
-        producer.send(
+        producer.fromRecords(
                 new ProducerRecord<String, PingMessage.Ping>(kStreamsProcessorConfig.input().topic().get(), 0,
                         null,
-                        ping));
-        producer.flush();
+                        ping))
+                .awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecords<byte[], byte[]> dlqRecords = KafkaTestUtils.getRecords(dlqConsumer, Duration.ofSeconds(10), 1);
+        List<ConsumerRecord<byte[], byte[]>> dlqRecords = dlqConsumer.fromTopics(DLQ_TOPIC, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getRecords();
 
-        assertEquals(1, dlqRecords.count(), "We do not have 1 corrupt protobuf message in the DLQ");
+        assertEquals(1, dlqRecords.size(), "We do not have 1 corrupt protobuf message in the DLQ");
 
         double globalDlqMessagesSent = getMetricAsFloat("\"kafkastreamsprocessor.global.dlq.sent\"");
         assertThat(globalDlqMessagesSent, closeTo(0.0d, 0.1d));

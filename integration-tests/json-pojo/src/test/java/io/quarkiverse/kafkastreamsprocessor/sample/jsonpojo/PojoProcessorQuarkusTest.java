@@ -23,54 +23,53 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.awaitility.Durations;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class PojoProcessorQuarkusTest {
-
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     @Inject
     KStreamsProcessorConfig kStreamsProcessorConfig;
 
-    KafkaProducer<String, String> producer;
+    ProducerBuilder<String, String> producer;
 
-    KafkaConsumer<String, String> consumer;
+    ConsumerBuilder<String, String> consumer;
 
     @Inject
     ObjectMapper objectMapper;
 
     @BeforeEach
     public void setup() {
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
-                new StringDeserializer());
-        consumer.subscribe(List.of(kStreamsProcessorConfig.output().topic().get()));
-        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
-        producer = new KafkaProducer<>(producerProps, new StringSerializer(), new StringSerializer());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), new StringDeserializer())
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
+        producer = companion.produceWithSerializers(new StringSerializer(), new StringSerializer());
     }
 
     @AfterEach
@@ -84,11 +83,12 @@ public class PojoProcessorQuarkusTest {
         SamplePojo pojo = new SamplePojo("hello", 1234, true);
         String json = objectMapper.writeValueAsString(pojo);
 
-        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), json));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), json))
+                .awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecord<String, String> record = KafkaTestUtils.getSingleRecord(consumer,
-                kStreamsProcessorConfig.output().topic().get(), Durations.FIVE_SECONDS);
+        ConsumerRecord<String, String> record = consumer.fromTopics(kStreamsProcessorConfig.output().topic().get(), 1)
+                .awaitCompletion(Durations.FIVE_SECONDS)
+                .getFirstRecord();
         SamplePojo expected = new SamplePojo("olleh", 1271, false);
 
         assertThat(objectMapper.readValue(record.value(), SamplePojo.class), is(equalTo(expected)));

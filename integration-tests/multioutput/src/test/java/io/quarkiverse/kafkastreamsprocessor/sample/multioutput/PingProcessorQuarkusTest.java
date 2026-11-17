@@ -21,12 +21,10 @@ package io.quarkiverse.kafkastreamsprocessor.sample.multioutput;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -35,60 +33,60 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
 
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage.Ping;
-import io.quarkiverse.kafkastreamsprocessor.testframework.KafkaBootstrapServers;
-import io.quarkiverse.kafkastreamsprocessor.testframework.QuarkusIntegrationCompatibleKafkaDevServicesResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 /**
  * Blackbox test that can run both in JVM and native modes (@Inject and @ConfigProperty not allowed)
  */
 @QuarkusTest
-@QuarkusTestResource(QuarkusIntegrationCompatibleKafkaDevServicesResource.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class PingProcessorQuarkusTest {
-    @KafkaBootstrapServers
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     String senderTopic = "ping-events";
 
     String consumerPongTopic = "pong-events";
     String consumerPangTopic = "pang-events";
 
-    KafkaProducer<String, Ping> producer;
+    ProducerBuilder<String, Ping> producer;
 
-    KafkaConsumer<String, Ping> consumer;
+    ConsumerBuilder<String, Ping> consumer;
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer(KafkaTestUtils.producerProps(kafkaBootstrapServers), new StringSerializer(),
+        producer = companion.produceWithSerializers(new StringSerializer(),
                 new KafkaProtobufSerializer<>());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer(consumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(Ping.parser()));
-        consumer.subscribe(List.of(consumerPongTopic, consumerPangTopic));
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(),
+                new KafkaProtobufDeserializer<>(Ping.parser())).withGroupId("test")
+                .withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
     public void tearDown() {
-        producer.close(Durations.ONE_SECOND);
-        consumer.close(Durations.ONE_SECOND);
+        producer.close();
+        consumer.close();
     }
 
     @Test
     public void testNominalCase() {
         Ping ping = Ping.newBuilder().setMessage("world").build();
 
-        producer.send(new ProducerRecord<>(senderTopic, ping));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(senderTopic, ping)).awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerPongTopic,
-                Durations.TEN_SECONDS);
+        ConsumerRecord<String, Ping> record = consumer.fromTopics(consumerPongTopic, 1).awaitCompletion(Durations.TEN_SECONDS)
+                .getFirstRecord();
         assertEquals("5", record.value().getMessage());
     }
 
@@ -96,11 +94,10 @@ public class PingProcessorQuarkusTest {
     public void testFunctionalError() {
         Ping ping = Ping.newBuilder().setMessage("error").build();
 
-        producer.send(new ProducerRecord<>(senderTopic, ping));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(senderTopic, ping)).awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecord<String, Ping> record = KafkaTestUtils.getSingleRecord(consumer, consumerPangTopic,
-                Durations.TEN_SECONDS);
+        ConsumerRecord<String, Ping> record = consumer.fromTopics(consumerPangTopic, 1).awaitCompletion(Durations.TEN_SECONDS)
+                .getFirstRecord();
         assertEquals("PANG!", record.value().getMessage());
     }
 }

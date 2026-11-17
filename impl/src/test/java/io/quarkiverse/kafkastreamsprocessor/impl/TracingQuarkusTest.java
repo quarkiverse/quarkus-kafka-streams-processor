@@ -28,7 +28,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,8 +35,7 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -49,7 +47,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
@@ -66,13 +63,20 @@ import io.quarkiverse.kafkastreamsprocessor.impl.protocol.KafkaStreamsProcessorH
 import io.quarkiverse.kafkastreamsprocessor.impl.utils.TestSpanExporter;
 import io.quarkiverse.kafkastreamsprocessor.propagation.KafkaTextMapSetter;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @TestProfile(TracingQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class TracingQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
     String senderTopic;
@@ -80,12 +84,12 @@ public class TracingQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.output.topic")
     String consumerTopic;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion kafkaCompanion;
 
-    KafkaProducer<String, PingMessage.Ping> producer;
+    ProducerBuilder<String, PingMessage.Ping> producer;
 
-    KafkaConsumer<String, PingMessage.Ping> consumer;
+    ConsumerBuilder<String, PingMessage.Ping> consumer;
 
     @Inject
     OpenTelemetry openTelemetry;
@@ -101,13 +105,10 @@ public class TracingQuarkusTest {
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new StringSerializer(),
-                new KafkaProtobufSerializer<>());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
-        consumer.subscribe(List.of(consumerTopic));
-
+        producer = kafkaCompanion.produceWithSerializers(new StringSerializer(), new KafkaProtobufSerializer<>());
+        consumer = kafkaCompanion.consumeWithDeserializers(new StringDeserializer(),
+                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()))
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
         clearSpans();
     }
 
@@ -134,10 +135,10 @@ public class TracingQuarkusTest {
                     .getTextMapPropagator()
                     .inject(Context.current(), headers, kafkaTextMapSetter);
             ProducerRecord<String, PingMessage.Ping> record = new ProducerRecord<>(senderTopic, 0, "key", input, headers);
-            producer.send(record);
+            producer.fromRecords(record).awaitCompletion(Duration.ofSeconds(5));
 
-            ConsumerRecord<String, PingMessage.Ping> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                    Duration.ofSeconds(5));
+            ConsumerRecord<String, PingMessage.Ping> singleRecord = consumer.fromTopics(consumerTopic, 1)
+                    .awaitCompletion(Duration.ofSeconds(5)).getFirstRecord();
             assertThat(toMap(singleRecord.headers()),
                     hasEntry(equalTo(KafkaStreamsProcessorHeaders.W3C_TRACE_ID),
                             containsString(parentSpan.getSpanContext().getTraceId())));
@@ -165,9 +166,9 @@ public class TracingQuarkusTest {
                     .getTextMapPropagator()
                     .inject(Context.current(), headers, kafkaTextMapSetter);
             ProducerRecord<String, PingMessage.Ping> record = new ProducerRecord<>(senderTopic, 0, "key", input, headers);
-            producer.send(record);
+            producer.fromRecords(record).awaitCompletion(Duration.ofSeconds(5));
 
-            KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Duration.ofSeconds(5));
+            consumer.fromTopics(consumerTopic, 1).awaitCompletion(Duration.ofSeconds(5));
         } finally {
             parentSpan.end();
         }

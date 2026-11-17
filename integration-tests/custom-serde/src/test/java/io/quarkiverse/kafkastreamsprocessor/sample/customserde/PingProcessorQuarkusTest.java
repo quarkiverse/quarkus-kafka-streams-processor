@@ -24,51 +24,51 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.awaitility.Durations;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class PingProcessorQuarkusTest {
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
     String senderTopic = "ping-events";
 
     String consumerTopic = "pong-events";
 
-    KafkaProducer<String, CustomType> producer;
+    ProducerBuilder<String, CustomType> producer;
 
-    KafkaConsumer<String, CustomType> consumer;
+    ConsumerBuilder<String, CustomType> consumer;
 
     @Inject
     CustomTypeSerde customTypeSerde;
 
     @BeforeEach
     public void setup() throws Exception {
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(), customTypeSerde.deserializer());
-        consumer.subscribe(List.of(consumerTopic));
-
-        Map<String, Object> producerProps = KafkaTestUtils.producerProps(kafkaBootstrapServers);
-        producer = new KafkaProducer<>(producerProps, new StringSerializer(), customTypeSerde.serializer());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(), customTypeSerde.deserializer())
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
+        producer = companion.produceWithSerializers(new StringSerializer(), customTypeSerde.serializer());
     }
 
     @AfterEach
@@ -79,19 +79,18 @@ public class PingProcessorQuarkusTest {
 
     @Test
     public void testCount() {
-        producer.send(new ProducerRecord<>(senderTopic, "1", new CustomType(1)));
-        producer.flush();
-        ConsumerRecord<String, CustomType> record = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                Durations.FIVE_SECONDS);
+        producer.fromRecords(new ProducerRecord<>(senderTopic, "1", new CustomType(1))).awaitCompletion(Duration.ofSeconds(1));
+        ConsumerRecord<String, CustomType> record = consumer.fromTopics(consumerTopic, 1)
+                .awaitCompletion(Durations.FIVE_SECONDS).getFirstRecord();
         assertThat(((CustomType) record.value()).getValue(), equalTo(1));
     }
 
     @Test
     public void testHeaderError() {
-        producer.send(new ProducerRecord<>(senderTopic, 0, "1", new CustomType(1),
-                new RecordHeaders().add("custom-header", "error".getBytes(StandardCharsets.UTF_8))));
-        producer.flush();
-        assertThrows(IllegalStateException.class,
-                () -> KafkaTestUtils.getSingleRecord(consumer, consumerTopic, Durations.FIVE_SECONDS));
+        producer.fromRecords(new ProducerRecord<>(senderTopic, 0, "1", new CustomType(1),
+                new RecordHeaders().add("custom-header", "error".getBytes(StandardCharsets.UTF_8))))
+                .awaitCompletion(Duration.ofSeconds(1));
+        assertThrows(AssertionError.class,
+                () -> consumer.fromTopics(consumerTopic, 1).awaitCompletion(Durations.FIVE_SECONDS).getFirstRecord());
     }
 }

@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -43,20 +42,16 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Record;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufDeserializer;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerializer;
@@ -71,12 +66,19 @@ import io.quarkiverse.kafkastreamsprocessor.api.decorator.processor.ProcessorDec
 import io.quarkiverse.kafkastreamsprocessor.impl.utils.TestSpanExporter;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
 import io.quarkiverse.kafkastreamsprocessor.spi.properties.KStreamsProcessorConfig;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 
 @QuarkusTest
 @TestProfile(DlqDecoratorQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class DlqDecoratorQuarkusTest {
     private static final String DLQ_TOPIC_NAME = "dlq-topic";
     private static final String INTERCEPT_AND_FAIL_MESSAGE = "Intercept&Fail";
@@ -87,14 +89,12 @@ public class DlqDecoratorQuarkusTest {
     @Inject
     KStreamsProcessorConfig kStreamsProcessorConfig;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String kafkaBootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<String, PingMessage.Ping> producer;
+    ProducerBuilder<String, PingMessage.Ping> producer;
 
-    KafkaConsumer<String, PingMessage.Ping> consumer;
-
-    KafkaConsumer<String, PingMessage.Ping> dlqConsumer;
+    ConsumerBuilder<String, PingMessage.Ping> consumer;
 
     @Inject
     OpenTelemetry openTelemetry;
@@ -104,25 +104,16 @@ public class DlqDecoratorQuarkusTest {
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(kafkaBootstrapServers), new StringSerializer(),
-                new KafkaProtobufSerializer<>());
-
-        Map<String, Object> dlqConsumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "dlq", true);
-        dlqConsumer = new KafkaConsumer<>(dlqConsumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
-        dlqConsumer.subscribe(List.of(DLQ_TOPIC_NAME));
-
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafkaBootstrapServers, "test", true);
-        consumer = new KafkaConsumer<>(consumerProps, new StringDeserializer(),
-                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()));
-        consumer.subscribe(List.of(kStreamsProcessorConfig.output().topic().get()));
+        producer = companion.produceWithSerializers(new StringSerializer(), new KafkaProtobufSerializer<>());
+        consumer = companion.consumeWithDeserializers(new StringDeserializer(),
+                new KafkaProtobufDeserializer<>(PingMessage.Ping.parser()))
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
     public void tearDown() {
         producer.close();
         consumer.close();
-        dlqConsumer.close();
         clearSpans();
     }
 
@@ -135,14 +126,13 @@ public class DlqDecoratorQuarkusTest {
     @Test
     void successFlowShouldNotGoInDlqTopic() {
         PingMessage.Ping ping = PingMessage.Ping.newBuilder().setMessage("Hello World").build();
-        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping))
+                .awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecords<String, PingMessage.Ping> mirroredRecords = KafkaTestUtils.getRecords(consumer, Duration.ofSeconds(10),
-                1);
-        assertThat(mirroredRecords.count(), equalTo(1));
+        ConsumerRecord<String, PingMessage.Ping> mirroredRecord = consumer
+                .fromTopics(kStreamsProcessorConfig.output().topic().get(), 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
-        ConsumerRecord<String, PingMessage.Ping> mirroredRecord = mirroredRecords.iterator().next();
         assertThat(mirroredRecord.key(), equalTo("blabla"));
         assertThat(mirroredRecord.value().getMessage(), equalTo("Hello World"));
         assertThat(headerValue(mirroredRecord, PRODUCER_INTERCEPTOR_ADDED_HEADER_NAME),
@@ -158,15 +148,13 @@ public class DlqDecoratorQuarkusTest {
     @Test
     void processorErrorShouldGoInDlqTopic() {
         PingMessage.Ping ping = PingMessage.Ping.newBuilder().setMessage(PROCESS_AND_FAIL_MESSAGE).build();
-        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping,
-                new RecordHeaders().add("header1", "value".getBytes(StandardCharsets.UTF_8))));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping,
+                new RecordHeaders().add("header1", "value".getBytes(StandardCharsets.UTF_8))))
+                .awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecords<String, PingMessage.Ping> dlqRecords = KafkaTestUtils.getRecords(dlqConsumer, Duration.ofSeconds(100),
-                1);
-        assertThat(dlqRecords.count(), equalTo(1));
+        ConsumerRecord<String, PingMessage.Ping> dlqRecord = consumer.fromTopics(DLQ_TOPIC_NAME, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
-        ConsumerRecord<String, PingMessage.Ping> dlqRecord = dlqRecords.iterator().next();
         assertThat(dlqRecord.key(), equalTo("blabla"));
         assertThat(dlqRecord.value().getMessage(), equalTo(PROCESS_AND_FAIL_MESSAGE));
         assertThat(dlqRecord.headers().toArray().length, equalTo(6));
@@ -191,14 +179,12 @@ public class DlqDecoratorQuarkusTest {
     @Test
     void interceptorErrorShouldGoInDlqTopic() {
         PingMessage.Ping ping = PingMessage.Ping.newBuilder().setMessage(INTERCEPT_AND_FAIL_MESSAGE).build();
-        producer.send(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping));
-        producer.flush();
+        producer.fromRecords(new ProducerRecord<>(kStreamsProcessorConfig.input().topic().get(), 0, "blabla", ping))
+                .awaitCompletion(Duration.ofSeconds(1));
 
-        ConsumerRecords<String, PingMessage.Ping> dlqRecords = KafkaTestUtils.getRecords(dlqConsumer, Duration.ofSeconds(10),
-                1);
-        assertThat(dlqRecords.count(), equalTo(1));
+        ConsumerRecord<String, PingMessage.Ping> dlqRecord = consumer.fromTopics(DLQ_TOPIC_NAME, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
-        ConsumerRecord<String, PingMessage.Ping> dlqRecord = dlqRecords.iterator().next();
         assertThat(dlqRecord.key(), equalTo("blabla"));
         assertThat(dlqRecord.value().getMessage(), equalTo(INTERCEPT_AND_FAIL_MESSAGE));
         assertThat(dlqRecord.headers().toArray().length, equalTo(5));

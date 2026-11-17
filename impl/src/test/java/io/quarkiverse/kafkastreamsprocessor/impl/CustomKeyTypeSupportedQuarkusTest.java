@@ -23,7 +23,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,8 +31,7 @@ import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -47,20 +45,26 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import io.opentelemetry.api.trace.Tracer;
 import io.quarkiverse.kafkastreamsprocessor.api.Processor;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.Configuration;
 import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCustomizer;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerBuilder;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ProducerBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @TestProfile(CustomKeyTypeSupportedQuarkusTest.TestProfile.class)
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class CustomKeyTypeSupportedQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.input.topic")
     String senderTopic;
@@ -68,20 +72,18 @@ public class CustomKeyTypeSupportedQuarkusTest {
     @ConfigProperty(name = "kafkastreamsprocessor.output.topic")
     String consumerTopic;
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    KafkaProducer<KeyType, String> producer;
+    ProducerBuilder<KeyType, String> producer;
 
-    KafkaConsumer<KeyType, String> consumer;
+    ConsumerBuilder<KeyType, String> consumer;
 
     @BeforeEach
     public void setup() {
-        producer = new KafkaProducer<>(KafkaTestUtils.producerProps(bootstrapServers), new KeySerializer(),
-                new StringSerializer());
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(bootstrapServers, "test", "true");
-        consumer = new KafkaConsumer<>(consumerProps, new KeyDeserializer(), new StringDeserializer());
-        consumer.subscribe(List.of(consumerTopic));
+        producer = companion.produceWithSerializers(new KeySerializer(), new StringSerializer());
+        consumer = companion.consumeWithDeserializers(new KeyDeserializer(), new StringDeserializer())
+                .withGroupId("test").withOffsetReset(OffsetResetStrategy.EARLIEST.toString()).withAutoCommit();
     }
 
     @AfterEach
@@ -94,11 +96,10 @@ public class CustomKeyTypeSupportedQuarkusTest {
     public void customKeyTypeSupported() {
         ProducerRecord<KeyType, String> sentRecord = new ProducerRecord<>(senderTopic, 0, new KeyType("key"), "value");
 
-        producer.send(sentRecord);
-        producer.flush();
+        producer.fromRecords(sentRecord).awaitCompletion(Duration.ofSeconds(5));
 
-        ConsumerRecord<KeyType, String> singleRecord = KafkaTestUtils.getSingleRecord(consumer, consumerTopic,
-                Duration.ofSeconds(10));
+        ConsumerRecord<KeyType, String> singleRecord = consumer.fromTopics(consumerTopic, 1)
+                .awaitCompletion(Duration.ofSeconds(10)).getFirstRecord();
 
         assertThat(singleRecord.key().getKey(), equalTo("key$"));
         assertThat(singleRecord.value(), equalTo("valueg"));
