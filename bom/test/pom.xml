@@ -10,8 +10,8 @@
   <name>quarkus-kafka-streams-processor-test-bom</name>
   <packaging>pom</packaging>
   <properties>
-
-    <kafka.version>4.2.0</kafka.version>
+    
+    <kafka.version>4.3.1</kafka.version>
     
     <org.mock-server.version>7.4.0</org.mock-server.version>
 
