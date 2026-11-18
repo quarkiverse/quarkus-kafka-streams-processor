@@ -24,12 +24,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 class JacksonDeserializerTest {
 
@@ -44,7 +43,7 @@ class JacksonDeserializerTest {
     }
 
     @Test
-    void shouldDeserializeAPojo() throws JsonProcessingException {
+    void shouldDeserializeAPojo() throws JacksonException {
         Pojo pojo = new Pojo("value");
         Pojo deserialized = deserializer.deserialize("topic", mapper.writeValueAsBytes(pojo));
         Assertions.assertEquals(pojo, deserialized);

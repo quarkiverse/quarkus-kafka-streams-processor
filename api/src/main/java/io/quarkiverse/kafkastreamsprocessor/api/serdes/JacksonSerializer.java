@@ -23,10 +23,9 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Message serializer for JSON content. Based on the well-known Jackson Java library.
@@ -72,7 +71,7 @@ public class JacksonSerializer<T> implements Serializer<T> {
         }
         try {
             return objectMapper.writeValueAsBytes(myPojo);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new SerializationException("Error serializing Pojo object into bytes", e);
         }
     }

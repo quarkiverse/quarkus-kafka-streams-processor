@@ -21,8 +21,8 @@ package io.quarkiverse.kafkastreamsprocessor.impl;
 
 import jakarta.inject.Inject;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Bridge serializer based on introspection that allows a JSON first input message policy.
@@ -45,7 +45,7 @@ public class IntrospectionSerializer extends AbstractIntrospectionSerializer {
     byte[] serializeNonProtobuf(Object data) {
         try {
             return objectMapper.writeValueAsBytes(data);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalArgumentException("Message cannot be processed, " +
                     "one of the following payloads is expected: valid JSON Pojo or Protobuf", e);
         }

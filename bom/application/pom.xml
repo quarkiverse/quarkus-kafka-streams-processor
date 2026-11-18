@@ -11,6 +11,8 @@
   <packaging>pom</packaging>
   <properties>
     <quarkus-kafka-streams-processor.version>6.2.0-SNAPSHOT</quarkus-kafka-streams-processor.version>
+    <!-- not importing the CloudEvents BOM as it imports the Jakarta EE BOM, which overrides the Quarkus versions -->
+    <cloudevents.version>5.1.0</cloudevents.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -61,10 +63,23 @@
       </dependency>
       <dependency>
         <groupId>io.cloudevents</groupId>
-        <artifactId>cloudevents-bom</artifactId>
-        <version>4.0.2</version>
-        <type>pom</type>
-        <scope>import</scope>
+        <artifactId>cloudevents-api</artifactId>
+        <version>${cloudevents.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cloudevents</groupId>
+        <artifactId>cloudevents-core</artifactId>
+        <version>${cloudevents.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cloudevents</groupId>
+        <artifactId>cloudevents-kafka</artifactId>
+        <version>${cloudevents.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cloudevents</groupId>
+        <artifactId>cloudevents-json-jackson3</artifactId>
+        <version>${cloudevents.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

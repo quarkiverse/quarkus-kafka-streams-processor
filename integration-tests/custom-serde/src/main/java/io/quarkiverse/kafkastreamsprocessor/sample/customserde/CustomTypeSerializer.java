@@ -24,7 +24,7 @@ import jakarta.inject.Inject;
 
 import org.apache.kafka.common.serialization.Serializer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 @ApplicationScoped
 public class CustomTypeSerializer implements Serializer<CustomType> {

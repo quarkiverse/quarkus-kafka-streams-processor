@@ -32,13 +32,13 @@ import org.apache.kafka.common.serialization.Serializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerde;
 
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerde;
 import io.quarkiverse.kafkastreamsprocessor.impl.IntrospectionSerializer;
 import io.quarkiverse.kafkastreamsprocessor.impl.StringIntrospectionSerializer;
 import io.quarkiverse.kafkastreamsprocessor.sample.message.PingMessage;
+import tools.jackson.databind.ObjectMapper;
 
 class DefaultTopologySerdesConfigurationTest {
 

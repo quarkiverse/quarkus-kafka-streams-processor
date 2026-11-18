@@ -43,8 +43,8 @@
       <artifactId>quarkus-kafka-streams-processor-text-map-accessors</artifactId>
     </dependency>
     <dependency>
-      <groupId>jakarta.enterprise</groupId>
-      <artifactId>jakarta.enterprise.cdi-api</artifactId>
+      <groupId>jakarta.cdi</groupId>
+      <artifactId>jakarta.cdi-api</artifactId>
     </dependency>
     <dependency>
       <groupId>jakarta.annotation</groupId>
@@ -126,7 +126,7 @@
     </dependency>
     <dependency>
       <groupId>io.smallrye.common</groupId>
-      <artifactId>smallrye-common-vertx-context</artifactId>
+      <artifactId>smallrye-common-vertx5-context</artifactId>
     </dependency>
     <dependency>
       <groupId>io.cloudevents</groupId>
@@ -166,12 +166,12 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5</artifactId>
+      <artifactId>quarkus-junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5-mockito</artifactId>
+      <artifactId>quarkus-junit-mockito</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -231,11 +231,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>json-path</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <artifactId>kafka-metadata</artifactId>
       <groupId>org.apache.kafka</groupId>
       <scope>test</scope>
@@ -250,11 +245,11 @@
       <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
+      <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
+      <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
@@ -285,7 +280,7 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5-internal</artifactId>
+      <artifactId>quarkus-junit-internal</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -295,7 +290,7 @@
     </dependency>
     <dependency>
       <groupId>io.cloudevents</groupId>
-      <artifactId>cloudevents-json-jackson</artifactId>
+      <artifactId>cloudevents-json-jackson3</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

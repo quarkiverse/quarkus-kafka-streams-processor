@@ -21,14 +21,13 @@ package io.quarkiverse.kafkastreamsprocessor.sample.jsonpojo;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-
-import io.quarkus.jackson.ObjectMapperCustomizer;
+import io.quarkus.jackson.JsonMapperBuilderCustomizer;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
 
 @ApplicationScoped
-public class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {
-    public void customize(ObjectMapper mapper) {
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+public class RegisterCustomModuleCustomizer implements JsonMapperBuilderCustomizer {
+    public void customize(JsonMapper.Builder builder) {
+        builder.propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     }
 }

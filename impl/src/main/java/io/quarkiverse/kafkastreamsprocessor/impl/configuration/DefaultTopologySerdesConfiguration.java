@@ -27,7 +27,6 @@ import jakarta.inject.Inject;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.Topology;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.daniel.shuy.kafka.protobuf.serde.KafkaProtobufSerde;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
@@ -37,6 +36,7 @@ import io.quarkiverse.kafkastreamsprocessor.api.configuration.ConfigurationCusto
 import io.quarkiverse.kafkastreamsprocessor.api.serdes.JacksonSerde;
 import io.quarkiverse.kafkastreamsprocessor.impl.IntrospectionSerializer;
 import io.quarkiverse.kafkastreamsprocessor.impl.StringIntrospectionSerializer;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Default serde configuration for the {@link Topology}.

@@ -31,12 +31,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 class JacksonSerializerTest {
 
@@ -59,9 +58,9 @@ class JacksonSerializerTest {
     }
 
     @Test
-    void shouldRaiseSerializationExceptionWhenJSonProcessingIsThrown() throws JsonProcessingException {
+    void shouldRaiseSerializationExceptionWhenJSonProcessingIsThrown() throws JacksonException {
         ObjectMapper mockMapper = Mockito.mock(ObjectMapper.class);
-        JsonProcessingException exception = Mockito.mock(JsonProcessingException.class);
+        JacksonException exception = Mockito.mock(JacksonException.class);
         when(mockMapper.writeValueAsBytes(Mockito.any())).thenThrow(exception);
         serializer = new JacksonSerializer<>(mockMapper);
         assertThrows(SerializationException.class, () -> serializer.serialize("topic", new Pojo("value")));
